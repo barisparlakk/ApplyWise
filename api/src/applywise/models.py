@@ -127,6 +127,12 @@ class Profile(TimestampedUuidMixin, Base):
     bio: Mapped[str | None] = mapped_column(Text)
     location: Mapped[str | None] = mapped_column(String(255))
     education_level: Mapped[str | None] = mapped_column(String(120))
+    skills: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    github_url: Mapped[str | None] = mapped_column(String(2048))
+    preferred_location: Mapped[str | None] = mapped_column(String(255))
+    internship_type: Mapped[str | None] = mapped_column(String(120))
+    languages: Mapped[list[dict[str, str]]] = mapped_column(JSON, default=list, nullable=False)
+    experience_level: Mapped[str | None] = mapped_column(String(120))
     target_roles: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
 
     user: Mapped[User] = relationship(back_populates="profile")
