@@ -8,6 +8,7 @@ type BackendJwtInput = {
   subject: string;
   email: string;
   name?: string | null;
+  githubAccessToken?: string | null;
 };
 
 function base64UrlEncode(input: string | Buffer): string {
@@ -28,6 +29,7 @@ export function createBackendJwt(input: BackendJwtInput): string {
     exp: now + 60 * 60,
     iss: process.env.AUTH_JWT_ISSUER ?? DEFAULT_AUTH_JWT_ISSUER,
     aud: process.env.AUTH_JWT_AUDIENCE ?? DEFAULT_AUTH_JWT_AUDIENCE,
+    ...(input.githubAccessToken ? { github_access_token: input.githubAccessToken } : {}),
   };
   const header = { alg: "HS256", typ: "JWT" };
   const encodedHeader = base64UrlEncode(JSON.stringify(header));

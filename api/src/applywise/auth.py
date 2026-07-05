@@ -31,6 +31,13 @@ class AuthClaims:
     subject: str
     email: str
     name: str | None
+    github_access_token: str | None = None
+
+
+@dataclass(frozen=True)
+class AuthContext:
+    user: User
+    claims: AuthClaims
 
 
 def get_auth_jwt_secret() -> str:
@@ -138,6 +145,9 @@ def decode_backend_jwt(token: str) -> AuthClaims:
         subject=subject,
         email=email.lower(),
         name=name if isinstance(name, str) else None,
+        github_access_token=payload.get("github_access_token")
+        if isinstance(payload.get("github_access_token"), str)
+        else None,
     )
 
 
@@ -146,6 +156,7 @@ def create_backend_jwt(
     subject: str,
     email: str,
     name: str | None = None,
+    github_access_token: str | None = None,
     expires_at: int | None = None,
 ) -> str:
     now = int(datetime.now(UTC).timestamp())
@@ -158,6 +169,9 @@ def create_backend_jwt(
         "iss": get_auth_jwt_issuer(),
         "aud": get_auth_jwt_audience(),
     }
+    if github_access_token:
+        payload["github_access_token"] = github_access_token
+
     header = {"alg": "HS256", "typ": "JWT"}
     encoded_header = _base64url_encode(json.dumps(header, separators=(",", ":")).encode("utf-8"))
     encoded_payload = _base64url_encode(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
@@ -169,6 +183,13 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials | None = bearer_dependency,
     session: Session = session_dependency,
 ) -> User:
+    return get_current_auth(credentials=credentials, session=session).user
+
+
+def get_current_auth(
+    credentials: HTTPAuthorizationCredentials | None = bearer_dependency,
+    session: Session = session_dependency,
+) -> AuthContext:
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -195,4 +216,4 @@ def get_current_user(
 
     session.commit()
     session.refresh(user)
-    return user
+    return AuthContext(user=user, claims=claims)

@@ -50,6 +50,9 @@ export const authOptions: NextAuthOptions = {
         token.backendSubject =
           account?.provider === "github" ? `github:${user.id}` : user.id;
       }
+      if (account?.provider === "github" && typeof account.access_token === "string") {
+        token.githubAccessToken = account.access_token;
+      }
 
       const subject = token.backendSubject ?? token.sub ?? token.email;
       if (typeof subject === "string" && typeof token.email === "string") {
@@ -57,6 +60,8 @@ export const authOptions: NextAuthOptions = {
           subject,
           email: token.email,
           name: typeof token.name === "string" ? token.name : null,
+          githubAccessToken:
+            typeof token.githubAccessToken === "string" ? token.githubAccessToken : null,
         });
       }
 

@@ -13,5 +13,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     backendSubject?: string;
     backendToken?: string;
+    githubAccessToken?: string;
   }
 }

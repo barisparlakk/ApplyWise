@@ -50,6 +50,52 @@ export type ResumeData = {
   chunk_count: number;
 };
 
+export type GitHubDeterministicSignals = {
+  readme_length: number;
+  has_tests: boolean;
+  has_docker: boolean;
+  has_ci: boolean;
+  has_docs: boolean;
+  has_deployment_config: boolean;
+  file_count: number;
+  directory_count: number;
+  language_count: number;
+  top_level_directories: string[];
+};
+
+export type GitHubRepositoryAnalysis = {
+  readme_quality: string;
+  tech_stack: string[];
+  complexity: string;
+  commit_activity: string;
+  testing: string;
+  deployment: string;
+  architecture_signals: string[];
+  missing_documentation: string[];
+  best_fit_roles: string[];
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+};
+
+export type GitHubRepositoryData = {
+  id: string;
+  owner: string;
+  name: string;
+  full_name: string;
+  html_url: string;
+  description: string | null;
+  language: string | null;
+  stars: number;
+  default_branch: string | null;
+  last_commit_at: string | null;
+  languages: Record<string, number>;
+  deterministic_signals: GitHubDeterministicSignals;
+  analysis: GitHubRepositoryAnalysis;
+  summary_text: string | null;
+  chunk_count: number;
+};
+
 export async function getCurrentUser(session: Session): Promise<CurrentUser> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
@@ -111,4 +157,25 @@ export async function getResume(session: Session): Promise<ResumeData | null> {
   }
 
   return (await response.json()) as ResumeData | null;
+}
+
+export async function getGitHubRepositories(session: Session): Promise<GitHubRepositoryData[]> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/github/repositories`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected GitHub repositories request: ${response.status}`);
+  }
+
+  return (await response.json()) as GitHubRepositoryData[];
 }

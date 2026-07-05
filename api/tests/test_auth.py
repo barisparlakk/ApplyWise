@@ -17,6 +17,7 @@ def test_decode_backend_jwt_validates_claims() -> None:
         subject="email:ada@example.com",
         email="ada@example.com",
         name="Ada Lovelace",
+        github_access_token="github-token",
     )
 
     claims = decode_backend_jwt(token)
@@ -24,6 +25,7 @@ def test_decode_backend_jwt_validates_claims() -> None:
     assert claims.subject == "email:ada@example.com"
     assert claims.email == "ada@example.com"
     assert claims.name == "Ada Lovelace"
+    assert claims.github_access_token == "github-token"
 
 
 def test_decode_backend_jwt_rejects_expired_token() -> None:

@@ -59,6 +59,11 @@ def test_create_and_query_one_of_each_model() -> None:
             description="ML experiments",
             language="Python",
             stars=3,
+            default_branch="main",
+            languages={"Python": 1000},
+            file_tree=["README.md", "tests/test_pipeline.py", "Dockerfile"],
+            deterministic_signals={"has_tests": True, "has_docker": True},
+            analysis_data={"strengths": ["Clear project structure"]},
             summary_text="Repository summary",
         )
         repositories.github_repository_chunks.create(
@@ -130,6 +135,9 @@ def test_create_and_query_one_of_each_model() -> None:
         assert len(saved_user.resumes[0].chunks) == 1
         assert len(saved_user.projects) == 1
         assert len(saved_user.github_repositories) == 1
+        assert saved_user.github_repositories[0].analysis_data["strengths"] == [
+            "Clear project structure"
+        ]
         assert len(saved_user.github_repositories[0].chunks) == 1
         assert len(repositories.skills.list()) == 1
         assert len(saved_user.job_posts) == 1

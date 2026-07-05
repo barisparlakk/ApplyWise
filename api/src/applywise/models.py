@@ -8,6 +8,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    DateTime,
     Float,
     ForeignKey,
     Index,
@@ -219,6 +220,17 @@ class GitHubRepository(TimestampedUuidMixin, Base):
     description: Mapped[str | None] = mapped_column(Text)
     language: Mapped[str | None] = mapped_column(String(120))
     stars: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    default_branch: Mapped[str | None] = mapped_column(String(255))
+    last_commit_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    readme_text: Mapped[str | None] = mapped_column(Text)
+    languages: Mapped[dict[str, int]] = mapped_column(JSON, default=dict, nullable=False)
+    file_tree: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    deterministic_signals: Mapped[dict[str, Any]] = mapped_column(
+        JSON,
+        default=dict,
+        nullable=False,
+    )
+    analysis_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     summary_text: Mapped[str | None] = mapped_column(Text)
 
     user: Mapped[User] = relationship(back_populates="github_repositories")
