@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "applywise-api"
+version = "0.1.0"
+description = "FastAPI backend for ApplyWise"
+requires-python = ">=3.11"
+dependencies = [
+    "alembic>=1.13.0",
+    "dramatiq[redis]>=1.17.0",
+    "fastapi>=0.115.0",
+    "psycopg[binary]>=3.2.0",
+    "pydantic>=2.8.0",
+    "sqlalchemy>=2.0.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "ruff>=0.5.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
