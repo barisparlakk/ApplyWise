@@ -1,0 +1,15 @@
+Ada Lovelace
+
+Education
+Computer Engineering, ApplyWise University
+
+Experience
+Data Science Intern at Insight Labs
+Built SQL dashboards and Python models for operational metrics.
+
+Skills
+Python, SQL, FastAPI, Machine Learning
+
+Projects
+Internship Fit Analyzer
+Created a resume and job-post matching tool with vector search.

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -34,6 +35,14 @@ class Vector(UserDefinedType):
 
     def get_col_spec(self, **_kw: object) -> str:
         return f"vector({self.dimensions})"
+
+    def bind_processor(self, _dialect: object) -> Callable[[list[float] | None], str | None]:
+        def process(value: list[float] | None) -> str | None:
+            if value is None:
+                return None
+            return "[" + ",".join(f"{item:.6f}" for item in value) + "]"
+
+        return process
 
 
 class Base(DeclarativeBase):
@@ -152,6 +161,28 @@ class Resume(TimestampedUuidMixin, Base):
     embedding: Mapped[list[float] | None] = mapped_column(Vector())
 
     user: Mapped[User] = relationship(back_populates="resumes")
+    chunks: Mapped[list[ResumeChunk]] = relationship(
+        back_populates="resume",
+        cascade="all, delete-orphan",
+    )
+
+
+class ResumeChunk(TimestampedUuidMixin, Base):
+    __tablename__ = "resume_chunks"
+    __table_args__ = (
+        UniqueConstraint("resume_id", "chunk_index", name="uq_resume_chunks_resume_index"),
+    )
+
+    resume_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("resumes.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector())
+
+    resume: Mapped[Resume] = relationship(back_populates="chunks")
 
 
 class Project(TimestampedUuidMixin, Base):

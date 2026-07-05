@@ -35,6 +35,21 @@ export type ProfileSnapshot = {
   target_role_options: string[];
 };
 
+export type ParsedResumeData = {
+  education: string[];
+  experience: string[];
+  skills: string[];
+  projects: string[];
+};
+
+export type ResumeData = {
+  id: string;
+  filename: string;
+  content_text: string;
+  parsed_data: ParsedResumeData;
+  chunk_count: number;
+};
+
 export async function getCurrentUser(session: Session): Promise<CurrentUser> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
@@ -75,4 +90,25 @@ export async function getProfileSnapshot(session: Session): Promise<ProfileSnaps
   }
 
   return (await response.json()) as ProfileSnapshot;
+}
+
+export async function getResume(session: Session): Promise<ResumeData | null> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/resume`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected resume request: ${response.status}`);
+  }
+
+  return (await response.json()) as ResumeData | null;
 }

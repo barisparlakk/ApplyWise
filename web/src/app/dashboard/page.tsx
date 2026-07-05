@@ -26,12 +26,20 @@ export default async function DashboardPage() {
               Welcome back, {user.full_name ?? user.email}.
             </h1>
           </div>
-          <Link
-            className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
-            href="/profile"
-          >
-            Profile
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
+              href="/profile"
+            >
+              Profile
+            </Link>
+            <Link
+              className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
+              href="/resume"
+            >
+              Resume
+            </Link>
+          </div>
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">

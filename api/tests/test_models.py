@@ -32,11 +32,16 @@ def test_create_and_query_one_of_each_model() -> None:
             education_level="BS",
             target_roles=["AI intern"],
         )
-        repositories.resumes.create(
+        resume = repositories.resumes.create(
             user_id=user.id,
             filename="ada.pdf",
             content_text="Python, SQL, machine learning",
             parsed_data={"skills": ["Python", "SQL"]},
+        )
+        repositories.resume_chunks.create(
+            resume_id=resume.id,
+            chunk_index=0,
+            content="Python, SQL, machine learning",
         )
         repositories.projects.create(
             user_id=user.id,
@@ -122,6 +127,7 @@ def test_create_and_query_one_of_each_model() -> None:
 
         assert saved_user.profile is not None
         assert len(saved_user.resumes) == 1
+        assert len(saved_user.resumes[0].chunks) == 1
         assert len(saved_user.projects) == 1
         assert len(saved_user.github_repositories) == 1
         assert len(saved_user.github_repositories[0].chunks) == 1
