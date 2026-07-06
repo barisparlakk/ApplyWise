@@ -10,8 +10,9 @@ from sqlalchemy.orm import Session
 from applywise.auth import get_current_user
 from applywise.database import get_session
 from applywise.embeddings import DeterministicEmbeddingProvider
+from applywise.fit_score import FitExplanation, compute_and_store_fit_analysis
 from applywise.job_analyzer import JobAnalysisError, JobPostAnalysis, analyze_job_post
-from applywise.models import JobPost, User
+from applywise.models import FitAnalysis, JobPost, User
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 current_user_dependency = Depends(get_current_user)
@@ -40,6 +41,24 @@ class AnalyzeJobPayload(BaseModel):
         return stripped or None
 
 
+class FitAnalysisComponentsResponse(BaseModel):
+    skill_score: float
+    project_relevance_score: float
+    experience_score: float
+    education_score: float
+    language_score: float
+    domain_score: float
+    profile_quality_score: float
+
+
+class FitAnalysisResponse(BaseModel):
+    id: uuid.UUID
+    components: FitAnalysisComponentsResponse
+    total_score: float
+    explanation: FitExplanation
+    breakdown: dict[str, object]
+
+
 class JobPostResponse(BaseModel):
     id: uuid.UUID
     company_name: str
@@ -59,9 +78,44 @@ class JobPostResponse(BaseModel):
     business_expectations: list[str]
     communication_expectations: list[str]
     analysis: JobPostAnalysis
+    fit_analysis: FitAnalysisResponse | None = None
 
 
-def job_post_to_response(job_post: JobPost) -> JobPostResponse:
+def fit_analysis_to_response(fit_analysis: FitAnalysis | None) -> FitAnalysisResponse | None:
+    if fit_analysis is None:
+        return None
+
+    explanation = FitExplanation.model_validate(
+        (fit_analysis.breakdown or {}).get(
+            "explanation",
+            {
+                "strong_matches": [],
+                "weak_areas": [],
+                "recommended_action": "Fit explanation is not available yet.",
+            },
+        )
+    )
+    return FitAnalysisResponse(
+        id=fit_analysis.id,
+        components=FitAnalysisComponentsResponse(
+            skill_score=fit_analysis.skill_score,
+            project_relevance_score=fit_analysis.project_relevance_score,
+            experience_score=fit_analysis.experience_score,
+            education_score=fit_analysis.education_score,
+            language_score=fit_analysis.language_score,
+            domain_score=fit_analysis.domain_score,
+            profile_quality_score=fit_analysis.profile_quality_score,
+        ),
+        total_score=fit_analysis.total_score,
+        explanation=explanation,
+        breakdown=fit_analysis.breakdown or {},
+    )
+
+
+def job_post_to_response(
+    job_post: JobPost,
+    fit_analysis: FitAnalysis | None = None,
+) -> JobPostResponse:
     return JobPostResponse(
         id=job_post.id,
         company_name=job_post.company_name,
@@ -81,6 +135,7 @@ def job_post_to_response(job_post: JobPost) -> JobPostResponse:
         business_expectations=job_post.business_expectations or [],
         communication_expectations=job_post.communication_expectations or [],
         analysis=JobPostAnalysis.model_validate(job_post.analysis_data),
+        fit_analysis=fit_analysis_to_response(fit_analysis),
     )
 
 
@@ -120,9 +175,12 @@ def analyze_job(
         embedding=embedding_provider.embed(payload.content),
     )
     session.add(job_post)
+    session.flush()
+    fit_analysis = compute_and_store_fit_analysis(session, user=current_user, job_post=job_post)
     session.commit()
     session.refresh(job_post)
-    return job_post_to_response(job_post)
+    session.refresh(fit_analysis)
+    return job_post_to_response(job_post, fit_analysis)
 
 
 @router.get("/{job_post_id}", response_model=JobPostResponse)
@@ -139,7 +197,10 @@ def read_job(
     ).first()
     if job_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job post not found.")
-    return job_post_to_response(job_post)
+    fit_analysis = compute_and_store_fit_analysis(session, user=current_user, job_post=job_post)
+    session.commit()
+    session.refresh(fit_analysis)
+    return job_post_to_response(job_post, fit_analysis)
 
 
 def infer_company_name(text: str) -> str:

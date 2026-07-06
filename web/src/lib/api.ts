@@ -110,6 +110,30 @@ export type JobPostAnalysis = {
   communication_expectations: string[];
 };
 
+export type FitAnalysisComponents = {
+  skill_score: number;
+  project_relevance_score: number;
+  experience_score: number;
+  education_score: number;
+  language_score: number;
+  domain_score: number;
+  profile_quality_score: number;
+};
+
+export type FitExplanation = {
+  strong_matches: string[];
+  weak_areas: string[];
+  recommended_action: string;
+};
+
+export type FitAnalysisData = {
+  id: string;
+  components: FitAnalysisComponents;
+  total_score: number;
+  explanation: FitExplanation;
+  breakdown: Record<string, unknown>;
+};
+
 export type JobPostData = {
   id: string;
   company_name: string;
@@ -129,6 +153,7 @@ export type JobPostData = {
   business_expectations: string[];
   communication_expectations: string[];
   analysis: JobPostAnalysis;
+  fit_analysis: FitAnalysisData | null;
 };
 
 export async function getCurrentUser(session: Session): Promise<CurrentUser> {

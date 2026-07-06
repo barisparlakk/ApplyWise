@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
-from applywise.models import Base, JobPost, User
+from applywise.models import Base, FitAnalysis, JobPost, User
 from applywise.routes.jobs import AnalyzeJobPayload, analyze_job, read_job
 
 SAMPLE_JOB = """
@@ -47,6 +47,7 @@ def test_analyze_job_route_persists_structured_analysis_and_embedding() -> None:
         )
         fetched = read_job(response.id, current_user=user, session=session)
         job_count = session.scalar(select(func.count()).select_from(JobPost))
+        fit_count = session.scalar(select(func.count()).select_from(FitAnalysis))
         saved_job = session.get(JobPost, response.id)
 
     assert response.company_name == "ApplyWise Labs"
@@ -55,8 +56,11 @@ def test_analyze_job_route_persists_structured_analysis_and_embedding() -> None:
     assert "Python" in response.required_skills
     assert "Docker" in response.nice_to_have_skills
     assert fetched.analysis.role_title == "Backend Intern"
+    assert fetched.fit_analysis is not None
+    assert fetched.fit_analysis.total_score >= 0
     assert fetched.analysis.communication_expectations
     assert saved_job is not None
     assert saved_job.embedding is not None
     assert len(saved_job.embedding) == 1536
     assert job_count == 1
+    assert fit_count == 1

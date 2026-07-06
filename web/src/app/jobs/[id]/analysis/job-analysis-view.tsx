@@ -6,6 +6,7 @@ type JobAnalysisViewProps = {
 
 export function JobAnalysisView({ jobPost }: JobAnalysisViewProps) {
   const analysis = jobPost.analysis;
+  const fitAnalysis = jobPost.fit_analysis;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
@@ -22,6 +23,47 @@ export function JobAnalysisView({ jobPost }: JobAnalysisViewProps) {
             <Metric label="Difficulty" value={analysis.technical_difficulty} />
           </div>
         </div>
+
+        {fitAnalysis ? (
+          <div className="rounded-md border border-border bg-white p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                  Overall Fit
+                </p>
+                <h2 className="mt-2 text-5xl font-semibold text-foreground">
+                  {formatScore(fitAnalysis.total_score)}
+                </h2>
+              </div>
+              <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+                {fitAnalysis.explanation.recommended_action}
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-3 md:grid-cols-2">
+              <ScoreBar label="Skill match" value={fitAnalysis.components.skill_score} />
+              <ScoreBar
+                label="Project relevance"
+                value={fitAnalysis.components.project_relevance_score}
+              />
+              <ScoreBar label="Experience" value={fitAnalysis.components.experience_score} />
+              <ScoreBar label="Education" value={fitAnalysis.components.education_score} />
+              <ScoreBar label="Language" value={fitAnalysis.components.language_score} />
+              <ScoreBar label="Domain" value={fitAnalysis.components.domain_score} />
+              <ScoreBar
+                label="Profile quality"
+                value={fitAnalysis.components.profile_quality_score}
+              />
+            </div>
+          </div>
+        ) : null}
+
+        {fitAnalysis ? (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ListPanel items={fitAnalysis.explanation.strong_matches} title="Strong matches" />
+            <ListPanel items={fitAnalysis.explanation.weak_areas} title="Weak areas" />
+          </div>
+        ) : null}
 
         <div className="grid gap-4 lg:grid-cols-2">
           <ListPanel items={analysis.required_skills} title="Required skills" />
@@ -81,6 +123,22 @@ function ListPanel({ items, title }: Readonly<{ items: string[]; title: string }
   );
 }
 
+function ScoreBar({ label, value }: Readonly<{ label: string; value: number }>) {
+  const normalizedValue = Math.max(0, Math.min(100, value));
+
+  return (
+    <div className="rounded-md border border-border px-3 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-sm font-semibold text-foreground">{formatScore(value)}</p>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-sm bg-secondary">
+        <div className="h-full bg-primary" style={{ width: `${normalizedValue}%` }} />
+      </div>
+    </div>
+  );
+}
+
 function SummaryItem({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
     <div className="flex items-center justify-between border-b border-border pb-2 last:border-0">
@@ -88,4 +146,8 @@ function SummaryItem({ label, value }: Readonly<{ label: string; value: string }
       <dd className="font-medium text-foreground">{value}</dd>
     </div>
   );
+}
+
+function formatScore(value: number) {
+  return `${Math.round(value)}%`;
 }
