@@ -3,11 +3,12 @@ from __future__ import annotations
 import enum
 import uuid
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy import (
     JSON,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -353,7 +354,11 @@ class Application(TimestampedUuidMixin, Base):
         default=ApplicationStatus.SAVED,
         nullable=False,
     )
+    deadline: Mapped[date | None] = mapped_column(Date)
+    applied_date: Mapped[date | None] = mapped_column(Date)
+    interview_date: Mapped[date | None] = mapped_column(Date)
     notes: Mapped[str | None] = mapped_column(Text)
+    next_action: Mapped[str | None] = mapped_column(String(500))
 
     user: Mapped[User] = relationship(back_populates="applications")
     job_post: Mapped[JobPost] = relationship(back_populates="applications")

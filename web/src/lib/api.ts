@@ -184,11 +184,32 @@ export type JobPostData = {
   roadmap: RoadmapData | null;
 };
 
+export type ApplicationStatus =
+  | "saved"
+  | "preparing"
+  | "applied"
+  | "assessment"
+  | "interview"
+  | "rejected"
+  | "offer"
+  | "archived";
+
 export type ApplicationData = {
   id: string;
   job_post_id: string;
-  status: string;
+  fit_analysis_id: string | null;
+  interview_prep_id: string | null;
+  company: string;
+  role: string;
+  status: ApplicationStatus;
+  deadline: string | null;
+  job_url: string | null;
+  fit_score: number | null;
+  applied_date: string | null;
+  interview_date: string | null;
   notes: string | null;
+  next_action: string | null;
+  updated_at: string;
 };
 
 export type InterviewPrepQuestion = {
@@ -380,6 +401,51 @@ export async function getRoadmaps(session: Session, durationDays = 3): Promise<R
   }
 
   return (await response.json()) as RoadmapData[];
+}
+
+export async function getApplications(session: Session): Promise<ApplicationData[]> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/applications`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected applications request: ${response.status}`);
+  }
+
+  return (await response.json()) as ApplicationData[];
+}
+
+export async function getApplication(
+  session: Session,
+  applicationId: string,
+): Promise<ApplicationData> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/applications/${applicationId}`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected application request: ${response.status}`);
+  }
+
+  return (await response.json()) as ApplicationData;
 }
 
 export async function getInterviewPrep(
