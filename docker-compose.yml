@@ -1,0 +1,80 @@
+services:
+  web:
+    build:
+      context: ./web
+    env_file:
+      - ./web/.env.example
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      NEXTAUTH_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./api
+    env_file:
+      - ./api/.env.example
+    environment:
+      DATABASE_URL: postgresql+psycopg://applywise:applywise@postgres:5432/applywise
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker:
+    build:
+      context: ./api
+    command: ["python", "-m", "applywise.worker"]
+    env_file:
+      - ./api/.env.example
+    environment:
+      DATABASE_URL: postgresql+psycopg://applywise:applywise@postgres:5432/applywise
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: applywise
+      POSTGRES_PASSWORD: applywise
+      POSTGRES_DB: applywise
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U applywise -d applywise"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -1,0 +1,17 @@
+[
+  {
+    "company": "Northstar AI",
+    "title": "AI/ML Intern",
+    "content": "Company: Northstar AI\nLocation: Remote\nPosition: AI/ML Intern\n\nResponsibilities\n- Build Python prototypes for RAG and evaluation workflows\n- Analyze model quality with pandas and SQL dashboards\n- Explain technical tradeoffs in English\n\nRequirements\n- Python\n- SQL\n- Machine Learning\n- RAG\n- pandas\n- English communication\n\nPreferred\n- Docker\n- CI/CD"
+  },
+  {
+    "company": "Atlas Backend Systems",
+    "title": "Backend Intern",
+    "content": "Company: Atlas Backend Systems\nLocation: Istanbul / Hybrid\nPosition: Backend Intern\n\nResponsibilities\n- Build FastAPI endpoints for internal workflow tools\n- Implement PostgreSQL queries and API integrations\n- Add focused tests and deployment documentation\n\nRequirements\n- Python\n- FastAPI\n- PostgreSQL\n- REST\n- Git\n- English communication\n\nPreferred\n- Docker\n- CI/CD"
+  },
+  {
+    "company": "BrightOps Analytics",
+    "title": "Business Analyst Intern",
+    "content": "Company: BrightOps Analytics\nLocation: Remote\nPosition: Business Analyst Intern\n\nResponsibilities\n- Build SQL dashboards for operational process metrics\n- Prepare concise recommendations for business stakeholders\n- Clean CSV and spreadsheet datasets with Python\n\nRequirements\n- SQL\n- Python\n- pandas\n- dashboard\n- communication\n\nPreferred\n- Process improvement\n- Business intelligence"
+  }
+]

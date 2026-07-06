@@ -1,0 +1,33 @@
+[
+  {
+    "full_name": "applywise-demo/internship-fit-api",
+    "readme_text": "# Internship Fit API\n\nFastAPI service with setup, usage, architecture, and testing instructions.\n\nRun pytest before committing.",
+    "languages": {
+      "Python": 18500,
+      "Dockerfile": 800
+    },
+    "file_paths": [
+      "README.md",
+      "src/app/main.py",
+      "src/app/scoring.py",
+      "tests/test_scoring.py",
+      "Dockerfile",
+      ".github/workflows/ci.yml"
+    ]
+  },
+  {
+    "full_name": "applywise-demo/student-success-dashboard",
+    "readme_text": "# Student Success Dashboard\n\nSQL and TypeScript dashboard for internship preparation metrics.",
+    "languages": {
+      "TypeScript": 9800,
+      "Python": 4500,
+      "SQL": 1500
+    },
+    "file_paths": [
+      "README.md",
+      "app/dashboard.tsx",
+      "notebooks/analysis.ipynb",
+      "queries/application_metrics.sql"
+    ]
+  }
+]
