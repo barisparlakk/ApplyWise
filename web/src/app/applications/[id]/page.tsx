@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { ApplicationDetail } from "@/app/applications/[id]/application-detail";
-import { getApplication } from "@/lib/api";
+import { getApplication, getInterviewPrep } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 
 type ApplicationDetailPageProps = {
@@ -18,7 +18,10 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
     redirect(`/login?callbackUrl=/applications/${params.id}`);
   }
 
-  const application = await getApplication(session, params.id);
+  const [application, interviewPrep] = await Promise.all([
+    getApplication(session, params.id),
+    getInterviewPrep(session, params.id),
+  ]);
 
   return (
     <main className="min-h-screen bg-background">
@@ -27,6 +30,7 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}
           backendToken={session.backendToken}
           initialApplication={application}
+          initialInterviewPrep={interviewPrep}
         />
       </section>
     </main>

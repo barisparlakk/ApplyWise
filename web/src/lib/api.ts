@@ -205,6 +205,9 @@ export type ApplicationData = {
   deadline: string | null;
   job_url: string | null;
   fit_score: number | null;
+  fit_components: FitAnalysisComponents | null;
+  fit_explanation: FitExplanation | null;
+  missing_skills: string[];
   applied_date: string | null;
   interview_date: string | null;
   notes: string | null;

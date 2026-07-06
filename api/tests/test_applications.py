@@ -76,7 +76,14 @@ def test_application_tracker_create_list_read_and_update() -> None:
             domain_score=75,
             profile_quality_score=65,
             total_score=75.25,
-            breakdown={},
+            breakdown={
+                "signals": {"missing_required_skills": ["Docker", "CI"]},
+                "explanation": {
+                    "strong_matches": ["Python and FastAPI are aligned."],
+                    "weak_areas": ["Docker needs proof."],
+                    "recommended_action": "Add a small Docker deployment note.",
+                },
+            },
         )
         session.add(fit_analysis)
         session.commit()
@@ -123,6 +130,11 @@ def test_application_tracker_create_list_read_and_update() -> None:
     assert created.status == ApplicationStatus.SAVED
     assert created.fit_analysis_id == fit_analysis.id
     assert created.fit_score == 75.25
+    assert created.fit_components is not None
+    assert created.fit_components["skill_score"] == 80
+    assert created.fit_explanation is not None
+    assert created.fit_explanation["recommended_action"] == "Add a small Docker deployment note."
+    assert created.missing_skills == ["Docker", "CI"]
     assert updated.status == ApplicationStatus.INTERVIEW
     assert updated.deadline == date(2026, 7, 20)
     assert updated.job_url == "https://example.com/jobs/backend-intern-updated"

@@ -34,6 +34,9 @@ class ApplicationResponse(BaseModel):
     deadline: date | None
     job_url: str | None
     fit_score: float | None
+    fit_components: dict[str, float] | None
+    fit_explanation: dict[str, object] | None
+    missing_skills: list[str]
     applied_date: date | None
     interview_date: date | None
     notes: str | None
@@ -73,6 +76,8 @@ def application_to_response(
     fit_analysis = latest_fit_analysis(session, application)
     interview_prep = latest_interview_prep(session, application)
     job_post = application.job_post
+    fit_breakdown = fit_analysis.breakdown if fit_analysis else {}
+    fit_signals = fit_breakdown.get("signals", {}) if isinstance(fit_breakdown, dict) else {}
     return ApplicationResponse(
         id=application.id,
         job_post_id=application.job_post_id,
@@ -84,6 +89,11 @@ def application_to_response(
         deadline=application.deadline,
         job_url=job_post.url,
         fit_score=fit_analysis.total_score if fit_analysis else None,
+        fit_components=extract_fit_components(fit_analysis),
+        fit_explanation=extract_fit_explanation(fit_analysis),
+        missing_skills=[
+            str(skill) for skill in fit_signals.get("missing_required_skills", [])
+        ],
         applied_date=application.applied_date,
         interview_date=application.interview_date,
         notes=application.notes,
@@ -243,6 +253,28 @@ def latest_interview_prep(session: Session, application: Application) -> Intervi
         .order_by(InterviewPrep.updated_at.desc(), InterviewPrep.created_at.desc())
         .limit(1)
     ).first()
+
+
+def extract_fit_components(fit_analysis: FitAnalysis | None) -> dict[str, float] | None:
+    if fit_analysis is None:
+        return None
+    return {
+        "skill_score": fit_analysis.skill_score,
+        "project_relevance_score": fit_analysis.project_relevance_score,
+        "experience_score": fit_analysis.experience_score,
+        "education_score": fit_analysis.education_score,
+        "language_score": fit_analysis.language_score,
+        "domain_score": fit_analysis.domain_score,
+        "profile_quality_score": fit_analysis.profile_quality_score,
+    }
+
+
+def extract_fit_explanation(fit_analysis: FitAnalysis | None) -> dict[str, object] | None:
+    if fit_analysis is None:
+        return None
+    breakdown = fit_analysis.breakdown or {}
+    explanation = breakdown.get("explanation")
+    return explanation if isinstance(explanation, dict) else None
 
 
 def strip_optional_text(value: str | None) -> str | None:

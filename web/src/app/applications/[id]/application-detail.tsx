@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { ApplicationData, ApplicationStatus } from "@/lib/api";
+import type { ApplicationData, ApplicationStatus, InterviewPrepData } from "@/lib/api";
 
 const STATUS_OPTIONS: ApplicationStatus[] = [
   "saved",
@@ -26,16 +26,23 @@ type ApplicationDetailProps = {
   apiBaseUrl: string;
   backendToken: string;
   initialApplication: ApplicationData;
+  initialInterviewPrep: InterviewPrepData;
 };
 
 type SaveState = "idle" | "saving" | "saved" | "error";
+type ToastState = {
+  tone: "success" | "error";
+  message: string;
+} | null;
 
 export function ApplicationDetail({
   apiBaseUrl,
   backendToken,
   initialApplication,
+  initialInterviewPrep,
 }: ApplicationDetailProps) {
   const [application, setApplication] = useState(initialApplication);
+  const [interviewPrep] = useState(initialInterviewPrep);
   const [form, setForm] = useState({
     status: initialApplication.status,
     deadline: initialApplication.deadline ?? "",
@@ -47,6 +54,7 @@ export function ApplicationDetail({
   });
   const [state, setState] = useState<SaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState>(null);
   const headers = useMemo(
     () => ({
       Authorization: `Bearer ${backendToken}`,
@@ -89,10 +97,45 @@ export function ApplicationDetail({
         next_action: updated.next_action ?? "",
       });
       setState("saved");
+      showToast("success", "Application saved.");
     } catch (error) {
       setState("error");
-      setErrorMessage(error instanceof Error ? error.message : "Save failed.");
+      const message = error instanceof Error ? error.message : "Save failed.";
+      setErrorMessage(message);
+      showToast("error", message);
     }
+  }
+
+  function downloadMarkdownReport() {
+    const markdown = buildMarkdownReport(application, interviewPrep);
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${slugify(application.company)}-${slugify(application.role)}-report.md`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    showToast("success", "Markdown report downloaded.");
+  }
+
+  function printPdfReport() {
+    const reportWindow = window.open("", "_blank");
+    if (!reportWindow) {
+      showToast("error", "Allow popups to export the PDF report.");
+      return;
+    }
+    reportWindow.document.write(buildPrintableReport(application, interviewPrep));
+    reportWindow.document.close();
+    reportWindow.focus();
+    reportWindow.print();
+    showToast("success", "PDF report opened. Choose Save as PDF in the print dialog.");
+  }
+
+  function showToast(tone: "success" | "error", message: string) {
+    setToast({ tone, message });
+    window.setTimeout(() => setToast(null), 3200);
   }
 
   return (
@@ -231,7 +274,24 @@ export function ApplicationDetail({
             ) : null}
           </div>
         </div>
+
+        <div className="rounded-md border border-border bg-white p-5">
+          <h2 className="text-lg font-semibold text-foreground">Export report</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Includes fit breakdown, missing skills, next action, and interview prep summary.
+          </p>
+          <div className="mt-5 grid gap-2">
+            <Button onClick={downloadMarkdownReport} type="button">
+              Download Markdown
+            </Button>
+            <Button onClick={printPdfReport} type="button" variant="secondary">
+              Print PDF
+            </Button>
+          </div>
+        </div>
       </aside>
+
+      {toast ? <Toast message={toast.message} tone={toast.tone} /> : null}
     </div>
   );
 }
@@ -272,4 +332,160 @@ function emptyToNull(value: string) {
 
 function formatScore(value: number | null) {
   return value === null ? "-" : `${Math.round(value)}%`;
+}
+
+function Toast({ message, tone }: Readonly<{ message: string; tone: "success" | "error" }>) {
+  return (
+    <div
+      className={
+        tone === "success"
+          ? "fixed bottom-4 right-4 z-50 rounded-md border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-emerald-700 shadow"
+          : "fixed bottom-4 right-4 z-50 rounded-md border border-red-200 bg-white px-4 py-3 text-sm font-medium text-red-700 shadow"
+      }
+      role="status"
+    >
+      {message}
+    </div>
+  );
+}
+
+function buildMarkdownReport(application: ApplicationData, prep: InterviewPrepData) {
+  const lines = [
+    `# ${application.company} - ${application.role}`,
+    "",
+    "## Application",
+    `- Status: ${application.status}`,
+    `- Fit score: ${formatScore(application.fit_score)}`,
+    `- Deadline: ${application.deadline ?? "-"}`,
+    `- Applied date: ${application.applied_date ?? "-"}`,
+    `- Interview date: ${application.interview_date ?? "-"}`,
+    `- Next action: ${application.next_action ?? "-"}`,
+    `- Job URL: ${application.job_url ?? "-"}`,
+    "",
+    "## Fit Breakdown",
+    ...fitComponentLines(application),
+    "",
+    "## Missing Skills",
+    ...(application.missing_skills.length
+      ? application.missing_skills.map((skill) => `- ${skill}`)
+      : ["- No missing-skill signal found."]),
+    "",
+    "## Fit Feedback",
+    ...fitFeedbackLines(application),
+    "",
+    "## Interview Prep Summary",
+    `- Technical questions: ${prep.content.technical_questions.length}`,
+    `- Behavioral questions: ${prep.content.behavioral_questions.length}`,
+    `- Weak-area drills: ${prep.content.weak_area_drill_questions.length}`,
+    "",
+    "### English Self-Introduction",
+    prep.content.english_self_introduction.content,
+    "",
+    "### Project Explanation",
+    prep.content.project_explanation_script.content,
+    "",
+    "### Why This Company",
+    prep.content.why_this_company.content,
+    "",
+    "### Why This Role",
+    prep.content.why_this_role.content,
+    "",
+    "### Technical Questions",
+    ...prep.content.technical_questions.map((question) => `- ${question.question}`),
+    "",
+    "### Weak-Area Drills",
+    ...prep.content.weak_area_drill_questions.map((question) => `- ${question.question}`),
+    "",
+    "## Notes",
+    application.notes ?? "-",
+    "",
+  ];
+  return lines.join("\n");
+}
+
+function buildPrintableReport(application: ApplicationData, prep: InterviewPrepData) {
+  const markdown = buildMarkdownReport(application, prep);
+  const body = markdown
+    .split("\n")
+    .map((line) => {
+      if (line.startsWith("# ")) {
+        return `<h1>${escapeHtml(line.slice(2))}</h1>`;
+      }
+      if (line.startsWith("## ")) {
+        return `<h2>${escapeHtml(line.slice(3))}</h2>`;
+      }
+      if (line.startsWith("### ")) {
+        return `<h3>${escapeHtml(line.slice(4))}</h3>`;
+      }
+      if (line.startsWith("- ")) {
+        return `<p class="bullet">${escapeHtml(line)}</p>`;
+      }
+      if (!line.trim()) {
+        return "<br />";
+      }
+      return `<p>${escapeHtml(line)}</p>`;
+    })
+    .join("");
+  return `<!doctype html>
+<html>
+  <head>
+    <title>${escapeHtml(application.company)} report</title>
+    <style>
+      body { color: #111827; font-family: Arial, sans-serif; line-height: 1.5; padding: 32px; }
+      h1 { font-size: 28px; margin: 0 0 20px; }
+      h2 { border-top: 1px solid #e5e7eb; font-size: 18px; margin: 22px 0 8px; padding-top: 14px; }
+      h3 { font-size: 15px; margin: 16px 0 6px; }
+      p { font-size: 12px; margin: 4px 0; }
+      .bullet { margin-left: 14px; }
+      @media print { body { padding: 0; } }
+    </style>
+  </head>
+  <body>${body}</body>
+</html>`;
+}
+
+function fitComponentLines(application: ApplicationData) {
+  const components = application.fit_components;
+  if (!components) {
+    return ["- No fit breakdown available."];
+  }
+  return [
+    `- Skill match: ${formatScore(components.skill_score)}`,
+    `- Project relevance: ${formatScore(components.project_relevance_score)}`,
+    `- Experience: ${formatScore(components.experience_score)}`,
+    `- Education: ${formatScore(components.education_score)}`,
+    `- Language: ${formatScore(components.language_score)}`,
+    `- Domain: ${formatScore(components.domain_score)}`,
+    `- Profile quality: ${formatScore(components.profile_quality_score)}`,
+  ];
+}
+
+function fitFeedbackLines(application: ApplicationData) {
+  const explanation = application.fit_explanation;
+  if (!explanation) {
+    return ["- No fit feedback available."];
+  }
+  return [
+    "- Strong matches:",
+    ...explanation.strong_matches.map((item) => `  - ${item}`),
+    "- Weak areas:",
+    ...explanation.weak_areas.map((item) => `  - ${item}`),
+    `- Recommended action: ${explanation.recommended_action}`,
+  ];
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&#039;");
 }
