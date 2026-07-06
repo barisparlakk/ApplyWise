@@ -134,6 +134,33 @@ export type FitAnalysisData = {
   breakdown: Record<string, unknown>;
 };
 
+export type MissingSkillData = {
+  rank: number;
+  name: string;
+  impact_score: number;
+  reason: string;
+};
+
+export type RoadmapDayData = {
+  day: number;
+  date: string;
+  focus: string;
+  tasks: string[];
+  outcome: string;
+};
+
+export type RoadmapData = {
+  id: string;
+  title: string;
+  duration_days: number;
+  job_post_id: string | null;
+  application_id: string | null;
+  fit_analysis_id: string | null;
+  target_role: string;
+  missing_skills: MissingSkillData[];
+  plan: RoadmapDayData[];
+};
+
 export type JobPostData = {
   id: string;
   company_name: string;
@@ -154,6 +181,7 @@ export type JobPostData = {
   communication_expectations: string[];
   analysis: JobPostAnalysis;
   fit_analysis: FitAnalysisData | null;
+  roadmap: RoadmapData | null;
 };
 
 export async function getCurrentUser(session: Session): Promise<CurrentUser> {
@@ -240,14 +268,18 @@ export async function getGitHubRepositories(session: Session): Promise<GitHubRep
   return (await response.json()) as GitHubRepositoryData[];
 }
 
-export async function getJobPost(session: Session, jobPostId: string): Promise<JobPostData> {
+export async function getJobPost(
+  session: Session,
+  jobPostId: string,
+  roadmapDays = 3,
+): Promise<JobPostData> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
   if (!session.backendToken) {
     throw new Error("Missing backend token.");
   }
 
-  const response = await fetch(`${baseUrl}/jobs/${jobPostId}`, {
+  const response = await fetch(`${baseUrl}/jobs/${jobPostId}?roadmap_days=${roadmapDays}`, {
     headers: {
       Authorization: `Bearer ${session.backendToken}`,
     },
@@ -259,4 +291,25 @@ export async function getJobPost(session: Session, jobPostId: string): Promise<J
   }
 
   return (await response.json()) as JobPostData;
+}
+
+export async function getRoadmaps(session: Session, durationDays = 3): Promise<RoadmapData[]> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/roadmap?duration_days=${durationDays}`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected roadmap request: ${response.status}`);
+  }
+
+  return (await response.json()) as RoadmapData[];
 }

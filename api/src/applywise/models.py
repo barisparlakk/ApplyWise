@@ -429,11 +429,22 @@ class LearningRoadmap(TimestampedUuidMixin, Base):
         ForeignKey("fit_analyses.id", ondelete="SET NULL"),
         index=True,
     )
+    job_post_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("job_posts.id", ondelete="SET NULL"),
+        index=True,
+    )
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("applications.id", ondelete="SET NULL"),
+        index=True,
+    )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
+    duration_days: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
     items: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
 
     user: Mapped[User] = relationship(back_populates="learning_roadmaps")
     fit_analysis: Mapped[FitAnalysis | None] = relationship(back_populates="learning_roadmaps")
+    job_post: Mapped[JobPost | None] = relationship()
+    application: Mapped[Application | None] = relationship()
 
 
 class CoverLetter(TimestampedUuidMixin, Base):

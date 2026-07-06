@@ -1,12 +1,16 @@
+import Link from "next/link";
+
 import type { JobPostData } from "@/lib/api";
 
 type JobAnalysisViewProps = {
   jobPost: JobPostData;
+  roadmapDays: number;
 };
 
-export function JobAnalysisView({ jobPost }: JobAnalysisViewProps) {
+export function JobAnalysisView({ jobPost, roadmapDays }: JobAnalysisViewProps) {
   const analysis = jobPost.analysis;
   const fitAnalysis = jobPost.fit_analysis;
+  const roadmap = jobPost.roadmap;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
@@ -65,6 +69,61 @@ export function JobAnalysisView({ jobPost }: JobAnalysisViewProps) {
           </div>
         ) : null}
 
+        {roadmap ? (
+          <div className="rounded-md border border-border bg-white p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                  Missing-Skills Roadmap
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold text-foreground">
+                  {roadmap.title}
+                </h2>
+              </div>
+              <DurationLinks jobPostId={jobPost.id} selectedDays={roadmapDays} />
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-[280px_1fr]">
+              <div className="space-y-3">
+                {roadmap.missing_skills.map((skill) => (
+                  <div className="rounded-md border border-border px-3 py-3" key={skill.name}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-foreground">
+                        {skill.rank}. {skill.name}
+                      </p>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {Math.round(skill.impact_score)}
+                      </p>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                      {skill.reason}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-3">
+                {roadmap.plan.map((day) => (
+                  <div className="rounded-md border border-border px-4 py-3" key={day.day}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h3 className="text-sm font-semibold text-foreground">
+                        Day {day.day}: {day.focus}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">{formatDate(day.date)}</p>
+                    </div>
+                    <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
+                      {day.tasks.map((task) => (
+                        <li key={task}>{task}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 text-sm font-medium text-foreground">{day.outcome}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div className="grid gap-4 lg:grid-cols-2">
           <ListPanel items={analysis.required_skills} title="Required skills" />
           <ListPanel items={analysis.nice_to_have_skills} title="Nice-to-have skills" />
@@ -99,6 +158,29 @@ export function JobAnalysisView({ jobPost }: JobAnalysisViewProps) {
           </pre>
         </div>
       </aside>
+    </div>
+  );
+}
+
+function DurationLinks({
+  jobPostId,
+  selectedDays,
+}: Readonly<{ jobPostId: string; selectedDays: number }>) {
+  return (
+    <div className="flex rounded-md border border-border p-1">
+      {[3, 7, 14].map((days) => (
+        <Link
+          className={
+            days === selectedDays
+              ? "rounded-sm bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+              : "rounded-sm px-3 py-1.5 text-sm font-medium text-muted-foreground"
+          }
+          href={`/jobs/${jobPostId}/analysis?days=${days}`}
+          key={days}
+        >
+          {days}d
+        </Link>
+      ))}
     </div>
   );
 }
@@ -150,4 +232,11 @@ function SummaryItem({ label, value }: Readonly<{ label: string; value: string }
 
 function formatScore(value: number) {
   return `${Math.round(value)}%`;
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${value}T00:00:00`));
 }

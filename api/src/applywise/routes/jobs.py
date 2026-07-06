@@ -13,6 +13,7 @@ from applywise.embeddings import DeterministicEmbeddingProvider
 from applywise.fit_score import FitExplanation, compute_and_store_fit_analysis
 from applywise.job_analyzer import JobAnalysisError, JobPostAnalysis, analyze_job_post
 from applywise.models import FitAnalysis, JobPost, User
+from applywise.roadmap import RoadmapPlan, build_and_store_roadmap, roadmap_to_plan
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 current_user_dependency = Depends(get_current_user)
@@ -79,6 +80,7 @@ class JobPostResponse(BaseModel):
     communication_expectations: list[str]
     analysis: JobPostAnalysis
     fit_analysis: FitAnalysisResponse | None = None
+    roadmap: RoadmapPlan | None = None
 
 
 def fit_analysis_to_response(fit_analysis: FitAnalysis | None) -> FitAnalysisResponse | None:
@@ -115,6 +117,7 @@ def fit_analysis_to_response(fit_analysis: FitAnalysis | None) -> FitAnalysisRes
 def job_post_to_response(
     job_post: JobPost,
     fit_analysis: FitAnalysis | None = None,
+    roadmap: RoadmapPlan | None = None,
 ) -> JobPostResponse:
     return JobPostResponse(
         id=job_post.id,
@@ -136,6 +139,7 @@ def job_post_to_response(
         communication_expectations=job_post.communication_expectations or [],
         analysis=JobPostAnalysis.model_validate(job_post.analysis_data),
         fit_analysis=fit_analysis_to_response(fit_analysis),
+        roadmap=roadmap,
     )
 
 
@@ -177,15 +181,24 @@ def analyze_job(
     session.add(job_post)
     session.flush()
     fit_analysis = compute_and_store_fit_analysis(session, user=current_user, job_post=job_post)
+    roadmap = build_and_store_roadmap(
+        session,
+        user=current_user,
+        fit_analysis=fit_analysis,
+        job_post=job_post,
+        duration_days=3,
+    )
     session.commit()
     session.refresh(job_post)
     session.refresh(fit_analysis)
-    return job_post_to_response(job_post, fit_analysis)
+    session.refresh(roadmap)
+    return job_post_to_response(job_post, fit_analysis, roadmap_to_plan(roadmap, job_post))
 
 
 @router.get("/{job_post_id}", response_model=JobPostResponse)
 def read_job(
     job_post_id: uuid.UUID,
+    roadmap_days: int = 3,
     current_user: User = current_user_dependency,
     session: Session = session_dependency,
 ) -> JobPostResponse:
@@ -198,9 +211,23 @@ def read_job(
     if job_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job post not found.")
     fit_analysis = compute_and_store_fit_analysis(session, user=current_user, job_post=job_post)
+    try:
+        roadmap = build_and_store_roadmap(
+            session,
+            user=current_user,
+            fit_analysis=fit_analysis,
+            job_post=job_post,
+            duration_days=roadmap_days,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     session.commit()
     session.refresh(fit_analysis)
-    return job_post_to_response(job_post, fit_analysis)
+    session.refresh(roadmap)
+    return job_post_to_response(job_post, fit_analysis, roadmap_to_plan(roadmap, job_post))
 
 
 def infer_company_name(text: str) -> str:

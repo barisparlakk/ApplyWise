@@ -12,6 +12,7 @@ export const config = {
     "/jobs/:path*",
     "/profile/:path*",
     "/projects/:path*",
+    "/roadmap/:path*",
     "/resume/:path*",
     "/settings/:path*",
   ],
