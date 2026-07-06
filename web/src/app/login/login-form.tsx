@@ -8,7 +8,7 @@ type LoginFormProps = {
 };
 
 export function LoginForm({ callbackUrl }: LoginFormProps) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState("demo@applywise.dev");
 
   return (
     <div className="w-full max-w-sm">
@@ -27,7 +27,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
           id="email"
           name="email"
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="you@example.com"
+          placeholder="demo@applywise.dev"
           required
           type="email"
           value={email}

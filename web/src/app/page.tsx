@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type HealthResponse = {
   status: string;
 };
@@ -38,7 +40,21 @@ export default async function Home() {
           The MVP scaffold is running with a Next.js frontend, FastAPI backend,
           PostgreSQL with pgvector, Redis, and a worker service.
         </p>
-        <div className="mt-10 inline-flex w-fit items-center gap-3 rounded-md border border-border bg-white px-4 py-3 text-sm shadow-sm">
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            className="inline-flex h-11 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground"
+            href="/login?callbackUrl=/dashboard"
+          >
+            Sign in
+          </Link>
+          <Link
+            className="inline-flex h-11 items-center rounded-md border border-border bg-white px-5 text-sm font-medium text-foreground"
+            href="/dashboard"
+          >
+            Open dashboard
+          </Link>
+        </div>
+        <div className="mt-8 inline-flex w-fit items-center gap-3 rounded-md border border-border bg-white px-4 py-3 text-sm shadow-sm">
           <span
             className={`h-2.5 w-2.5 rounded-full ${
               isHealthy ? "bg-emerald-500" : "bg-red-500"
