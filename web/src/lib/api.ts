@@ -184,6 +184,74 @@ export type JobPostData = {
   roadmap: RoadmapData | null;
 };
 
+export type ApplicationData = {
+  id: string;
+  job_post_id: string;
+  status: string;
+  notes: string | null;
+};
+
+export type InterviewPrepQuestion = {
+  question: string;
+  guidance: string;
+  grounded_evidence: string[];
+  related_skills: string[];
+};
+
+export type InterviewPrepScript = {
+  content: string;
+  grounded_evidence: string[];
+};
+
+export type InterviewPrepStarTemplate = {
+  prompt: string;
+  situation: string;
+  task: string;
+  action: string;
+  result: string;
+  grounded_evidence: string[];
+};
+
+export type InterviewPrepContent = {
+  technical_questions: InterviewPrepQuestion[];
+  behavioral_questions: InterviewPrepQuestion[];
+  english_self_introduction: InterviewPrepScript;
+  project_explanation_script: InterviewPrepScript;
+  why_this_company: InterviewPrepScript;
+  why_this_role: InterviewPrepScript;
+  star_answer_templates: InterviewPrepStarTemplate[];
+  weak_area_drill_questions: InterviewPrepQuestion[];
+};
+
+export type InterviewPrepData = {
+  id: string;
+  application: {
+    id: string;
+    status: string;
+    job_post_id: string;
+  };
+  job: {
+    id: string;
+    company_name: string;
+    title: string;
+    domain: string | null;
+    required_skills: string[];
+    nice_to_have_skills: string[];
+  };
+  focus_areas: string[];
+  content: InterviewPrepContent;
+};
+
+export type InterviewPrepSection =
+  | "technical_questions"
+  | "behavioral_questions"
+  | "english_self_introduction"
+  | "project_explanation_script"
+  | "why_this_company"
+  | "why_this_role"
+  | "star_answer_templates"
+  | "weak_area_drill_questions";
+
 export async function getCurrentUser(session: Session): Promise<CurrentUser> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
@@ -312,4 +380,28 @@ export async function getRoadmaps(session: Session, durationDays = 3): Promise<R
   }
 
   return (await response.json()) as RoadmapData[];
+}
+
+export async function getInterviewPrep(
+  session: Session,
+  applicationId: string,
+): Promise<InterviewPrepData> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/interview-prep/${applicationId}`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected interview prep request: ${response.status}`);
+  }
+
+  return (await response.json()) as InterviewPrepData;
 }

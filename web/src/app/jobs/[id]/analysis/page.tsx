@@ -27,7 +27,12 @@ export default async function JobAnalysisPage({ params, searchParams }: JobAnaly
   return (
     <main className="min-h-screen bg-background">
       <section className="mx-auto w-full max-w-6xl px-6 py-8">
-        <JobAnalysisView jobPost={jobPost} roadmapDays={roadmapDays} />
+        <JobAnalysisView
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}
+          backendToken={session.backendToken}
+          jobPost={jobPost}
+          roadmapDays={roadmapDays}
+        />
       </section>
     </main>
   );

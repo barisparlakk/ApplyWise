@@ -9,6 +9,7 @@ export default withAuth({
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/interview-prep/:path*",
     "/jobs/:path*",
     "/profile/:path*",
     "/projects/:path*",

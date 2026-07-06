@@ -1,13 +1,21 @@
 import Link from "next/link";
 
+import { InterviewPrepAction } from "@/app/jobs/[id]/analysis/interview-prep-action";
 import type { JobPostData } from "@/lib/api";
 
 type JobAnalysisViewProps = {
+  apiBaseUrl: string;
+  backendToken: string;
   jobPost: JobPostData;
   roadmapDays: number;
 };
 
-export function JobAnalysisView({ jobPost, roadmapDays }: JobAnalysisViewProps) {
+export function JobAnalysisView({
+  apiBaseUrl,
+  backendToken,
+  jobPost,
+  roadmapDays,
+}: JobAnalysisViewProps) {
   const analysis = jobPost.analysis;
   const fitAnalysis = jobPost.fit_analysis;
   const roadmap = jobPost.roadmap;
@@ -145,6 +153,13 @@ export function JobAnalysisView({ jobPost, roadmapDays }: JobAnalysisViewProps) 
             <SummaryItem label="Source" value={jobPost.source ?? "manual"} />
             <SummaryItem label="Location" value={jobPost.location ?? "Not specified"} />
           </dl>
+          <div className="mt-5">
+            <InterviewPrepAction
+              apiBaseUrl={apiBaseUrl}
+              backendToken={backendToken}
+              jobPostId={jobPost.id}
+            />
+          </div>
         </div>
 
         <div className="rounded-md border border-border bg-white p-5">
