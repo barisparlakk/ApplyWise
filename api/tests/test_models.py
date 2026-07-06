@@ -81,6 +81,16 @@ def test_create_and_query_one_of_each_model() -> None:
             url="https://example.com/jobs/1",
             source="manual",
             required_skills=["Python", "SQL", "LLMs"],
+            nice_to_have_skills=["Docker"],
+            responsibilities=["Build RAG tooling"],
+            seniority_level="Internship",
+            domain="AI/ML",
+            hidden_expectations=["Learn quickly"],
+            english_requirement="Working proficiency",
+            technical_difficulty="Medium",
+            business_expectations=["Connect tooling to hiring outcomes"],
+            communication_expectations=["Document tradeoffs"],
+            analysis_data={"role_title": "AI Engineering Intern"},
         )
         application = repositories.applications.create(
             user_id=user.id,

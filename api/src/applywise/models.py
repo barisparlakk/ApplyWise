@@ -45,6 +45,27 @@ class Vector(UserDefinedType):
 
         return process
 
+    def result_processor(
+        self,
+        _dialect: object,
+        _coltype: object,
+    ) -> Callable[[object], list[float] | None]:
+        def process(value: object) -> list[float] | None:
+            if value is None:
+                return None
+            if isinstance(value, list):
+                return [float(item) for item in value]
+            if isinstance(value, tuple):
+                return [float(item) for item in value]
+            if isinstance(value, str):
+                vector = value.strip().removeprefix("[").removesuffix("]")
+                if not vector:
+                    return []
+                return [float(item) for item in vector.split(",")]
+            return None
+
+        return process
+
 
 class Base(DeclarativeBase):
     pass
@@ -283,6 +304,20 @@ class JobPost(TimestampedUuidMixin, Base):
     url: Mapped[str | None] = mapped_column(String(2048))
     source: Mapped[str | None] = mapped_column(String(120))
     required_skills: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    nice_to_have_skills: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    responsibilities: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    seniority_level: Mapped[str | None] = mapped_column(String(120))
+    domain: Mapped[str | None] = mapped_column(String(120))
+    hidden_expectations: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    english_requirement: Mapped[str | None] = mapped_column(String(120))
+    technical_difficulty: Mapped[str | None] = mapped_column(String(120))
+    business_expectations: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    communication_expectations: Mapped[list[str]] = mapped_column(
+        JSON,
+        default=list,
+        nullable=False,
+    )
+    analysis_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     embedding: Mapped[list[float] | None] = mapped_column(Vector())
 
     user: Mapped[User | None] = relationship(back_populates="job_posts")

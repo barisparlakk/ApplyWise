@@ -96,6 +96,41 @@ export type GitHubRepositoryData = {
   chunk_count: number;
 };
 
+export type JobPostAnalysis = {
+  role_title: string;
+  required_skills: string[];
+  nice_to_have_skills: string[];
+  responsibilities: string[];
+  seniority_level: string;
+  domain: string;
+  hidden_expectations: string[];
+  english_requirement: string;
+  technical_difficulty: string;
+  business_expectations: string[];
+  communication_expectations: string[];
+};
+
+export type JobPostData = {
+  id: string;
+  company_name: string;
+  title: string;
+  description: string;
+  location: string | null;
+  url: string | null;
+  source: string | null;
+  required_skills: string[];
+  nice_to_have_skills: string[];
+  responsibilities: string[];
+  seniority_level: string | null;
+  domain: string | null;
+  hidden_expectations: string[];
+  english_requirement: string | null;
+  technical_difficulty: string | null;
+  business_expectations: string[];
+  communication_expectations: string[];
+  analysis: JobPostAnalysis;
+};
+
 export async function getCurrentUser(session: Session): Promise<CurrentUser> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
@@ -178,4 +213,25 @@ export async function getGitHubRepositories(session: Session): Promise<GitHubRep
   }
 
   return (await response.json()) as GitHubRepositoryData[];
+}
+
+export async function getJobPost(session: Session, jobPostId: string): Promise<JobPostData> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/jobs/${jobPostId}`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected job request: ${response.status}`);
+  }
+
+  return (await response.json()) as JobPostData;
 }
