@@ -4,16 +4,46 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
-    --border: 214 32% 91%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --primary: 173 80% 32%;
+    --background: 210 29% 97%;
+    --foreground: 198 27% 13%;
+    --border: 202 23% 86%;
+    --muted: 189 22% 93%;
+    --muted-foreground: 198 13% 39%;
+    --primary: 163 58% 31%;
     --primary-foreground: 0 0% 100%;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  ::selection {
+    @apply bg-[#d7f75b] text-[#10221f];
+  }
+}
+
+@layer components {
+  .app-surface {
+    @apply rounded-lg border border-border bg-white shadow-[0_1px_2px_rgba(15,38,33,0.04),0_8px_24px_rgba(15,38,33,0.035)];
+  }
+
+  .app-kicker {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+  }
+
+  .app-title {
+    @apply mt-2 text-3xl font-semibold tracking-normal text-foreground sm:text-[2rem];
+  }
+
+  .app-subtitle {
+    @apply mt-2 max-w-2xl text-sm leading-6 text-muted-foreground;
+  }
+
+  .data-chip {
+    @apply inline-flex items-center rounded-md border border-border bg-[#f6faf8] px-2.5 py-1 text-xs font-medium text-[#285c52];
   }
 }

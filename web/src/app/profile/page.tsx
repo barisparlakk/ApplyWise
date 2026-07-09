@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { ProfileBuilder } from "@/app/profile/profile-builder";
+import { AppShell } from "@/components/app-shell";
 import { getProfileSnapshot } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 
@@ -15,14 +16,14 @@ export default async function ProfilePage() {
   const snapshot = await getProfileSnapshot(session);
 
   return (
-    <main className="min-h-screen bg-background">
-      <section className="mx-auto w-full max-w-6xl px-6 py-8">
+    <AppShell>
+      <section className="mx-auto w-full max-w-7xl">
         <ProfileBuilder
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}
           backendToken={session.backendToken}
           initialSnapshot={snapshot}
         />
       </section>
-    </main>
+    </AppShell>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
+import { AppShell } from "@/components/app-shell";
 import type { ApplicationData } from "@/lib/api";
 import { getApplications, getCurrentUser } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
@@ -38,192 +39,157 @@ export default async function DashboardPage() {
   const nextBestActions = buildNextBestActions(applications).slice(0, 5);
 
   return (
-    <main className="min-h-screen bg-background">
-      <section className="mx-auto w-full max-w-6xl px-6 py-12">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <AppShell>
+      <section className="mx-auto w-full max-w-7xl">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Dashboard
+            <p className="app-kicker">Overview</p>
+            <h1 className="app-title">Good to see you, {firstName(user.full_name ?? user.email)}.</h1>
+            <p className="app-subtitle">
+              Keep the strongest opportunities moving and turn every gap into a concrete next step.
             </p>
-            <h1 className="mt-2 text-3xl font-semibold text-foreground">
-              Welcome back, {user.full_name ?? user.email}.
-            </h1>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
-              href="/profile"
-            >
-              Profile
-            </Link>
-            <Link
-              className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
-              href="/resume"
-            >
-              Resume
-            </Link>
-            <Link
-              className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
-              href="/projects"
-            >
-              Projects
-            </Link>
-            <Link
-              className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
-              href="/jobs/new"
-            >
-              Jobs
-            </Link>
-            <Link
-              className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
-              href="/applications"
-            >
-              Applications
-            </Link>
-            <Link
-              className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
-              href="/roadmap"
-            >
-              Roadmap
-            </Link>
-          </div>
+          <Link
+            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-[#176e60]"
+            href="/jobs/new"
+          >
+            Analyze a new job
+          </Link>
         </div>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-md border border-border bg-white p-4">
-            <p className="text-sm font-medium text-muted-foreground">Active applications</p>
-            <p className="mt-3 text-3xl font-semibold text-foreground">
-              {activeApplications.length}
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">Saved through interview stages</p>
-          </div>
-          <div className="rounded-md border border-border bg-white p-4">
-            <p className="text-sm font-medium text-muted-foreground">Upcoming deadlines</p>
-            <p className="mt-3 text-3xl font-semibold text-foreground">
-              {upcomingDeadlines.length}
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">Open applications with dates</p>
-          </div>
-          <div className="rounded-md border border-border bg-white p-4">
-            <p className="text-sm font-medium text-muted-foreground">Average fit</p>
-            <p className="mt-3 text-3xl font-semibold text-foreground">
-              {formatAverageFit(applications)}
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">Across analyzed targets</p>
-          </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard detail="Saved through interview stages" label="Active applications" value={activeApplications.length.toString()} />
+          <StatCard detail="Open applications with dates" label="Upcoming deadlines" value={upcomingDeadlines.length.toString()} />
+          <StatCard detail="Across analyzed targets" label="Average fit" value={formatAverageFit(applications)} />
+          <StatCard detail="Tracked opportunities" label="Total pipeline" value={applications.length.toString()} />
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="rounded-md border border-border bg-white p-5">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-lg font-semibold text-foreground">Upcoming deadlines</h2>
-              <Link
-                className="text-sm font-medium text-foreground hover:underline"
-                href="/applications"
-              >
-                View tracker
+        <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
+          <section className="app-surface overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
+              <div>
+                <p className="text-base font-semibold text-foreground">Priority queue</p>
+                <p className="mt-1 text-sm text-muted-foreground">The actions most likely to move your applications forward.</p>
+              </div>
+              <Link className="text-sm font-semibold text-primary hover:underline" href="/applications">
+                Open tracker
               </Link>
             </div>
-            <div className="mt-4 space-y-3">
-              {upcomingDeadlines.length ? (
-                upcomingDeadlines.map((application) => (
-                  <Link
-                    className="grid gap-3 rounded-md border border-border px-4 py-3 sm:grid-cols-[1fr_auto]"
-                    href={`/applications/${application.id}`}
-                    key={application.id}
-                  >
-                    <div>
-                      <p className="font-medium text-foreground">{application.company}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">{application.role}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {formatDate(application.deadline)}
-                    </p>
-                  </Link>
-                ))
-              ) : (
-                <EmptyState text="No upcoming deadlines. Add dates on tracked applications." />
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-md border border-border bg-white p-5">
-            <h2 className="text-lg font-semibold text-foreground">Top missing skills</h2>
-            <div className="mt-4 space-y-3">
-              {topMissingSkills.length ? (
-                topMissingSkills.map((skill) => (
-                  <div className="rounded-md border border-border px-4 py-3" key={skill.name}>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-foreground">{skill.name}</p>
-                      <p className="text-xs text-muted-foreground">{skill.count} targets</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <EmptyState text="No missing-skill signals yet. Analyze and save a job first." />
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <div className="rounded-md border border-border bg-white p-5">
-            <h2 className="text-lg font-semibold text-foreground">Next-best actions</h2>
-            <div className="mt-4 space-y-3">
+            <div className="divide-y divide-border">
               {nextBestActions.length ? (
-                nextBestActions.map((item) => (
+                nextBestActions.slice(0, 4).map((item, index) => (
                   <Link
-                    className="block rounded-md border border-border px-4 py-3 hover:border-primary"
+                    className="group grid gap-3 px-5 py-4 transition hover:bg-[#f5faf8] sm:grid-cols-[34px_1fr_auto] sm:items-center sm:px-6"
                     href={`/applications/${item.application.id}`}
                     key={`${item.application.id}-${item.action}`}
                   >
-                    <p className="text-sm font-semibold text-foreground">{item.action}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {item.application.company} - {item.application.role}
-                    </p>
+                    <span className="grid h-8 w-8 place-items-center rounded-md bg-[#e6f2ee] text-xs font-bold text-primary">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground group-hover:text-primary">{item.action}</p>
+                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                        {item.application.company} <span className="text-border">/</span> {item.application.role}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-[#16675a]">{formatScore(item.application.fit_score)}</span>
                   </Link>
                 ))
               ) : (
-                <EmptyState text="No immediate action. Save applications to build your queue." />
+                <EmptyState text="Your next actions will appear after you save an application." />
               )}
             </div>
-          </div>
+          </section>
 
-          <div className="rounded-md border border-border bg-white p-5">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="text-lg font-semibold text-foreground">Recent fit scores</h2>
-              <Link
-                className="text-sm font-medium text-foreground hover:underline"
-                href="/applications"
-              >
-                View tracker
+          <section className="app-surface p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-base font-semibold text-foreground">Skill leverage</p>
+                <p className="mt-1 text-sm text-muted-foreground">Focus on gaps recurring across your target roles.</p>
+              </div>
+              <Link className="text-sm font-semibold text-primary hover:underline" href="/roadmap">
+                Roadmap
               </Link>
             </div>
-            <div className="mt-4 space-y-3">
-              {recentFitScores.length ? (
-                recentFitScores.map((application) => (
-                  <Link
-                    className="grid gap-3 rounded-md border border-border px-4 py-3 sm:grid-cols-[1fr_auto]"
-                    href={`/applications/${application.id}`}
-                    key={application.id}
-                  >
+            <div className="mt-5 space-y-3">
+              {topMissingSkills.length ? (
+                topMissingSkills.slice(0, 5).map((skill, index) => (
+                  <div className="grid grid-cols-[26px_1fr_auto] items-center gap-3" key={skill.name}>
+                    <span className="text-xs font-semibold text-muted-foreground">{String(index + 1).padStart(2, "0")}</span>
                     <div>
-                      <p className="font-medium text-foreground">{application.company}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">{application.role}</p>
+                      <p className="text-sm font-semibold text-foreground">{skill.name}</p>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-[#f0a13a]" style={{ width: `${Math.min(100, skill.count * 28)}%` }} />
+                      </div>
                     </div>
-                    <p className="text-lg font-semibold text-foreground">
-                      {formatScore(application.fit_score)}
-                    </p>
-                  </Link>
+                    <span className="data-chip">{skill.count} roles</span>
+                  </div>
                 ))
               ) : (
-                <EmptyState text="Analyze and save an application to see recent fit scores." />
+                <EmptyState text="Missing skills appear after job analyses are saved." />
               )}
             </div>
-          </div>
+          </section>
+        </div>
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <section className="app-surface p-5 sm:p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-base font-semibold text-foreground">Upcoming deadlines</p>
+                <p className="mt-1 text-sm text-muted-foreground">Plan before the window closes.</p>
+              </div>
+              <Link className="text-sm font-semibold text-primary hover:underline" href="/applications">View all</Link>
+            </div>
+            <div className="mt-5 space-y-3">
+              {upcomingDeadlines.length ? upcomingDeadlines.map((application) => (
+                <Link className="flex items-center justify-between gap-4 rounded-lg border border-border p-3 transition hover:border-[#6cb5a3] hover:bg-[#f5faf8]" href={`/applications/${application.id}`} key={application.id}>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">{application.company}</p>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">{application.role}</p>
+                  </div>
+                  <span className="shrink-0 rounded-md bg-[#fff1d9] px-2.5 py-1 text-xs font-semibold text-[#9a5d10]">{formatDate(application.deadline)}</span>
+                </Link>
+              )) : <EmptyState text="No deadlines yet. Add them to applications that need attention." />}
+            </div>
+          </section>
+
+          <section className="app-surface overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
+              <div>
+                <p className="text-base font-semibold text-foreground">Recent fit analyses</p>
+                <p className="mt-1 text-sm text-muted-foreground">A quick read on how your profile maps to each role.</p>
+              </div>
+              <Link className="text-sm font-semibold text-primary hover:underline" href="/applications">View all</Link>
+            </div>
+            <div className="divide-y divide-border">
+              {recentFitScores.length ? recentFitScores.map((application) => (
+                <Link className="grid gap-3 px-5 py-4 transition hover:bg-[#f5faf8] sm:grid-cols-[1fr_170px_auto] sm:items-center sm:px-6" href={`/applications/${application.id}`} key={application.id}>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">{application.company}</p>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">{application.role}</p>
+                  </div>
+                  <div className="hidden h-2 overflow-hidden rounded-full bg-muted sm:block">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${application.fit_score ?? 0}%` }} />
+                  </div>
+                  <span className="text-lg font-semibold text-foreground">{formatScore(application.fit_score)}</span>
+                </Link>
+              )) : <EmptyState text="Analyze and save a job to see fit scores here." />}
+            </div>
+          </section>
         </div>
       </section>
-    </main>
+    </AppShell>
+  );
+}
+
+function StatCard({ detail, label, value }: Readonly<{ detail: string; label: string; value: string }>) {
+  return (
+    <div className="app-surface p-5">
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="mt-3 text-3xl font-semibold text-foreground">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{detail}</p>
+    </div>
   );
 }
 
@@ -311,5 +277,9 @@ function actionPriority(application: ApplicationData) {
 }
 
 function EmptyState({ text }: Readonly<{ text: string }>) {
-  return <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">{text}</p>;
+  return <p className="m-5 rounded-lg border border-dashed border-border bg-[#f8fbfa] p-4 text-sm leading-6 text-muted-foreground">{text}</p>;
+}
+
+function firstName(value: string) {
+  return value.split(/[\s@]/)[0] || value;
 }

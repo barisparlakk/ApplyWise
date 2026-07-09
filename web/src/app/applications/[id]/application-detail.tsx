@@ -141,13 +141,13 @@ export function ApplicationDetail({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <section className="space-y-6">
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="app-kicker">
                 Application
               </p>
-              <h1 className="mt-2 text-3xl font-semibold text-foreground">
+              <h1 className="app-title">
                 {application.company}
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">{application.role}</p>
@@ -158,7 +158,7 @@ export function ApplicationDetail({
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-foreground">Tracker fields</h2>
             <Button disabled={state === "saving"} onClick={() => void saveApplication()} type="button">
@@ -249,7 +249,7 @@ export function ApplicationDetail({
       </section>
 
       <aside className="space-y-6">
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-foreground">Linked workflow</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <SummaryItem label="Fit score" value={formatScore(application.fit_score)} />
@@ -275,7 +275,7 @@ export function ApplicationDetail({
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-foreground">Export report</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Includes fit breakdown, missing skills, next action, and interview prep summary.

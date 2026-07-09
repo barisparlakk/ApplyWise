@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { InterviewPrepView } from "@/app/interview-prep/[id]/interview-prep-view";
+import { AppShell } from "@/components/app-shell";
 import { getInterviewPrep } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 
@@ -21,14 +22,14 @@ export default async function InterviewPrepPage({ params }: InterviewPrepPagePro
   const prep = await getInterviewPrep(session, params.id);
 
   return (
-    <main className="min-h-screen bg-background">
-      <section className="mx-auto w-full max-w-6xl px-6 py-8">
+    <AppShell>
+      <section className="mx-auto w-full max-w-7xl">
         <InterviewPrepView
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}
           backendToken={session.backendToken}
           initialPrep={prep}
         />
       </section>
-    </main>
+    </AppShell>
   );
 }

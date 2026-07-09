@@ -23,11 +23,11 @@ export function JobAnalysisView({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <section className="space-y-6">
-        <div className="rounded-md border border-border bg-white p-5">
-          <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+        <div className="app-surface p-5 sm:p-6">
+          <p className="app-kicker">
             Job Analysis
           </p>
-          <h1 className="mt-2 text-3xl font-semibold text-foreground">{jobPost.title}</h1>
+          <h1 className="app-title">{jobPost.title}</h1>
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
             <Metric label="Company" value={jobPost.company_name} />
             <Metric label="Seniority" value={analysis.seniority_level} />
@@ -37,10 +37,10 @@ export function JobAnalysisView({
         </div>
 
         {fitAnalysis ? (
-          <div className="rounded-md border border-border bg-white p-5">
+          <div className="app-surface p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="app-kicker">
                   Overall Fit
                 </p>
                 <h2 className="mt-2 text-5xl font-semibold text-foreground">
@@ -78,10 +78,10 @@ export function JobAnalysisView({
         ) : null}
 
         {roadmap ? (
-          <div className="rounded-md border border-border bg-white p-5">
+          <div className="app-surface p-5 sm:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="app-kicker">
                   Missing-Skills Roadmap
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold text-foreground">
@@ -94,7 +94,7 @@ export function JobAnalysisView({
             <div className="mt-5 grid gap-4 lg:grid-cols-[280px_1fr]">
               <div className="space-y-3">
                 {roadmap.missing_skills.map((skill) => (
-                  <div className="rounded-md border border-border px-3 py-3" key={skill.name}>
+                  <div className="rounded-lg border border-border bg-[#fbfdfc] px-3 py-3" key={skill.name}>
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-semibold text-foreground">
                         {skill.rank}. {skill.name}
@@ -146,7 +146,7 @@ export function JobAnalysisView({
       </section>
 
       <aside className="space-y-6">
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-foreground">Signals</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <SummaryItem label="English" value={analysis.english_requirement} />
@@ -162,7 +162,7 @@ export function JobAnalysisView({
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-foreground">Raw post</h2>
           <pre
             className={
@@ -211,7 +211,7 @@ function Metric({ label, value }: Readonly<{ label: string; value: string }>) {
 
 function ListPanel({ items, title }: Readonly<{ items: string[]; title: string }>) {
   return (
-    <div className="rounded-md border border-border bg-white p-5">
+    <div className="app-surface p-5 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">
         {items.length ? items.map((item) => <li key={item}>{item}</li>) : <li>Not specified</li>}
@@ -224,7 +224,7 @@ function ScoreBar({ label, value }: Readonly<{ label: string; value: number }>) 
   const normalizedValue = Math.max(0, Math.min(100, value));
 
   return (
-    <div className="rounded-md border border-border px-3 py-3">
+    <div className="rounded-lg border border-border bg-[#fbfdfc] px-3 py-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium text-foreground">{label}</p>
         <p className="text-sm font-semibold text-foreground">{formatScore(value)}</p>

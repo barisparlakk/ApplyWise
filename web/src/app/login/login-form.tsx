@@ -11,7 +11,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
   const [email, setEmail] = useState("demo@applywise.dev");
 
   return (
-    <div className="w-full max-w-sm">
+    <div className="w-full">
       <form
         className="space-y-3"
         onSubmit={(event) => {
@@ -23,7 +23,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
           Email
         </label>
         <input
-          className="h-11 w-full rounded-md border border-border bg-white px-3 text-sm outline-none ring-primary/20 transition focus:ring-4"
+          className="h-11 w-full rounded-md border border-border bg-white px-3 text-sm shadow-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
           id="email"
           name="email"
           onChange={(event) => setEmail(event.target.value)}
@@ -33,7 +33,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
           value={email}
         />
         <button
-          className="h-11 w-full rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+          className="h-11 w-full rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-[#176e60]"
           type="submit"
         >
           Continue with email
@@ -43,7 +43,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
       <div className="my-6 h-px bg-border" />
 
       <button
-        className="h-11 w-full rounded-md border border-border bg-white px-4 text-sm font-medium text-foreground"
+        className="h-11 w-full rounded-md border border-border bg-white px-4 text-sm font-semibold text-foreground shadow-sm transition hover:border-[#6cb5a3] hover:bg-[#f4fbf8]"
         onClick={() => void signIn("github", { callbackUrl })}
         type="button"
       >

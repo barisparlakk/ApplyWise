@@ -81,13 +81,13 @@ export function InterviewPrepView({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <section className="space-y-6">
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="app-kicker">
                 Interview Prep
               </p>
-              <h1 className="mt-2 text-3xl font-semibold text-foreground">{prep.job.title}</h1>
+              <h1 className="app-title">{prep.job.title}</h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 {prep.job.company_name}
                 {prep.job.domain ? ` - ` : ""}
@@ -181,7 +181,7 @@ function ScriptSection({
   title: string;
 }>) {
   return (
-    <article className="rounded-md border border-border bg-white p-5">
+    <article className="app-surface p-5 sm:p-6">
       <SectionHeader isBusy={isBusy} onRegenerate={onRegenerate} title={title} />
       <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
         {script.content}
@@ -203,7 +203,7 @@ function QuestionSection({
   title: string;
 }>) {
   return (
-    <article className="rounded-md border border-border bg-white p-5">
+    <article className="app-surface p-5 sm:p-6">
       <SectionHeader isBusy={isBusy} onRegenerate={onRegenerate} title={title} />
       <div className="mt-4 space-y-4">
         {questions.map((question) => (
@@ -239,7 +239,7 @@ function StarSection({
   templates: InterviewPrepStarTemplate[];
 }>) {
   return (
-    <article className="rounded-md border border-border bg-white p-5">
+    <article className="app-surface p-5 sm:p-6">
       <SectionHeader
         isBusy={isBusy}
         onRegenerate={onRegenerate}

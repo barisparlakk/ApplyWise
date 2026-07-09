@@ -193,13 +193,13 @@ export function ProfileBuilder({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <section className="space-y-6">
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="app-kicker">
                 Profile
               </p>
-              <h1 className="mt-2 text-3xl font-semibold text-foreground">Profile builder</h1>
+              <h1 className="app-title">Profile builder</h1>
             </div>
             <span className="rounded-md border border-border px-3 py-1 text-sm text-muted-foreground">
               {statusText}
@@ -262,7 +262,7 @@ export function ProfileBuilder({
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-foreground">Target roles</h2>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {initialSnapshot.target_role_options.map((role) => (
@@ -289,7 +289,7 @@ export function ProfileBuilder({
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-foreground">Skills</h2>
           <div className="mt-4 flex gap-2">
             <Input
@@ -326,7 +326,7 @@ export function ProfileBuilder({
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-foreground">Projects</h2>
             <Button
@@ -411,7 +411,7 @@ export function ProfileBuilder({
       </section>
 
       <aside className="space-y-6">
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-foreground">Languages</h2>
             <Button
@@ -455,7 +455,7 @@ export function ProfileBuilder({
           </div>
         </div>
 
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-foreground">Snapshot</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <SummaryItem label="Roles" value={form.target_roles.length.toString()} />

@@ -161,13 +161,13 @@ export function ResumeManager({
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
       <section className="space-y-6">
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="app-kicker">
                 Resume
               </p>
-              <h1 className="mt-2 text-3xl font-semibold text-foreground">CV upload</h1>
+              <h1 className="app-title">CV upload</h1>
             </div>
             <span className="rounded-md border border-border px-3 py-1 text-sm text-muted-foreground">
               {statusText}
@@ -188,7 +188,7 @@ export function ResumeManager({
         </div>
 
         {resume ? (
-          <div className="rounded-md border border-border bg-white p-5">
+          <div className="app-surface p-5 sm:p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Parsed result</h2>
@@ -231,14 +231,14 @@ export function ResumeManager({
             </div>
           </div>
         ) : (
-          <div className="rounded-md border border-border bg-white p-5">
+          <div className="app-surface p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-foreground">No CV uploaded yet</h2>
           </div>
         )}
       </section>
 
       <aside className="space-y-6">
-        <div className="rounded-md border border-border bg-white p-5">
+        <div className="app-surface p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-foreground">Storage</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <SummaryItem label="Parsed sections" value={resume ? "4" : "0"} />
@@ -248,7 +248,7 @@ export function ResumeManager({
         </div>
 
         {resume ? (
-          <div className="rounded-md border border-border bg-white p-5">
+          <div className="app-surface p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-foreground">Extracted text</h2>
             <pre className="mt-4 max-h-[520px] overflow-auto whitespace-pre-wrap text-xs leading-5 text-muted-foreground">
               {resume.content_text}

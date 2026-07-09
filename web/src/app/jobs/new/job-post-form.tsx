@@ -64,11 +64,11 @@ export function JobPostForm({ apiBaseUrl, backendToken }: JobPostFormProps) {
   }
 
   return (
-    <div className="rounded-md border border-border bg-white p-5">
+    <div className="app-surface p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">Jobs</p>
-          <h1 className="mt-2 text-3xl font-semibold text-foreground">New job analysis</h1>
+          <p className="app-kicker">Jobs</p>
+          <h1 className="app-title">New job analysis</h1>
         </div>
         <span className="rounded-md border border-border px-3 py-1 text-sm text-muted-foreground">
           {state === "analyzing" ? "Analyzing" : "Ready"}

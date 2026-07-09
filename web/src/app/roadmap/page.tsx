@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import type { RoadmapData } from "@/lib/api";
 import { getRoadmaps } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
+import { AppShell } from "@/components/app-shell";
 
 type RoadmapPageProps = {
   searchParams?: {
@@ -23,14 +24,14 @@ export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
   const roadmaps = await getRoadmaps(session, durationDays);
 
   return (
-    <main className="min-h-screen bg-background">
-      <section className="mx-auto w-full max-w-6xl px-6 py-8">
+    <AppShell>
+      <section className="mx-auto w-full max-w-7xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="app-kicker">
               Roadmap
             </p>
-            <h1 className="mt-2 text-3xl font-semibold text-foreground">
+            <h1 className="app-title">
               Missing-skills prep plans
             </h1>
           </div>
@@ -41,7 +42,7 @@ export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
           {roadmaps.length ? (
             roadmaps.map((roadmap) => <RoadmapPanel key={roadmap.id} roadmap={roadmap} />)
           ) : (
-            <div className="rounded-md border border-border bg-white p-5">
+            <div className="app-surface p-5 sm:p-6">
               <p className="text-sm text-muted-foreground">
                 Analyze a job first to generate a ranked missing-skills roadmap.
               </p>
@@ -49,13 +50,13 @@ export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
           )}
         </div>
       </section>
-    </main>
+    </AppShell>
   );
 }
 
 function RoadmapPanel({ roadmap }: Readonly<{ roadmap: RoadmapData }>) {
   return (
-    <div className="rounded-md border border-border bg-white p-5">
+    <div className="app-surface p-5 sm:p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">{roadmap.title}</h2>
@@ -74,7 +75,7 @@ function RoadmapPanel({ roadmap }: Readonly<{ roadmap: RoadmapData }>) {
       <div className="mt-5 grid gap-4 lg:grid-cols-[300px_1fr]">
         <div className="space-y-3">
           {roadmap.missing_skills.map((skill) => (
-            <div className="rounded-md border border-border px-3 py-3" key={skill.name}>
+            <div className="rounded-lg border border-border bg-[#fbfdfc] px-3 py-3" key={skill.name}>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-foreground">
                   {skill.rank}. {skill.name}

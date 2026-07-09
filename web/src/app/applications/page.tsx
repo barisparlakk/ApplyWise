@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
+import { AppShell } from "@/components/app-shell";
 import type { ApplicationData, ApplicationStatus } from "@/lib/api";
 import { getApplications } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
@@ -27,30 +28,33 @@ export default async function ApplicationsPage() {
   const applications = await getApplications(session);
 
   return (
-    <main className="min-h-screen bg-background">
-      <section className="mx-auto w-full max-w-7xl px-6 py-8">
+    <AppShell>
+      <section className="mx-auto w-full max-w-[1500px]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Applications
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold text-foreground">Application tracker</h1>
+            <p className="app-kicker">Pipeline</p>
+            <h1 className="app-title">Application tracker</h1>
+            <p className="app-subtitle">Keep each opportunity, deadline, and follow-up visible in one working view.</p>
           </div>
           <Link
-            className="h-10 rounded-md border border-border bg-white px-4 py-2 text-sm font-medium text-foreground"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-[#176e60]"
             href="/jobs/new"
           >
             Analyze job
           </Link>
         </div>
 
-        <div className="mt-8 rounded-md border border-border bg-white">
-          <div className="border-b border-border px-5 py-4">
-            <h2 className="text-lg font-semibold text-foreground">Table</h2>
+        <div className="mt-8 app-surface overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground">All opportunities</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{applications.length} tracked applications</p>
+            </div>
+            <span className="data-chip">Table view</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] border-collapse text-left text-sm">
-              <thead className="bg-muted text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="bg-[#f3f8f6] text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 font-medium">Company</th>
                   <th className="px-4 py-3 font-medium">Role</th>
@@ -69,7 +73,7 @@ export default async function ApplicationsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td className="px-4 py-6 text-muted-foreground" colSpan={8}>
+                    <td className="px-5 py-8 text-muted-foreground" colSpan={8}>
                       Analyze a job and save it to start tracking applications.
                     </td>
                   </tr>
@@ -81,17 +85,20 @@ export default async function ApplicationsPage() {
 
         <div className="mt-8">
           <div className="mb-4 flex items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-foreground">Board</h2>
-            <p className="text-sm text-muted-foreground">{applications.length} tracked</p>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Pipeline board</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Scan work by stage and open an item to update it.</p>
+            </div>
+            <p className="data-chip">{applications.length} tracked</p>
           </div>
-          <div className="grid gap-4 xl:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
             {STATUS_COLUMNS.map((column) => {
               const items = applications.filter((item) => item.status === column.status);
               return (
-                <section className="rounded-md border border-border bg-white" key={column.status}>
-                  <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                <section className="app-surface overflow-hidden" key={column.status}>
+                  <div className="flex items-center justify-between border-b border-border bg-[#f8fbfa] px-4 py-3">
                     <h3 className="text-sm font-semibold text-foreground">{column.label}</h3>
-                    <span className="text-xs text-muted-foreground">{items.length}</span>
+                    <span className="grid h-6 min-w-6 place-items-center rounded-md bg-white px-1 text-xs font-semibold text-muted-foreground">{items.length}</span>
                   </div>
                   <div className="space-y-3 p-3">
                     {items.length ? (
@@ -108,27 +115,27 @@ export default async function ApplicationsPage() {
           </div>
         </div>
       </section>
-    </main>
+    </AppShell>
   );
 }
 
 function ApplicationRow({ application }: Readonly<{ application: ApplicationData }>) {
   return (
-    <tr className="border-t border-border">
-      <td className="px-4 py-3 font-medium text-foreground">
-        <Link className="hover:underline" href={`/applications/${application.id}`}>
+    <tr className="border-t border-border transition hover:bg-[#f7fbf9]">
+      <td className="px-5 py-4 font-medium text-foreground">
+        <Link className="font-semibold hover:text-primary" href={`/applications/${application.id}`}>
           {application.company}
         </Link>
       </td>
-      <td className="px-4 py-3 text-muted-foreground">{application.role}</td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-4 text-muted-foreground">{application.role}</td>
+      <td className="px-4 py-4">
         <StatusBadge status={application.status} />
       </td>
-      <td className="px-4 py-3 text-muted-foreground">{formatDate(application.deadline)}</td>
-      <td className="px-4 py-3 text-muted-foreground">{formatScore(application.fit_score)}</td>
-      <td className="px-4 py-3 text-muted-foreground">{formatDate(application.applied_date)}</td>
-      <td className="px-4 py-3 text-muted-foreground">{formatDate(application.interview_date)}</td>
-      <td className="max-w-[260px] truncate px-4 py-3 text-muted-foreground">
+      <td className="px-4 py-4 text-muted-foreground">{formatDate(application.deadline)}</td>
+      <td className="px-4 py-4 font-semibold text-[#16675a]">{formatScore(application.fit_score)}</td>
+      <td className="px-4 py-4 text-muted-foreground">{formatDate(application.applied_date)}</td>
+      <td className="px-4 py-4 text-muted-foreground">{formatDate(application.interview_date)}</td>
+      <td className="max-w-[260px] truncate px-4 py-4 text-muted-foreground">
         {application.next_action ?? "Not set"}
       </td>
     </tr>
@@ -138,7 +145,7 @@ function ApplicationRow({ application }: Readonly<{ application: ApplicationData
 function ApplicationCard({ application }: Readonly<{ application: ApplicationData }>) {
   return (
     <Link
-      className="block rounded-md border border-border px-3 py-3 hover:border-primary"
+      className="block rounded-lg border border-border bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#6cb5a3] hover:shadow-md"
       href={`/applications/${application.id}`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -146,7 +153,7 @@ function ApplicationCard({ application }: Readonly<{ application: ApplicationDat
           <h4 className="text-sm font-semibold text-foreground">{application.company}</h4>
           <p className="mt-1 text-sm text-muted-foreground">{application.role}</p>
         </div>
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-sm font-semibold text-[#16675a]">
           {formatScore(application.fit_score)}
         </span>
       </div>
@@ -163,10 +170,24 @@ function ApplicationCard({ application }: Readonly<{ application: ApplicationDat
 
 function StatusBadge({ status }: Readonly<{ status: ApplicationStatus }>) {
   return (
-    <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium capitalize text-foreground">
+    <span className={`rounded-md px-2 py-1 text-xs font-semibold capitalize ${statusTone(status)}`}>
       {status}
     </span>
   );
+}
+
+function statusTone(status: ApplicationStatus) {
+  const tones: Record<ApplicationStatus, string> = {
+    saved: "bg-[#e8eefb] text-[#3b5b9f]",
+    preparing: "bg-[#f0e9fb] text-[#7045a0]",
+    applied: "bg-[#e6f2ee] text-[#16675a]",
+    assessment: "bg-[#fff1d9] text-[#9a5d10]",
+    interview: "bg-[#ffe5e4] text-[#a33e3a]",
+    rejected: "bg-[#f0f1f2] text-[#5e6770]",
+    offer: "bg-[#eaf7cf] text-[#49720e]",
+    archived: "bg-[#f0f1f2] text-[#5e6770]",
+  };
+  return tones[status];
 }
 
 function formatScore(value: number | null) {
