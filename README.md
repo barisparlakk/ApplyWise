@@ -2,7 +2,7 @@
 
 ApplyWise is an AI-powered internship intelligence platform for computer engineering and data/AI students. It helps students move through the full internship workflow: find roles, analyze fit, improve their profile, track applications, prepare interviews, and learn missing skills.
 
-This MVP is wired for a local demo without external accounts: deterministic local analyzers stand in for LLM calls, seeded data creates a demo student, and the full workflow is available through Docker Compose.
+This MVP is wired for a local demo without external accounts: deterministic local analyzers stand in for LLM calls, seeded data creates a demo student, and the full workflow is available through Docker Compose. The repository also includes a production Compose topology with private data services, automatic migrations, runtime environment validation, and health endpoints.
 
 ## Architecture
 
@@ -27,32 +27,90 @@ flowchart LR
 
 - `web/`: Next.js App Router frontend with TypeScript, Tailwind CSS, and shadcn/ui config.
 - `api/`: FastAPI backend using a `src` layout with pytest and ruff.
-- `docker-compose.yml`: one-command local stack for the full product.
+- `docker-compose.yml`: production Docker Compose base topology.
+- `docker-compose.dev.yml`: local development override with hot reload and published data-service ports.
 - `infra/`: infrastructure notes and the original compose/env samples.
 - `Makefile`: common development, test, migration, and seed commands.
 
-## Setup
+## Local Development
 
-Copy environment files if you want editable local values:
-
-```bash
-cp web/.env.example web/.env
-cp api/.env.example api/.env
-```
-
-Boot the full stack from the repository root:
+Start the local stack with the development override:
 
 ```bash
-docker compose up --build
+make dev
 ```
 
-In another terminal, run migrations and load a complete demo dataset:
+In another terminal, load the demo dataset:
 
 ```bash
 make seed
 ```
 
-Open the frontend at [http://localhost:3000](http://localhost:3000). The API is available at [http://localhost:8000](http://localhost:8000).
+Open the frontend at [http://localhost:3000](http://localhost:3000). The development API is available at [http://localhost:8000](http://localhost:8000).
+
+The local stack uses the same-origin `/api/backend` proxy for browser requests, so client workflows do not need to reach the FastAPI port directly.
+
+## Production Deployment
+
+The root [docker-compose.yml](/Users/barisparlak/Desktop/ApplyWise/docker-compose.yml) is the production topology. It exposes only the Next.js web service; API, Redis, and PostgreSQL remain on a private Docker network. The web service proxies authenticated browser API requests internally.
+
+```mermaid
+flowchart LR
+    Internet["Internet"] --> TLS["Managed TLS / existing reverse proxy"]
+    TLS --> Web["ApplyWise web :3000"]
+    Web --> API["Private FastAPI API"]
+    API --> DB[("Private PostgreSQL + pgvector")]
+    API --> Redis["Private Redis"]
+    Worker["Dramatiq worker"] --> Redis
+    Worker --> DB
+```
+
+1. Point your deployment platform or reverse proxy at port `3000` and terminate TLS there. The production app requires an HTTPS `NEXTAUTH_URL`.
+2. Create the untracked production environment file:
+
+```bash
+cp .env.production.example .env.production
+```
+
+3. Generate distinct secrets and place them in `.env.production`:
+
+```bash
+openssl rand -base64 48
+openssl rand -base64 48
+```
+
+4. Set at least `NEXTAUTH_URL`, `CORS_ORIGINS`, `NEXTAUTH_SECRET`, `AUTH_JWT_SECRET`, `POSTGRES_PASSWORD`, `DATABASE_URL`, `GITHUB_ID`, and `GITHUB_SECRET`. Use URL-safe PostgreSQL credentials, and keep the password in `DATABASE_URL` aligned with `POSTGRES_PASSWORD`.
+5. In the GitHub OAuth application, set the authorization callback URL to `https://your-domain.example/api/auth/callback/github`. Its homepage URL should match `NEXTAUTH_URL`.
+6. Build and start the production stack:
+
+```bash
+make deploy
+```
+
+The `migrate` service upgrades Alembic migrations before the API and worker start. Production startup rejects development secrets, default database credentials, non-HTTPS CORS origins, and incomplete GitHub OAuth credentials. The unrestricted local email provider is disabled in production; use GitHub OAuth until a transactional email provider is added.
+
+Verify the public web health endpoint after the platform or proxy is routing traffic:
+
+```bash
+curl https://your-domain.example/api/health
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+When using a host reverse proxy, forward the original host and HTTPS scheme to port `3000`. For example, the upstream needs the equivalent of `Host`, `X-Forwarded-Host`, and `X-Forwarded-Proto: https` headers. Keep port `3000` private to that proxy where possible; PostgreSQL, Redis, and FastAPI are already private to the Compose network.
+
+Production logs and shutdown commands:
+
+```bash
+make deploy-logs
+make deploy-down
+```
+
+Do not run `make seed` against a production database.
 
 ## Demo Login
 
@@ -67,28 +125,38 @@ The seed command creates that user, a profile, a parsed resume, three GitHub rep
 ## Common Commands
 
 ```bash
-make dev      # docker compose up --build
+make dev      # local development stack with hot reload
 make test
 make lint
 make migrate
 make seed
+make deploy   # production stack using .env.production
 ```
 
 ## Environment Variables
 
-The root Compose file injects container-safe defaults. For local process development, copy the examples above and edit:
+Use [web/.env.example](/Users/barisparlak/Desktop/ApplyWise/web/.env.example) and [api/.env.example](/Users/barisparlak/Desktop/ApplyWise/api/.env.example) for local process development. Use [.env.production.example](/Users/barisparlak/Desktop/ApplyWise/.env.production.example) as the production deployment template.
 
 - `api/.env.example`: FastAPI runtime, PostgreSQL, Redis, backend JWT validation, and optional LLM provider settings.
-- `web/.env.example`: browser/server API URLs, Auth.js secrets, backend JWT signing values, and optional GitHub OAuth credentials.
+- `web/.env.example`: same-origin browser API proxy, server-side API URL, Auth.js secrets, backend JWT signing values, and optional GitHub OAuth credentials.
+- `.env.production`: untracked production credentials and public-domain configuration.
 
 Keep `AUTH_JWT_SECRET`, `AUTH_JWT_AUDIENCE`, and `AUTH_JWT_ISSUER` aligned between the frontend and backend.
 
+For a backup before a host migration or upgrade:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.yml exec -T postgres \
+  sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > applywise-backup.sql
+```
+
 ## Verification
 
-After `docker compose up --build`, verify the API health endpoint:
+After `make dev`, verify both the internal API and the web health endpoint:
 
 ```bash
 curl http://localhost:8000/health
+curl http://localhost:3000/api/health
 ```
 
 Expected response:

@@ -8,14 +8,15 @@ function displayNameFromEmail(email: string): string {
   return email.split("@")[0] ?? email;
 }
 
-export const authOptions: NextAuthOptions = {
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/login",
-  },
-  providers: [
+export const emailLoginEnabled = process.env.APP_ENV !== "production";
+const githubClientId = process.env.GITHUB_ID;
+const githubClientSecret = process.env.GITHUB_SECRET;
+export const githubLoginEnabled = Boolean(githubClientId && githubClientSecret);
+
+const providers: NonNullable<NextAuthOptions["providers"]> = [];
+
+if (emailLoginEnabled) {
+  providers.push(
     CredentialsProvider({
       id: "email",
       name: "Email",
@@ -36,11 +37,27 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
+  );
+}
+
+if (githubClientId && githubClientSecret) {
+  providers.push(
     GitHubProvider({
-      clientId: process.env.GITHUB_ID ?? "missing-github-client-id",
-      clientSecret: process.env.GITHUB_SECRET ?? "missing-github-client-secret",
+      clientId: githubClientId,
+      clientSecret: githubClientSecret,
     }),
-  ],
+  );
+}
+
+export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/login",
+  },
+  providers,
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {

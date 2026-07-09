@@ -1,4 +1,5 @@
 import { LoginForm } from "@/app/login/login-form";
+import { emailLoginEnabled, githubLoginEnabled } from "@/lib/auth";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -26,8 +27,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="mb-10 lg:hidden"><p className="text-lg font-semibold text-foreground">ApplyWise</p><p className="mt-1 text-sm text-muted-foreground">Career intelligence workspace</p></div>
           <p className="app-kicker">Welcome back</p>
           <h1 className="mt-3 text-3xl font-semibold text-foreground">Sign in to your workspace</h1>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">Use the demo email to explore the seeded workspace, or continue with GitHub.</p>
-          <div className="mt-8 app-surface p-5 sm:p-6"><LoginForm callbackUrl={callbackUrl} /></div>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">Sign in to access your workspace.</p>
+          <div className="mt-8 app-surface p-5 sm:p-6">
+            <LoginForm
+              callbackUrl={callbackUrl}
+              emailEnabled={emailLoginEnabled}
+              githubEnabled={githubLoginEnabled}
+            />
+          </div>
         </div>
       </section>
     </main>

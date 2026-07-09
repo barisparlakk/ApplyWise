@@ -7,30 +7,31 @@ import { getJobPost } from "@/lib/api";
 import { authOptions } from "@/lib/auth";
 
 type JobAnalysisPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
   searchParams: Promise<{
     days?: string;
   }>;
 };
 
 export default async function JobAnalysisPage({ params, searchParams }: JobAnalysisPageProps) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   const query = await searchParams;
   const roadmapDays = parseRoadmapDays(query.days);
 
   if (!session?.backendToken) {
-    redirect(`/login?callbackUrl=/jobs/${params.id}/analysis`);
+    redirect(`/login?callbackUrl=/jobs/${id}/analysis`);
   }
 
-  const jobPost = await getJobPost(session, params.id, roadmapDays);
+  const jobPost = await getJobPost(session, id, roadmapDays);
 
   return (
     <AppShell>
       <section className="mx-auto w-full max-w-7xl">
         <JobAnalysisView
-          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           backendToken={session.backendToken}
           jobPost={jobPost}
           roadmapDays={roadmapDays}

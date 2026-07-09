@@ -19,7 +19,7 @@ export default async function ProjectsPage() {
     <AppShell>
       <section className="mx-auto w-full max-w-7xl">
         <GitHubAnalyzer
-          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           backendToken={session.backendToken}
           initialRepositories={repositories}
         />

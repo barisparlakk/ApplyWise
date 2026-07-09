@@ -16,7 +16,7 @@ export default async function NewJobPage() {
     <AppShell>
       <section className="mx-auto w-full max-w-6xl">
         <JobPostForm
-          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           backendToken={session.backendToken}
         />
       </section>

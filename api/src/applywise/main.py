@@ -1,4 +1,6 @@
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -12,13 +14,20 @@ from applywise.routes.jobs import router as jobs_router
 from applywise.routes.profile import router as profile_router
 from applywise.routes.resume import router as resume_router
 from applywise.routes.roadmap import router as roadmap_router
+from applywise.settings import validate_runtime_environment
 
 
 class HealthResponse(BaseModel):
     status: str
 
 
-app = FastAPI(title="ApplyWise API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    validate_runtime_environment()
+    yield
+
+
+app = FastAPI(title="ApplyWise API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

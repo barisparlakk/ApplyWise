@@ -2,79 +2,155 @@ services:
   web:
     build:
       context: ./web
-    env_file:
-      - ./web/.env.example
+      target: production
     environment:
+      APP_ENV: production
       API_INTERNAL_URL: http://api:8000
-      NEXTAUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_API_BASE_URL: /api/backend
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-nextauth-secret-change-me}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-applywise-auth-secret-change-me}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-applywise-api}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-applywise-web}
+      GITHUB_ID: ${GITHUB_ID:-}
+      GITHUB_SECRET: ${GITHUB_SECRET:-}
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_ENV: production
     ports:
-      - "3000:3000"
+      - "${WEB_PORT:-3000}:3000"
     depends_on:
       api:
         condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - edge
+      - backend
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: ./api
+      target: production
+    command: ["python", "-m", "applywise.migrations"]
+    environment:
+      APP_ENV: production
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://applywise:applywise@postgres:5432/applywise}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-applywise-auth-secret-change-me}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-applywise-api}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-applywise-web}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: "no"
 
   api:
     build:
       context: ./api
-    env_file:
-      - ./api/.env.example
+      target: production
     environment:
-      DATABASE_URL: postgresql+psycopg://applywise:applywise@postgres:5432/applywise
-      REDIS_URL: redis://redis:6379/0
-    ports:
-      - "8000:8000"
+      APP_ENV: production
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://applywise:applywise@postgres:5432/applywise}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-applywise-auth-secret-change-me}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-applywise-api}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-applywise-web}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      LLM_PROVIDER: ${LLM_PROVIDER:-local}
+      LLM_API_URL: ${LLM_API_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+    expose:
+      - "8000"
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 15s
+    networks:
+      - backend
+    restart: unless-stopped
 
   worker:
     build:
       context: ./api
+      target: production
     command: ["python", "-m", "applywise.worker"]
-    env_file:
-      - ./api/.env.example
     environment:
-      DATABASE_URL: postgresql+psycopg://applywise:applywise@postgres:5432/applywise
-      REDIS_URL: redis://redis:6379/0
+      APP_ENV: production
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://applywise:applywise@postgres:5432/applywise}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-applywise-auth-secret-change-me}
+      AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-applywise-api}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-applywise-web}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - backend
+    restart: unless-stopped
 
   postgres:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_USER: applywise
-      POSTGRES_PASSWORD: applywise
-      POSTGRES_DB: applywise
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-applywise}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-applywise}
+      POSTGRES_DB: ${POSTGRES_DB:-applywise}
+      POSTGRES_INITDB_ARGS: "--data-checksums"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U applywise -d applywise"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - backend
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - backend
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  redis_data:
+
+networks:
+  edge:
+  backend:
+    internal: true

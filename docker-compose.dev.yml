@@ -1,0 +1,78 @@
+services:
+  web:
+    build:
+      target: development
+    environment:
+      APP_ENV: development
+      API_INTERNAL_URL: http://api:8000
+      NEXT_PUBLIC_API_BASE_URL: /api/backend
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: dev-nextauth-secret-change-me
+      AUTH_JWT_SECRET: dev-applywise-auth-secret-change-me
+      AUTH_JWT_AUDIENCE: applywise-api
+      AUTH_JWT_ISSUER: applywise-web
+      GITHUB_ID: ""
+      GITHUB_SECRET: ""
+      NODE_ENV: development
+    volumes:
+      - ./web:/app
+      - web_node_modules:/app/node_modules
+
+  migrate:
+    build:
+      target: development
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg://applywise:applywise@postgres:5432/applywise
+      AUTH_JWT_SECRET: dev-applywise-auth-secret-change-me
+      AUTH_JWT_AUDIENCE: applywise-api
+      AUTH_JWT_ISSUER: applywise-web
+      CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - ./api:/app
+
+  api:
+    build:
+      target: development
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg://applywise:applywise@postgres:5432/applywise
+      REDIS_URL: redis://redis:6379/0
+      AUTH_JWT_SECRET: dev-applywise-auth-secret-change-me
+      AUTH_JWT_AUDIENCE: applywise-api
+      AUTH_JWT_ISSUER: applywise-web
+      CORS_ORIGINS: http://localhost:3000
+      LLM_PROVIDER: local
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app
+
+  worker:
+    build:
+      target: development
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+psycopg://applywise:applywise@postgres:5432/applywise
+      REDIS_URL: redis://redis:6379/0
+      AUTH_JWT_SECRET: dev-applywise-auth-secret-change-me
+      AUTH_JWT_AUDIENCE: applywise-api
+      AUTH_JWT_ISSUER: applywise-web
+      CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - ./api:/app
+
+  postgres:
+    environment:
+      POSTGRES_USER: applywise
+      POSTGRES_PASSWORD: applywise
+      POSTGRES_DB: applywise
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+volumes:
+  web_node_modules:

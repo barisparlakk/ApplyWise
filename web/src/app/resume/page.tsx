@@ -19,7 +19,7 @@ export default async function ResumePage() {
     <AppShell>
       <section className="mx-auto w-full max-w-7xl">
         <ResumeManager
-          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"}
+          apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           backendToken={session.backendToken}
           initialResume={resume}
         />

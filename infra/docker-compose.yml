@@ -1,11 +1,14 @@
 services:
+  # Local-only compose entry point. Use the root docker-compose.yml for production deployment.
   web:
     build:
       context: ../web
+      target: development
     env_file:
       - ../web/.env.example
     environment:
       API_INTERNAL_URL: http://api:8000
+      NEXT_PUBLIC_API_BASE_URL: /api/backend
       NEXTAUTH_URL: http://localhost:3000
     ports:
       - "3000:3000"
@@ -16,11 +19,14 @@ services:
   api:
     build:
       context: ../api
+      target: development
     env_file:
       - ../api/.env.example
     environment:
       DATABASE_URL: postgresql+psycopg://applywise:applywise@postgres:5432/applywise
       REDIS_URL: redis://redis:6379/0
+      APP_ENV: development
+      CORS_ORIGINS: http://localhost:3000
     ports:
       - "8000:8000"
     depends_on:
@@ -38,12 +44,15 @@ services:
   worker:
     build:
       context: ../api
+      target: development
     command: ["python", "-m", "applywise.worker"]
     env_file:
       - ../api/.env.example
     environment:
       DATABASE_URL: postgresql+psycopg://applywise:applywise@postgres:5432/applywise
       REDIS_URL: redis://redis:6379/0
+      APP_ENV: development
+      CORS_ORIGINS: http://localhost:3000
     depends_on:
       postgres:
         condition: service_healthy

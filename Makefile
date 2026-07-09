@@ -1,24 +1,35 @@
 COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo docker compose || echo docker-compose)
-COMPOSE_FILE=docker-compose.yml
+DEV_COMPOSE = $(COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml
+PROD_COMPOSE = $(COMPOSE) --env-file .env.production -f docker-compose.yml
 
-.PHONY: dev test lint migrate seed
+.PHONY: dev test lint migrate seed deploy deploy-logs deploy-down
 
 dev:
-	$(COMPOSE) -f $(COMPOSE_FILE) up --build
+	$(DEV_COMPOSE) up --build
 
 test:
-	$(COMPOSE) -f $(COMPOSE_FILE) build api web
-	$(COMPOSE) -f $(COMPOSE_FILE) run --rm api pytest
-	$(COMPOSE) -f $(COMPOSE_FILE) run --rm web npm run test
+	$(DEV_COMPOSE) build api web
+	$(DEV_COMPOSE) run --rm api pytest
+	$(DEV_COMPOSE) run --rm web npm run test
 
 lint:
-	$(COMPOSE) -f $(COMPOSE_FILE) build api web
-	$(COMPOSE) -f $(COMPOSE_FILE) run --rm api ruff check .
-	$(COMPOSE) -f $(COMPOSE_FILE) run --rm web npm run lint
+	$(DEV_COMPOSE) build api web
+	$(DEV_COMPOSE) run --rm api ruff check .
+	$(DEV_COMPOSE) run --rm web npm run lint
 
 migrate:
-	$(COMPOSE) -f $(COMPOSE_FILE) run --rm api python -m applywise.migrations
+	$(DEV_COMPOSE) run --rm migrate
 
 seed:
-	$(COMPOSE) -f $(COMPOSE_FILE) run --rm api python -m applywise.migrations
-	$(COMPOSE) -f $(COMPOSE_FILE) run --rm api python -m applywise.seed
+	$(DEV_COMPOSE) run --rm migrate
+	$(DEV_COMPOSE) run --rm api python -m applywise.seed
+
+deploy:
+	test -f .env.production
+	$(PROD_COMPOSE) up -d --build
+
+deploy-logs:
+	$(PROD_COMPOSE) logs -f --tail=100
+
+deploy-down:
+	$(PROD_COMPOSE) down

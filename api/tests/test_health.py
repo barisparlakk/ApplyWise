@@ -8,7 +8,9 @@ def test_health_returns_ok() -> None:
 
 
 def test_api_allows_the_local_web_origin_for_authenticated_browser_requests() -> None:
-    cors = next(middleware for middleware in app.user_middleware if middleware.cls is CORSMiddleware)
+    cors = next(
+        middleware for middleware in app.user_middleware if middleware.cls is CORSMiddleware
+    )
 
     assert "http://localhost:3000" in cors.kwargs["allow_origins"]
     assert cors.kwargs["allow_credentials"] is True
