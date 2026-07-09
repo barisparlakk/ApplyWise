@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <p className="text-sm text-[#a9c1ba]">Built for computer engineering and data/AI students.</p>
       </section>
       <section className="flex min-h-screen items-center justify-center bg-[#f6f9f8] px-6 py-12">
-        <div className="w-full max-w-md">
+        <div className="page-entrance w-full max-w-md">
           <div className="mb-10 lg:hidden"><p className="text-lg font-semibold text-foreground">ApplyWise</p><p className="mt-1 text-sm text-muted-foreground">Career intelligence workspace</p></div>
           <p className="app-kicker">Welcome back</p>
           <h1 className="mt-3 text-3xl font-semibold text-foreground">Sign in to your workspace</h1>

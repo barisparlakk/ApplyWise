@@ -29,7 +29,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-[#10221f] px-5 py-5 text-white sm:p-8">
-      <section className="mx-auto flex min-h-[calc(100vh-40px)] w-full max-w-[1440px] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#15302b] shadow-2xl sm:min-h-[calc(100vh-64px)]">
+      <section className="page-entrance mx-auto flex min-h-[calc(100vh-40px)] w-full max-w-[1440px] flex-col overflow-hidden rounded-xl border border-white/10 bg-[#15302b] shadow-2xl sm:min-h-[calc(100vh-64px)]">
         <header className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-8">
           <div className="flex items-center gap-3">
             <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#d7f75b] text-xs font-bold text-[#10221f]">AW</span>

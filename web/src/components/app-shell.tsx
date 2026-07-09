@@ -45,7 +45,7 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
             return (
               <Link
                 className={cn(
-                  "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
+                  "motion-nav group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
                   active
                     ? "bg-white text-[#10221f] shadow-sm"
                     : "text-[#bed0cb] hover:bg-white/10 hover:text-white",
@@ -75,7 +75,7 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
             Analyze a role to turn your profile into an application plan.
           </p>
           <Link
-            className="mt-4 inline-flex h-9 items-center rounded-md bg-[#d7f75b] px-3 text-xs font-semibold text-[#10221f] transition hover:bg-[#e3ff82]"
+            className="motion-control mt-4 inline-flex h-9 items-center rounded-md bg-[#d7f75b] px-3 text-xs font-semibold text-[#10221f] hover:bg-[#e3ff82]"
             href="/jobs/new"
           >
             Analyze a job
@@ -99,14 +99,14 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
             </nav>
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
-                className="hidden h-9 items-center rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground transition hover:border-[#6cb5a3] hover:bg-[#f4fbf8] sm:inline-flex"
+                className="motion-control hidden h-9 items-center rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground hover:border-[#6cb5a3] hover:bg-[#f4fbf8] sm:inline-flex"
                 href="/settings"
               >
                 Settings
               </Link>
               <Link
                 aria-label="Open settings"
-                className="grid h-9 w-9 place-items-center rounded-full bg-[#e6f2ee] text-xs font-bold text-[#16675a] transition hover:bg-[#d7f75b]"
+                className="motion-control grid h-9 w-9 place-items-center rounded-full bg-[#e6f2ee] text-xs font-bold text-[#16675a] hover:bg-[#d7f75b]"
                 href="/settings"
                 title="Open settings"
               >
@@ -118,7 +118,7 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
             {navigation.map((item) => (
               <Link
                 className={cn(
-                  "whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium",
+                  "motion-control whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium",
                   isActive(pathname, item.href)
                     ? "bg-[#10221f] text-white"
                     : "text-muted-foreground hover:bg-muted",
@@ -131,7 +131,9 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
             ))}
           </nav>
         </header>
-        <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
+        <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <div className="app-page" key={pathname}>{children}</div>
+        </main>
       </div>
     </div>
   );
