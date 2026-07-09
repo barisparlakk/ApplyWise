@@ -10,14 +10,15 @@ type JobAnalysisPageProps = {
   params: {
     id: string;
   };
-  searchParams?: {
+  searchParams: Promise<{
     days?: string;
-  };
+  }>;
 };
 
 export default async function JobAnalysisPage({ params, searchParams }: JobAnalysisPageProps) {
   const session = await getServerSession(authOptions);
-  const roadmapDays = parseRoadmapDays(searchParams?.days);
+  const query = await searchParams;
+  const roadmapDays = parseRoadmapDays(query.days);
 
   if (!session?.backendToken) {
     redirect(`/login?callbackUrl=/jobs/${params.id}/analysis`);

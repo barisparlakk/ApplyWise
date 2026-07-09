@@ -20,11 +20,21 @@ type JobPostFormProps = {
 
 type AnalyzeState = "idle" | "analyzing" | "error";
 
+const OUTPUT_SIGNALS = [
+  "Role and seniority",
+  "Required skills",
+  "Hidden expectations",
+  "Fit components",
+  "Preparation gaps",
+];
+
 export function JobPostForm({ apiBaseUrl, backendToken }: JobPostFormProps) {
   const router = useRouter();
   const [content, setContent] = useState("");
   const [state, setState] = useState<AnalyzeState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const trimmedLength = content.trim().length;
+  const isReady = trimmedLength >= 40;
 
   const headers = useMemo(
     () => ({
@@ -64,38 +74,71 @@ export function JobPostForm({ apiBaseUrl, backendToken }: JobPostFormProps) {
   }
 
   return (
-    <div className="app-surface p-5 sm:p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="app-kicker">Jobs</p>
-          <h1 className="app-title">New job analysis</h1>
+    <div className="space-y-6">
+      <header className="overflow-hidden rounded-lg border border-[#1d4b42] bg-[#10221f] text-white shadow-[0_14px_32px_rgba(15,38,33,0.18)]">
+        <div className="grid gap-7 px-5 py-6 sm:px-7 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end lg:px-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#a9c1ba]">Job intake</p>
+            <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">Turn a job post into a decision.</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[#c5d8d2]">
+              Bring in the original description so your profile, CV, and projects can be evaluated against the same evidence.
+            </p>
+          </div>
+          <div className="border-t border-white/10 pt-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a9c1ba]">Source status</p>
+            <p className="mt-2 text-xl font-semibold">{isReady ? "Ready to analyze" : "Waiting for job post"}</p>
+            <p className="mt-2 text-sm text-[#c5d8d2]">{trimmedLength} characters captured</p>
+          </div>
         </div>
-        <span className="rounded-md border border-border px-3 py-1 text-sm text-muted-foreground">
-          {state === "analyzing" ? "Analyzing" : "Ready"}
-        </span>
-      </div>
+      </header>
 
-      <div className="mt-6">
-        <Label htmlFor="job-post">Job post</Label>
-        <Textarea
-          className="mt-2 min-h-[520px]"
-          id="job-post"
-          onChange={(event) => setContent(event.target.value)}
-          placeholder="Paste the full internship job description..."
-          value={content}
-        />
-      </div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="app-surface p-5 sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Job description</h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">Paste the full listing, including responsibilities and requirements.</p>
+            </div>
+            <span className="data-chip">Manual paste</span>
+          </div>
 
-      {errorMessage ? <p className="mt-3 text-sm text-red-700">{errorMessage}</p> : null}
+          <div className="mt-6">
+            <Label htmlFor="job-post">Original listing</Label>
+            <Textarea
+              className="mt-2 min-h-[440px] resize-y text-[15px] leading-7"
+              id="job-post"
+              onChange={(event) => setContent(event.target.value)}
+              placeholder="Paste the full internship job description here..."
+              value={content}
+            />
+          </div>
 
-      <div className="mt-5 flex justify-end">
-        <Button
-          disabled={state === "analyzing"}
-          onClick={() => void analyzeJobPost()}
-          type="button"
-        >
-          Analyze job
-        </Button>
+          <div className="mt-5 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div aria-live="polite" className="text-sm text-muted-foreground">
+              {isReady ? "Ready to extract role signals." : `${Math.max(0, 40 - trimmedLength)} more characters needed.`}
+              {errorMessage ? <p className="mt-1 font-medium text-[#a34c47]">{errorMessage}</p> : null}
+            </div>
+            <Button
+              disabled={!isReady || state === "analyzing"}
+              onClick={() => void analyzeJobPost()}
+              type="button"
+            >
+              {state === "analyzing" ? "Analyzing role" : "Analyze role"}
+            </Button>
+          </div>
+        </section>
+
+        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+          <section className="app-surface p-5 sm:p-6">
+            <p className="text-base font-semibold text-foreground">Analysis signals</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {OUTPUT_SIGNALS.map((signal) => (
+                <span className="data-chip" key={signal}>{signal}</span>
+              ))}
+            </div>
+          </section>
+
+        </aside>
       </div>
     </div>
   );

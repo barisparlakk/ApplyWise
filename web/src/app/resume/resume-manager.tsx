@@ -1,13 +1,14 @@
 "use client";
 
+import type { DragEvent } from "react";
 import { useMemo, useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ParsedResumeData, ResumeData } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 const parsedResumeSchema = z.object({
   education: z.array(z.string().trim().min(1)),
@@ -67,6 +68,7 @@ export function ResumeManager({
   );
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const headers = useMemo(
     () => ({
@@ -122,7 +124,7 @@ export function ResumeManager({
 
     const parsed = parsedResumeSchema.safeParse(parsedData);
     if (!parsed.success) {
-      setErrorMessage("Each parsed section must contain at least one non-empty line.");
+      setErrorMessage("Each section needs at least one complete entry.");
       setSaveState("error");
       return;
     }
@@ -150,112 +152,140 @@ export function ResumeManager({
     }
   }
 
-  const statusText = {
-    idle: "Ready",
-    uploading: "Uploading",
-    saving: "Saving",
-    saved: "Saved",
+  function handleDrop(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setIsDragging(false);
+    void uploadResume(event.dataTransfer.files[0] ?? null);
+  }
+
+  const status = {
+    idle: resume ? "Ready for review" : "No CV uploaded",
+    uploading: "Parsing CV",
+    saving: "Saving corrections",
+    saved: "CV indexed",
     error: "Needs attention",
   }[saveState];
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-      <section className="space-y-6">
-        <div className="app-surface p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="app-kicker">
-                Resume
-              </p>
-              <h1 className="app-title">CV upload</h1>
-            </div>
-            <span className="rounded-md border border-border px-3 py-1 text-sm text-muted-foreground">
-              {statusText}
-            </span>
+    <div className="space-y-6">
+      <header className="overflow-hidden rounded-lg border border-[#1d4b42] bg-[#10221f] text-white shadow-[0_14px_32px_rgba(15,38,33,0.18)]">
+        <div className="grid gap-7 px-5 py-6 sm:px-7 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end lg:px-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#a9c1ba]">CV library</p>
+            <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">Make your strongest evidence searchable.</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[#c5d8d2]">
+              Upload a CV, review the extracted evidence, and keep the profile behind each application current.
+            </p>
           </div>
-
-          <div className="mt-6">
-            <Label htmlFor="resume-file">PDF or DOCX</Label>
-            <Input
-              accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              className="mt-2"
-              id="resume-file"
-              onChange={(event) => void uploadResume(event.target.files?.[0] ?? null)}
-              type="file"
-            />
-            {errorMessage ? <p className="mt-3 text-sm text-red-700">{errorMessage}</p> : null}
+          <div className="border-t border-white/10 pt-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a9c1ba]">Document status</p>
+            <p className="mt-2 text-xl font-semibold">{status}</p>
+            <p className="mt-2 text-sm text-[#c5d8d2]">
+              {resume ? `${resume.chunk_count} indexed sections` : "PDF and DOCX supported"}
+            </p>
           </div>
         </div>
+      </header>
 
-        {resume ? (
-          <div className="app-surface p-5 sm:p-6">
-            <div className="flex items-center justify-between gap-4">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="min-w-0 space-y-6">
+          <section className="app-surface p-5 sm:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Parsed result</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{resume.filename}</p>
+                <h2 className="text-lg font-semibold text-foreground">Upload a CV</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">Replace the current file at any time. Your extracted profile stays editable.</p>
               </div>
-              <Button onClick={() => void saveCorrections()} type="button">
-                Save corrections
-              </Button>
+              {resume ? <span className="data-chip">{resume.filename}</span> : null}
             </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <ParsedSection
-                label="Education"
-                onChange={(value) =>
-                  setParsedData((current) => ({ ...current, education: linesToList(value) }))
-                }
-                value={listToLines(parsedData.education)}
+            <label
+              className={cn(
+                "mt-6 flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed px-6 text-center transition",
+                isDragging
+                  ? "border-primary bg-[#edf8f4]"
+                  : "border-[#9bc8bb] bg-[#f8fcfa] hover:border-primary hover:bg-[#f1faf6]",
+              )}
+              htmlFor="resume-file"
+              onDragEnter={() => setIsDragging(true)}
+              onDragLeave={() => setIsDragging(false)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={handleDrop}
+            >
+              <span className="grid h-10 w-10 place-items-center rounded-md bg-[#d7f75b] text-sm font-bold text-[#10221f]">CV</span>
+              <span className="mt-4 text-base font-semibold text-foreground">Drop a PDF or DOCX here</span>
+              <span className="mt-1 text-sm text-muted-foreground">or choose a file from your computer</span>
+              <input
+                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="sr-only"
+                id="resume-file"
+                onChange={(event) => void uploadResume(event.target.files?.[0] ?? null)}
+                type="file"
               />
-              <ParsedSection
-                label="Experience"
-                onChange={(value) =>
-                  setParsedData((current) => ({ ...current, experience: linesToList(value) }))
-                }
-                value={listToLines(parsedData.experience)}
-              />
-              <ParsedSection
-                label="Skills"
-                onChange={(value) =>
-                  setParsedData((current) => ({ ...current, skills: linesToList(value) }))
-                }
-                value={listToLines(parsedData.skills)}
-              />
-              <ParsedSection
-                label="Projects"
-                onChange={(value) =>
-                  setParsedData((current) => ({ ...current, projects: linesToList(value) }))
-                }
-                value={listToLines(parsedData.projects)}
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="app-surface p-5 sm:p-6">
-            <h2 className="text-lg font-semibold text-foreground">No CV uploaded yet</h2>
-          </div>
-        )}
-      </section>
+            </label>
+            {errorMessage ? <p className="mt-4 text-sm font-medium text-[#a34c47]">{errorMessage}</p> : null}
+          </section>
 
-      <aside className="space-y-6">
-        <div className="app-surface p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-foreground">Storage</h2>
-          <dl className="mt-4 space-y-3 text-sm">
-            <SummaryItem label="Parsed sections" value={resume ? "4" : "0"} />
-            <SummaryItem label="Resume chunks" value={resume?.chunk_count.toString() ?? "0"} />
-            <SummaryItem label="Embedding" value={resume ? "Created" : "Pending"} />
-          </dl>
-        </div>
+          {resume ? (
+            <section className="app-surface p-5 sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Review extracted evidence</h2>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">Edit anything the parser missed before using it in fit analyses.</p>
+                </div>
+                <Button disabled={saveState === "saving"} onClick={() => void saveCorrections()} type="button">
+                  {saveState === "saving" ? "Saving" : "Save corrections"}
+                </Button>
+              </div>
 
-        {resume ? (
-          <div className="app-surface p-5 sm:p-6">
-            <h2 className="text-lg font-semibold text-foreground">Extracted text</h2>
-            <pre className="mt-4 max-h-[520px] overflow-auto whitespace-pre-wrap text-xs leading-5 text-muted-foreground">
-              {resume.content_text}
-            </pre>
-          </div>
-        ) : null}
-      </aside>
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                <ParsedSection
+                  label="Education"
+                  onChange={(value) => setParsedData((current) => ({ ...current, education: linesToList(value) }))}
+                  value={listToLines(parsedData.education)}
+                />
+                <ParsedSection
+                  label="Experience"
+                  onChange={(value) => setParsedData((current) => ({ ...current, experience: linesToList(value) }))}
+                  value={listToLines(parsedData.experience)}
+                />
+                <ParsedSection
+                  label="Skills"
+                  onChange={(value) => setParsedData((current) => ({ ...current, skills: linesToList(value) }))}
+                  value={listToLines(parsedData.skills)}
+                />
+                <ParsedSection
+                  label="Projects"
+                  onChange={(value) => setParsedData((current) => ({ ...current, projects: linesToList(value) }))}
+                  value={listToLines(parsedData.projects)}
+                />
+              </div>
+            </section>
+          ) : null}
+        </section>
+
+        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+          <section className="app-surface p-5 sm:p-6">
+            <p className="text-base font-semibold text-foreground">CV signals</p>
+            <dl className="mt-5 space-y-4 text-sm">
+              <SummaryItem label="File" value={resume ? "Stored" : "Not uploaded"} />
+              <SummaryItem label="Sections" value={resume ? "4 extracted" : "-"} />
+              <SummaryItem label="Indexed chunks" value={resume?.chunk_count.toString() ?? "0"} />
+              <SummaryItem label="Review state" value={resume ? "Ready" : "Waiting"} />
+            </dl>
+          </section>
+
+          {resume ? (
+            <details className="app-surface group p-5 sm:p-6">
+              <summary className="cursor-pointer list-none text-sm font-semibold text-foreground">
+                Source text
+              </summary>
+              <pre className="mt-4 max-h-[460px] overflow-auto whitespace-pre-wrap border-t border-border pt-4 text-xs leading-5 text-muted-foreground">
+                {resume.content_text}
+              </pre>
+            </details>
+          ) : null}
+        </aside>
+      </div>
     </div>
   );
 }
@@ -270,18 +300,18 @@ function ParsedSection({
   value: string;
 }>) {
   return (
-    <div>
+    <section className="border-t border-border pt-4 first:border-t-0 first:pt-0 md:odd:border-t-0 md:odd:pt-0">
       <Label>{label}</Label>
-      <Textarea className="mt-2 min-h-36" onChange={(event) => onChange(event.target.value)} value={value} />
-    </div>
+      <Textarea className="mt-2 min-h-40" onChange={(event) => onChange(event.target.value)} value={value} />
+    </section>
   );
 }
 
 function SummaryItem({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
-    <div className="flex items-center justify-between border-b border-border pb-2 last:border-0">
+    <div className="flex items-center justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-medium text-foreground">{value}</dd>
+      <dd className="text-right font-semibold text-foreground">{value}</dd>
     </div>
   );
 }

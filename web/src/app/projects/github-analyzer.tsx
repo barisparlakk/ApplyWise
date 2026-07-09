@@ -91,60 +91,74 @@ export function GitHubAnalyzer({
   }[state];
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-      <section className="space-y-6">
-        <div className="app-surface p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="app-kicker">
-                Projects
-              </p>
-              <h1 className="app-title">GitHub analyzer</h1>
-            </div>
-            <span className="rounded-md border border-border px-3 py-1 text-sm text-muted-foreground">
-              {statusText}
-            </span>
+    <div className="space-y-6">
+      <header className="overflow-hidden rounded-lg border border-[#1d4b42] bg-[#10221f] text-white shadow-[0_14px_32px_rgba(15,38,33,0.18)]">
+        <div className="grid gap-7 px-5 py-6 sm:px-7 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-end lg:px-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#a9c1ba]">Project evidence</p>
+            <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">Make the depth of your work visible.</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[#c5d8d2]">
+              Add the repositories that best represent how you build, test, document, and ship software.
+            </p>
           </div>
-
-          <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_auto]">
-            <div>
-              <Label htmlFor="repo-url">GitHub repository URL</Label>
-              <Input
-                className="mt-2"
-                id="repo-url"
-                onChange={(event) => setRepoUrl(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    void analyzeRepository();
-                  }
-                }}
-                placeholder="https://github.com/owner/repo"
-                value={repoUrl}
-              />
-            </div>
-            <Button
-              className="self-end"
-              disabled={state === "analyzing"}
-              onClick={() => void analyzeRepository()}
-              type="button"
-            >
-              Analyze
-            </Button>
+          <div className="border-t border-white/10 pt-5 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a9c1ba]">Repository status</p>
+            <p className="mt-2 text-xl font-semibold">{statusText}</p>
+            <p className="mt-2 text-sm text-[#c5d8d2]">{repositories.length} analyzed repositories</p>
           </div>
-          {errorMessage ? <p className="mt-3 text-sm text-red-700">{errorMessage}</p> : null}
         </div>
+      </header>
 
-        <div className="space-y-4">
-          {repositories.map((repository) => (
-            <RepositoryCard key={repository.id} repository={repository} />
-          ))}
-        </div>
-      </section>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+        <section className="space-y-6">
+          <section className="app-surface p-5 sm:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Analyze a repository</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">Use a public GitHub URL, owner/repository reference, or SSH remote.</p>
+              </div>
+              <span className="data-chip">GitHub</span>
+            </div>
 
-      <aside className="space-y-6">
-        <div className="app-surface p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-foreground">Repository Signals</h2>
+            <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_auto]">
+              <div>
+                <Label htmlFor="repo-url">Repository source</Label>
+                <Input
+                  className="mt-2"
+                  id="repo-url"
+                  onChange={(event) => setRepoUrl(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void analyzeRepository();
+                    }
+                  }}
+                  placeholder="https://github.com/owner/repo"
+                  value={repoUrl}
+                />
+              </div>
+              <Button
+                className="self-end"
+                disabled={state === "analyzing"}
+                onClick={() => void analyzeRepository()}
+                type="button"
+              >
+                {state === "analyzing" ? "Analyzing" : "Analyze repository"}
+              </Button>
+            </div>
+            {errorMessage ? <p className="mt-3 text-sm font-medium text-[#a34c47]">{errorMessage}</p> : null}
+          </section>
+
+          <div className="space-y-4">
+            {repositories.map((repository) => (
+              <RepositoryCard key={repository.id} repository={repository} />
+            ))}
+          </div>
+        </section>
+
+        <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
+          <section className="app-surface p-5 sm:p-6">
+            <h2 className="text-base font-semibold text-foreground">Repository coverage</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <SummaryItem label="Repositories" value={repositories.length.toString()} />
             <SummaryItem
@@ -160,8 +174,9 @@ export function GitHubAnalyzer({
               value={repositories.filter((repo) => repo.deterministic_signals.has_docker).length.toString()}
             />
           </dl>
-        </div>
-      </aside>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }
@@ -170,7 +185,7 @@ function RepositoryCard({ repository }: Readonly<{ repository: GitHubRepositoryD
   const analysis = repository.analysis;
 
   return (
-    <article className="app-surface p-5 sm:p-6">
+    <article className="app-surface app-surface-hover p-5 sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <a

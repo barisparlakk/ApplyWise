@@ -8,14 +8,15 @@ import { authOptions } from "@/lib/auth";
 import { AppShell } from "@/components/app-shell";
 
 type RoadmapPageProps = {
-  searchParams?: {
+  searchParams: Promise<{
     days?: string;
-  };
+  }>;
 };
 
 export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
   const session = await getServerSession(authOptions);
-  const durationDays = parseRoadmapDays(searchParams?.days);
+  const params = await searchParams;
+  const durationDays = parseRoadmapDays(params.days);
 
   if (!session?.backendToken) {
     redirect("/login?callbackUrl=/roadmap");

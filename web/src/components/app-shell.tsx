@@ -28,7 +28,7 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 hidden w-[252px] border-r border-border bg-[#10221f] px-4 py-5 text-white lg:flex lg:flex-col">
+      <aside className="fixed inset-y-0 left-0 hidden w-[236px] border-r border-border bg-[#10221f] px-4 py-5 text-white min-[900px]:flex min-[900px]:flex-col">
         <Link className="flex items-center gap-3 px-2" href="/dashboard">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#d7f75b] text-sm font-bold text-[#10221f]">
             AW
@@ -83,16 +83,16 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
         </div>
       </aside>
 
-      <div className="lg:pl-[252px]">
+      <div className="min-[900px]:pl-[236px]">
         <header className="sticky top-0 z-20 border-b border-border/80 bg-background/95 backdrop-blur">
           <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3 lg:hidden">
+            <div className="flex items-center gap-3 min-[900px]:hidden">
               <Link className="grid h-8 w-8 place-items-center rounded-md bg-[#10221f] text-[10px] font-bold text-[#d7f75b]" href="/dashboard">
                 AW
               </Link>
               <p className="text-sm font-semibold text-foreground">ApplyWise</p>
             </div>
-            <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto lg:flex" aria-label="Breadcrumb">
+            <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto min-[900px]:flex" aria-label="Breadcrumb">
               <span className="text-sm text-muted-foreground">Workspace</span>
               <span className="text-sm text-border">/</span>
               <span className="text-sm font-medium text-foreground">Career command center</span>
@@ -114,7 +114,7 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
               </Link>
             </div>
           </div>
-          <nav className="flex gap-1 overflow-x-auto border-t border-border/70 px-3 py-2 lg:hidden" aria-label="Mobile navigation">
+          <nav className="flex gap-1 overflow-x-auto border-t border-border/70 px-3 py-2 min-[900px]:hidden" aria-label="Mobile navigation">
             {navigation.map((item) => (
               <Link
                 className={cn(

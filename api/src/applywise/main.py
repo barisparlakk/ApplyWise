@@ -1,5 +1,8 @@
+import os
+
 from fastapi import FastAPI
 from pydantic import BaseModel
+from starlette.middleware.cors import CORSMiddleware
 
 from applywise.routes.applications import router as applications_router
 from applywise.routes.auth import router as auth_router
@@ -16,6 +19,17 @@ class HealthResponse(BaseModel):
 
 
 app = FastAPI(title="ApplyWise API", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        origin.strip()
+        for origin in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+        if origin.strip()
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 app.include_router(applications_router)
 app.include_router(auth_router)
 app.include_router(github_router)
