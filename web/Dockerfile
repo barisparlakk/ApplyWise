@@ -1,4 +1,4 @@
-FROM node:22-alpine AS dependencies
+FROM node:26-alpine AS dependencies
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
 COPY . .
 RUN npm run build
 
-FROM node:22-alpine AS production
+FROM node:26-alpine AS production
 
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
