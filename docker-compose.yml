@@ -16,6 +16,8 @@ services:
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-applywise-web}
       GITHUB_ID: ${GITHUB_ID:-}
       GITHUB_SECRET: ${GITHUB_SECRET:-}
+      GOOGLE_ID: ${GOOGLE_ID:-}
+      GOOGLE_SECRET: ${GOOGLE_SECRET:-}
       SUPPORT_EMAIL: ${SUPPORT_EMAIL:-support@applywise.example}
       NEXT_TELEMETRY_DISABLED: "1"
       NODE_ENV: production

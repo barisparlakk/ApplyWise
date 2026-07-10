@@ -23,12 +23,16 @@ if (jwtSecret.length < 32 || jwtSecret === developmentJwtSecret) {
   errors.push("AUTH_JWT_SECRET must be a non-default value with at least 32 characters.");
 }
 const githubConfigured = Boolean(process.env.GITHUB_ID && process.env.GITHUB_SECRET);
+const googleConfigured = Boolean(process.env.GOOGLE_ID && process.env.GOOGLE_SECRET);
 
 if (Boolean(process.env.GITHUB_ID) !== Boolean(process.env.GITHUB_SECRET)) {
   errors.push("GITHUB_ID and GITHUB_SECRET must be configured together.");
 }
-if (!githubConfigured) {
-  errors.push("GitHub OAuth must be configured for production sign-in.");
+if (Boolean(process.env.GOOGLE_ID) !== Boolean(process.env.GOOGLE_SECRET)) {
+  errors.push("GOOGLE_ID and GOOGLE_SECRET must be configured together.");
+}
+if (!githubConfigured && !googleConfigured) {
+  errors.push("At least one social OAuth provider must be configured for production sign-in.");
 }
 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supportEmail) || supportEmail.endsWith(".example")) {
   errors.push("SUPPORT_EMAIL must be a real monitored address.");

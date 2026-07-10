@@ -1,6 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GitHubProvider from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
 
 function displayNameFromEmail(email: string): string {
   return email.split("@")[0] ?? email;
@@ -10,6 +11,9 @@ export const emailLoginEnabled = process.env.APP_ENV !== "production";
 const githubClientId = process.env.GITHUB_ID;
 const githubClientSecret = process.env.GITHUB_SECRET;
 export const githubLoginEnabled = Boolean(githubClientId && githubClientSecret);
+const googleClientId = process.env.GOOGLE_ID;
+const googleClientSecret = process.env.GOOGLE_SECRET;
+export const googleLoginEnabled = Boolean(googleClientId && googleClientSecret);
 
 const providers: NonNullable<NextAuthOptions["providers"]> = [];
 
@@ -47,6 +51,15 @@ if (githubClientId && githubClientSecret) {
   );
 }
 
+if (googleClientId && googleClientSecret) {
+  providers.push(
+    GoogleProvider({
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+    }),
+  );
+}
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
@@ -63,7 +76,9 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.sub = user.id;
         token.backendSubject =
-          account?.provider === "github" ? `github:${user.id}` : user.id;
+          account?.provider === "github" || account?.provider === "google"
+            ? `${account.provider}:${user.id}`
+            : user.id;
       }
       if (account?.provider === "github" && typeof account.access_token === "string") {
         token.githubAccessToken = account.access_token;

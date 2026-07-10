@@ -35,9 +35,9 @@ services:
         value: applywise-api
       - key: AUTH_JWT_ISSUER
         value: applywise-web
-      - key: GITHUB_ID
+      - key: GOOGLE_ID
         sync: false
-      - key: GITHUB_SECRET
+      - key: GOOGLE_SECRET
         sync: false
       - key: SUPPORT_EMAIL
         sync: false
@@ -63,4 +63,3 @@ services:
     ipAllowList: []
     maxmemoryPolicy: noeviction
     persistenceMode: off
-

@@ -82,8 +82,8 @@ openssl rand -base64 48
 openssl rand -base64 48
 ```
 
-4. Set every placeholder in `.env.production`, including the public URLs, independent secrets, PostgreSQL credentials, GitHub OAuth credentials, monitored `SUPPORT_EMAIL`, and the OpenAI-compatible LLM endpoint, key, and model. Use URL-safe PostgreSQL credentials, and keep the password in `DATABASE_URL` aligned with `POSTGRES_PASSWORD`.
-5. In the GitHub OAuth application, set the authorization callback URL to `https://your-domain.example/api/auth/callback/github`. Its homepage URL should match `NEXTAUTH_URL`.
+4. Set every placeholder in `.env.production`, including the public URLs, independent secrets, PostgreSQL credentials, at least one social OAuth provider, monitored `SUPPORT_EMAIL`, and the OpenAI-compatible LLM endpoint, key, and model. Use URL-safe PostgreSQL credentials, and keep the password in `DATABASE_URL` aligned with `POSTGRES_PASSWORD`.
+5. Configure the callback for each enabled provider: `/api/auth/callback/github` for GitHub and `/api/auth/callback/google` for Google. Provider home/origin URLs should match `NEXTAUTH_URL`.
 6. Review the public [privacy notice](web/src/app/privacy/page.tsx) and [terms of use](web/src/app/terms/page.tsx) for your legal entity, jurisdiction, backup-retention policy, and provider contracts.
 7. Run the release gate and start the production stack:
 
@@ -93,7 +93,7 @@ make deploy
 
 `make deploy` runs the backend/frontend tests, lint checks, production image builds, Compose validation, and runtime environment validation before starting containers. The `migrate` service then upgrades Alembic migrations before the API and worker start.
 
-Production startup rejects development secrets, default database credentials, wildcard hosts, non-HTTPS origins, placeholder support details, invalid request limits, incomplete GitHub OAuth, and missing external LLM configuration. The unrestricted local email provider is disabled in production. Any GitHub user can self-provision without an allowlist; supporting users without GitHub requires a real transactional email provider.
+Production startup rejects development secrets, default database credentials, wildcard hosts, non-HTTPS origins, placeholder support details, invalid request limits, incomplete social OAuth, and missing external LLM configuration. The unrestricted local email provider is disabled in production. Any user accepted by an enabled social provider can self-provision without an allowlist.
 
 Verify the public web health endpoint after the platform or proxy is routing traffic:
 
@@ -129,7 +129,7 @@ The free target intentionally omits the placeholder worker and uses the local qu
 ## Public Launch Checklist
 
 - DNS points to the selected host and HTTPS is active before OAuth is enabled.
-- GitHub OAuth homepage and callback URLs match the production origin exactly.
+- Enabled OAuth provider origins and callback URLs match the production origin exactly.
 - The support inbox is monitored, and the privacy notice and terms have owner/legal approval.
 - The external LLM provider has billing limits, data-retention settings, and an API key restricted to this service.
 - `AI_ACTIONS_PER_HOUR` matches the launch budget; Redis-backed quotas fail closed if usage controls are unavailable.
@@ -165,7 +165,7 @@ make deploy   # production stack using .env.production
 Use [web/.env.example](web/.env.example) and [api/.env.example](api/.env.example) for local process development. Use [.env.production.example](.env.production.example) as the production deployment template.
 
 - `api/.env.example`: FastAPI runtime, PostgreSQL, Redis, backend JWT validation, quotas, request limits, and LLM provider settings.
-- `web/.env.example`: same-origin browser API proxy, server-side API URL, Auth.js secrets, backend JWT signing values, and optional GitHub OAuth credentials.
+- `web/.env.example`: same-origin browser API proxy, server-side API URL, Auth.js secrets, backend JWT signing values, and optional GitHub/Google OAuth credentials.
 - `.env.production`: untracked production credentials and public-domain configuration.
 
 Keep `AUTH_JWT_SECRET`, `AUTH_JWT_AUDIENCE`, and `AUTH_JWT_ISSUER` aligned between the frontend and backend.

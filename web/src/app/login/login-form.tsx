@@ -7,10 +7,17 @@ type LoginFormProps = {
   callbackUrl: string;
   emailEnabled: boolean;
   githubEnabled: boolean;
+  googleEnabled: boolean;
 };
 
-export function LoginForm({ callbackUrl, emailEnabled, githubEnabled }: LoginFormProps) {
+export function LoginForm({
+  callbackUrl,
+  emailEnabled,
+  githubEnabled,
+  googleEnabled,
+}: LoginFormProps) {
   const [email, setEmail] = useState("demo@applywise.dev");
+  const socialLoginEnabled = githubEnabled || googleEnabled;
 
   return (
     <div className="w-full">
@@ -44,18 +51,29 @@ export function LoginForm({ callbackUrl, emailEnabled, githubEnabled }: LoginFor
         </form>
       ) : null}
 
-      {emailEnabled && githubEnabled ? <div className="my-6 h-px bg-border" /> : null}
+      {emailEnabled && socialLoginEnabled ? <div className="my-6 h-px bg-border" /> : null}
 
-      {githubEnabled ? (
-        <>
-          <button
-            className="h-11 w-full rounded-md border border-border bg-white px-4 text-sm font-semibold text-foreground shadow-sm transition hover:border-[#6cb5a3] hover:bg-[#f4fbf8]"
-            onClick={() => void signIn("github", { callbackUrl })}
-            type="button"
-          >
-            Continue with GitHub
-          </button>
-        </>
+      {socialLoginEnabled ? (
+        <div className="space-y-3">
+          {googleEnabled ? (
+            <button
+              className="h-11 w-full rounded-md border border-border bg-white px-4 text-sm font-semibold text-foreground shadow-sm transition hover:border-[#6cb5a3] hover:bg-[#f4fbf8]"
+              onClick={() => void signIn("google", { callbackUrl })}
+              type="button"
+            >
+              Continue with Google
+            </button>
+          ) : null}
+          {githubEnabled ? (
+            <button
+              className="h-11 w-full rounded-md border border-border bg-white px-4 text-sm font-semibold text-foreground shadow-sm transition hover:border-[#6cb5a3] hover:bg-[#f4fbf8]"
+              onClick={() => void signIn("github", { callbackUrl })}
+              type="button"
+            >
+              Continue with GitHub
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
       <p className="mt-6 text-xs leading-5 text-muted-foreground">

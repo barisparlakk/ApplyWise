@@ -1,5 +1,5 @@
 import { LoginForm } from "@/app/login/login-form";
-import { emailLoginEnabled, githubLoginEnabled } from "@/lib/auth";
+import { emailLoginEnabled, githubLoginEnabled, googleLoginEnabled } from "@/lib/auth";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -33,6 +33,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               callbackUrl={callbackUrl}
               emailEnabled={emailLoginEnabled}
               githubEnabled={githubLoginEnabled}
+              googleEnabled={googleLoginEnabled}
             />
           </div>
         </div>
