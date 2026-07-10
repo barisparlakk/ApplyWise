@@ -9,8 +9,17 @@ from sqlalchemy.orm import Session, sessionmaker
 DEFAULT_DATABASE_URL = "postgresql+psycopg://applywise:applywise@localhost:5432/applywise"
 
 
+def normalize_database_url(value: str) -> str:
+    normalized = value.strip()
+    if normalized.startswith("postgresql://"):
+        return normalized.replace("postgresql://", "postgresql+psycopg://", 1)
+    if normalized.startswith("postgres://"):
+        return normalized.replace("postgres://", "postgresql+psycopg://", 1)
+    return normalized
+
+
 def get_database_url() -> str:
-    return os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
+    return normalize_database_url(os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL))
 
 
 engine = create_engine(get_database_url(), pool_pre_ping=True)

@@ -59,3 +59,4 @@ jobs:
       - run: docker compose -f docker-compose.yml config --quiet
       - run: docker build --target production -t applywise-api-ci ./api
       - run: docker build --target production -t applywise-web-ci ./web
+      - run: docker build -f Dockerfile.render-free -t applywise-render-free-ci .

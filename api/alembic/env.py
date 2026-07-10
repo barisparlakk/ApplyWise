@@ -6,6 +6,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from applywise.database import normalize_database_url
 from applywise.models import Base
 
 config = context.config
@@ -17,9 +18,11 @@ target_metadata = Base.metadata
 
 
 def get_database_url() -> str:
-    return os.environ.get(
-        "DATABASE_URL",
-        config.get_main_option("sqlalchemy.url", ""),
+    return normalize_database_url(
+        os.environ.get(
+            "DATABASE_URL",
+            config.get_main_option("sqlalchemy.url", ""),
+        )
     )
 
 

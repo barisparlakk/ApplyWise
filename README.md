@@ -120,6 +120,12 @@ make deploy-down
 
 Store backups in encrypted off-host storage and test restoration before launch. Do not run `make seed` against a production database.
 
+## Free Public Beta
+
+The repository also includes [render.yaml](render.yaml) and [Dockerfile.render-free](Dockerfile.render-free) for a zero-cost public beta. This target runs Next.js and FastAPI in one Render Free web service, keeps FastAPI on the container loopback interface, uses a Render Free Key Value instance for quotas, and expects a Neon PostgreSQL connection string in `DATABASE_URL`. Neon-style `postgresql://` URLs are normalized to the configured psycopg driver automatically.
+
+The free target intentionally omits the placeholder worker and uses the local qualitative-analysis provider, so it does not require a paid LLM API. It is a beta topology, not the production topology: Render can sleep the service after inactivity, free Key Value data is not durable, and free database/service quotas apply. The regular Docker Compose production deployment remains unchanged.
+
 ## Public Launch Checklist
 
 - DNS points to the selected host and HTTPS is active before OAuth is enabled.

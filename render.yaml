@@ -1,0 +1,66 @@
+services:
+  - type: web
+    name: applywise-barisparlak
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./Dockerfile.render-free
+    dockerContext: .
+    autoDeployTrigger: checksPass
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: API_INTERNAL_URL
+        value: http://127.0.0.1:8000
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: /api/backend
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: applywise-beta-cache
+          property: connectionString
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: AUTH_JWT_SECRET
+        generateValue: true
+      - key: AUTH_JWT_AUDIENCE
+        value: applywise-api
+      - key: AUTH_JWT_ISSUER
+        value: applywise-web
+      - key: GITHUB_ID
+        sync: false
+      - key: GITHUB_SECRET
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: ALLOWED_HOSTS
+        value: 127.0.0.1,localhost
+      - key: MAX_REQUEST_BODY_BYTES
+        value: "16777216"
+      - key: API_PROXY_TIMEOUT_MS
+        value: "120000"
+      - key: AI_ACTIONS_PER_HOUR
+        value: "30"
+      - key: LLM_PROVIDER
+        value: local
+      - key: REQUIRE_EXTERNAL_LLM
+        value: "false"
+      - key: WEB_CONCURRENCY
+        value: "1"
+
+  - type: keyvalue
+    name: applywise-beta-cache
+    plan: free
+    region: frankfurt
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+    persistenceMode: off
+

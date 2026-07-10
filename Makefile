@@ -8,12 +8,12 @@ dev:
 	$(DEV_COMPOSE) up --build
 
 test:
-	$(DEV_COMPOSE) build api web
+	$(DEV_COMPOSE) build migrate api web
 	$(DEV_COMPOSE) run --rm api pytest
 	$(DEV_COMPOSE) run --rm web npm run test
 
 lint:
-	$(DEV_COMPOSE) build api web
+	$(DEV_COMPOSE) build migrate api web
 	$(DEV_COMPOSE) run --rm api ruff check .
 	$(DEV_COMPOSE) run --rm web npm run lint
 
