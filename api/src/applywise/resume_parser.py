@@ -145,11 +145,14 @@ def extract_llm_message_content(response_data: object) -> str | None:
 
 
 def parse_cv_file(filename: str, content: bytes) -> str:
-    lower_filename = filename.lower()
-    if lower_filename.endswith(".pdf"):
-        return parse_pdf(content)
-    if lower_filename.endswith(".docx"):
-        return parse_docx(content)
+    try:
+        lower_filename = filename.lower()
+        if lower_filename.endswith(".pdf"):
+            return parse_pdf(content)
+        if lower_filename.endswith(".docx"):
+            return parse_docx(content)
+    except Exception as exc:
+        raise ResumeExtractionError("Resume file could not be parsed.") from exc
     raise ResumeExtractionError("Unsupported resume file type.")
 
 

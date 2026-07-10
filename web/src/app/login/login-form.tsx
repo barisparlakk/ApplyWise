@@ -57,6 +57,10 @@ export function LoginForm({ callbackUrl, emailEnabled, githubEnabled }: LoginFor
           </button>
         </>
       ) : null}
+
+      <p className="mt-6 text-xs leading-5 text-muted-foreground">
+        By continuing, you agree to the <a className="font-semibold text-primary hover:underline" href="/terms">terms</a> and acknowledge the <a className="font-semibold text-primary hover:underline" href="/privacy">privacy notice</a>.
+      </p>
     </div>
   );
 }

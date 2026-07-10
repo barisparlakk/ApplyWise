@@ -14,22 +14,26 @@ from applywise.auth import get_current_user
 from applywise.database import get_session
 from applywise.embeddings import DeterministicEmbeddingProvider, chunk_text
 from applywise.models import Resume, ResumeChunk, User
+from applywise.rate_limit import ai_action_limit_dependency
 from applywise.resume_parser import (
     ParsedResume,
     ResumeExtractionError,
     extract_structured_resume,
     parse_cv_file,
 )
+from applywise.validation import bounded_text_values
 
 router = APIRouter(prefix="/resume", tags=["resume"])
 current_user_dependency = Depends(get_current_user)
 session_dependency = Depends(get_session)
 embedding_provider = DeterministicEmbeddingProvider()
+MAX_RESUME_BYTES = 10 * 1024 * 1024
+MAX_RESUME_BASE64_LENGTH = ((MAX_RESUME_BYTES + 2) // 3) * 4
 
 
 class ResumeUploadPayload(BaseModel):
     filename: str = Field(max_length=255)
-    content_base64: str
+    content_base64: str = Field(max_length=MAX_RESUME_BASE64_LENGTH)
 
     @field_validator("filename")
     @classmethod
@@ -41,10 +45,15 @@ class ResumeUploadPayload(BaseModel):
 
 
 class ResumeCorrectionPayload(BaseModel):
-    education: list[str] = Field(default_factory=list)
-    experience: list[str] = Field(default_factory=list)
-    skills: list[str] = Field(default_factory=list)
-    projects: list[str] = Field(default_factory=list)
+    education: list[str] = Field(default_factory=list, max_length=100)
+    experience: list[str] = Field(default_factory=list, max_length=100)
+    skills: list[str] = Field(default_factory=list, max_length=100)
+    projects: list[str] = Field(default_factory=list, max_length=100)
+
+    @field_validator("education", "experience", "skills", "projects")
+    @classmethod
+    def validate_sections(cls, value: list[str]) -> list[str]:
+        return bounded_text_values(value, max_items=100, max_item_length=2000)
 
 
 class ResumeResponse(BaseModel):
@@ -76,12 +85,23 @@ def latest_resume_statement(user: User):
 
 def decode_upload(payload: ResumeUploadPayload) -> bytes:
     try:
-        return base64.b64decode(payload.content_base64, validate=True)
+        content = base64.b64decode(payload.content_base64, validate=True)
     except (binascii.Error, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid base64 resume content.",
         ) from exc
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Resume file is empty.",
+        )
+    if len(content) > MAX_RESUME_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="Resume file must be 10 MB or smaller.",
+        )
+    return content
 
 
 def build_chunks(resume: Resume) -> list[ResumeChunk]:
@@ -111,8 +131,20 @@ def upload_resume(
     payload: ResumeUploadPayload,
     current_user: User = current_user_dependency,
     session: Session = session_dependency,
+    _rate_limit: None = ai_action_limit_dependency,
 ) -> ResumeResponse:
     content = decode_upload(payload)
+    lower_filename = payload.filename.lower()
+    if lower_filename.endswith(".pdf") and not content.startswith(b"%PDF"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is not a valid PDF.",
+        )
+    if lower_filename.endswith(".docx") and not content.startswith(b"PK"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is not a valid DOCX document.",
+        )
     try:
         content_text = parse_cv_file(payload.filename, content)
     except ResumeExtractionError as exc:

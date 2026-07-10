@@ -1,4 +1,6 @@
-import type { Session } from "next-auth";
+import "server-only";
+
+import type { BackendSession } from "@/lib/server-auth";
 
 export type CurrentUser = {
   id: string;
@@ -276,7 +278,7 @@ export type InterviewPrepSection =
   | "star_answer_templates"
   | "weak_area_drill_questions";
 
-export async function getCurrentUser(session: Session): Promise<CurrentUser> {
+export async function getCurrentUser(session: BackendSession): Promise<CurrentUser> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
   if (!session.backendToken) {
@@ -297,7 +299,7 @@ export async function getCurrentUser(session: Session): Promise<CurrentUser> {
   return (await response.json()) as CurrentUser;
 }
 
-export async function getProfileSnapshot(session: Session): Promise<ProfileSnapshot> {
+export async function getProfileSnapshot(session: BackendSession): Promise<ProfileSnapshot> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
   if (!session.backendToken) {
@@ -318,7 +320,7 @@ export async function getProfileSnapshot(session: Session): Promise<ProfileSnaps
   return (await response.json()) as ProfileSnapshot;
 }
 
-export async function getResume(session: Session): Promise<ResumeData | null> {
+export async function getResume(session: BackendSession): Promise<ResumeData | null> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
   if (!session.backendToken) {
@@ -339,7 +341,9 @@ export async function getResume(session: Session): Promise<ResumeData | null> {
   return (await response.json()) as ResumeData | null;
 }
 
-export async function getGitHubRepositories(session: Session): Promise<GitHubRepositoryData[]> {
+export async function getGitHubRepositories(
+  session: BackendSession,
+): Promise<GitHubRepositoryData[]> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
   if (!session.backendToken) {
@@ -361,7 +365,7 @@ export async function getGitHubRepositories(session: Session): Promise<GitHubRep
 }
 
 export async function getJobPost(
-  session: Session,
+  session: BackendSession,
   jobPostId: string,
   roadmapDays = 3,
 ): Promise<JobPostData> {
@@ -385,7 +389,10 @@ export async function getJobPost(
   return (await response.json()) as JobPostData;
 }
 
-export async function getRoadmaps(session: Session, durationDays = 3): Promise<RoadmapData[]> {
+export async function getRoadmaps(
+  session: BackendSession,
+  durationDays = 3,
+): Promise<RoadmapData[]> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
   if (!session.backendToken) {
@@ -406,7 +413,7 @@ export async function getRoadmaps(session: Session, durationDays = 3): Promise<R
   return (await response.json()) as RoadmapData[];
 }
 
-export async function getApplications(session: Session): Promise<ApplicationData[]> {
+export async function getApplications(session: BackendSession): Promise<ApplicationData[]> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
 
   if (!session.backendToken) {
@@ -428,7 +435,7 @@ export async function getApplications(session: Session): Promise<ApplicationData
 }
 
 export async function getApplication(
-  session: Session,
+  session: BackendSession,
   applicationId: string,
 ): Promise<ApplicationData> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
@@ -452,7 +459,7 @@ export async function getApplication(
 }
 
 export async function getInterviewPrep(
-  session: Session,
+  session: BackendSession,
   applicationId: string,
 ): Promise<InterviewPrepData> {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
@@ -461,12 +468,21 @@ export async function getInterviewPrep(
     throw new Error("Missing backend token.");
   }
 
-  const response = await fetch(`${baseUrl}/interview-prep/${applicationId}`, {
-    headers: {
-      Authorization: `Bearer ${session.backendToken}`,
-    },
+  const requestHeaders = {
+    Authorization: `Bearer ${session.backendToken}`,
+  };
+  let response = await fetch(`${baseUrl}/interview-prep/${applicationId}`, {
+    headers: requestHeaders,
     cache: "no-store",
   });
+
+  if (response.status === 404) {
+    response = await fetch(`${baseUrl}/interview-prep/${applicationId}`, {
+      method: "POST",
+      headers: requestHeaders,
+      cache: "no-store",
+    });
+  }
 
   if (!response.ok) {
     throw new Error(`Backend rejected interview prep request: ${response.status}`);

@@ -7,6 +7,8 @@ services:
       APP_ENV: production
       API_INTERNAL_URL: http://api:8000
       NEXT_PUBLIC_API_BASE_URL: /api/backend
+      MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-16777216}
+      API_PROXY_TIMEOUT_MS: ${API_PROXY_TIMEOUT_MS:-120000}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-nextauth-secret-change-me}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-applywise-auth-secret-change-me}
@@ -14,6 +16,7 @@ services:
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-applywise-web}
       GITHUB_ID: ${GITHUB_ID:-}
       GITHUB_SECRET: ${GITHUB_SECRET:-}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-support@applywise.example}
       NEXT_TELEMETRY_DISABLED: "1"
       NODE_ENV: production
     ports:
@@ -44,7 +47,11 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-applywise-auth-secret-change-me}
       AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-applywise-api}
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-applywise-web}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-api,localhost,127.0.0.1}
+      MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-16777216}
+      AI_ACTIONS_PER_HOUR: ${AI_ACTIONS_PER_HOUR:-30}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,8 +70,12 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-applywise-auth-secret-change-me}
       AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-applywise-api}
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-applywise-web}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-api,localhost,127.0.0.1}
+      MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-16777216}
+      AI_ACTIONS_PER_HOUR: ${AI_ACTIONS_PER_HOUR:-30}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       LLM_PROVIDER: ${LLM_PROVIDER:-local}
+      REQUIRE_EXTERNAL_LLM: ${REQUIRE_EXTERNAL_LLM:-true}
       LLM_API_URL: ${LLM_API_URL:-}
       LLM_API_KEY: ${LLM_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
@@ -78,7 +89,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready').read()"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -99,7 +110,16 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-applywise-auth-secret-change-me}
       AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-applywise-api}
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-applywise-web}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-api,localhost,127.0.0.1}
+      MAX_REQUEST_BODY_BYTES: ${MAX_REQUEST_BODY_BYTES:-16777216}
+      AI_ACTIONS_PER_HOUR: ${AI_ACTIONS_PER_HOUR:-30}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      LLM_PROVIDER: ${LLM_PROVIDER:-local}
+      REQUIRE_EXTERNAL_LLM: ${REQUIRE_EXTERNAL_LLM:-true}
+      LLM_API_URL: ${LLM_API_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-30}
     depends_on:
       migrate:
         condition: service_completed_successfully

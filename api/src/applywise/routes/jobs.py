@@ -10,10 +10,16 @@ from sqlalchemy.orm import Session
 from applywise.auth import get_current_user
 from applywise.database import get_session
 from applywise.embeddings import DeterministicEmbeddingProvider
-from applywise.fit_score import FitExplanation, compute_and_store_fit_analysis
+from applywise.fit_score import (
+    FitExplanation,
+    compute_and_store_fit_analysis,
+    latest_fit_analysis,
+)
 from applywise.job_analyzer import JobAnalysisError, JobPostAnalysis, analyze_job_post
 from applywise.models import FitAnalysis, JobPost, User
+from applywise.rate_limit import ai_action_limit_dependency
 from applywise.roadmap import RoadmapPlan, build_and_store_roadmap, roadmap_to_plan
+from applywise.validation import optional_http_url
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 current_user_dependency = Depends(get_current_user)
@@ -22,7 +28,7 @@ embedding_provider = DeterministicEmbeddingProvider()
 
 
 class AnalyzeJobPayload(BaseModel):
-    content: str = Field(min_length=40)
+    content: str = Field(min_length=40, max_length=50000)
     source_url: str | None = Field(default=None, max_length=2048)
 
     @field_validator("content")
@@ -36,10 +42,7 @@ class AnalyzeJobPayload(BaseModel):
     @field_validator("source_url")
     @classmethod
     def strip_source_url(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        stripped = value.strip()
-        return stripped or None
+        return optional_http_url(value)
 
 
 class FitAnalysisComponentsResponse(BaseModel):
@@ -148,6 +151,7 @@ def analyze_job(
     payload: AnalyzeJobPayload,
     current_user: User = current_user_dependency,
     session: Session = session_dependency,
+    _rate_limit: None = ai_action_limit_dependency,
 ) -> JobPostResponse:
     try:
         analysis = analyze_job_post(payload.content)
@@ -210,7 +214,13 @@ def read_job(
     ).first()
     if job_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job post not found.")
-    fit_analysis = compute_and_store_fit_analysis(session, user=current_user, job_post=job_post)
+    fit_analysis = latest_fit_analysis(session, user=current_user, job_post=job_post)
+    if fit_analysis is None:
+        fit_analysis = compute_and_store_fit_analysis(
+            session,
+            user=current_user,
+            job_post=job_post,
+        )
     try:
         roadmap = build_and_store_roadmap(
             session,

@@ -1,13 +1,14 @@
 "use client";
 
 import type { DragEvent } from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ParsedResumeData, ResumeData } from "@/lib/api";
+import { apiError, JSON_HEADERS } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
 
 const parsedResumeSchema = z.object({
@@ -21,7 +22,6 @@ type SaveState = "idle" | "uploading" | "saving" | "saved" | "error";
 
 type ResumeManagerProps = {
   apiBaseUrl: string;
-  backendToken: string;
   initialResume: ResumeData | null;
 };
 
@@ -54,7 +54,6 @@ function fileToBase64(file: File): Promise<string> {
 
 export function ResumeManager({
   apiBaseUrl,
-  backendToken,
   initialResume,
 }: ResumeManagerProps) {
   const [resume, setResume] = useState<ResumeData | null>(initialResume);
@@ -70,14 +69,6 @@ export function ResumeManager({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const headers = useMemo(
-    () => ({
-      Authorization: `Bearer ${backendToken}`,
-      "Content-Type": "application/json",
-    }),
-    [backendToken],
-  );
-
   async function uploadResume(file: File | null) {
     if (!file) {
       return;
@@ -89,6 +80,11 @@ export function ResumeManager({
       setSaveState("error");
       return;
     }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage("Upload a file that is 10 MB or smaller.");
+      setSaveState("error");
+      return;
+    }
 
     try {
       setSaveState("uploading");
@@ -96,7 +92,7 @@ export function ResumeManager({
       const contentBase64 = await fileToBase64(file);
       const response = await fetch(`${apiBaseUrl}/resume/upload`, {
         method: "POST",
-        headers,
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           filename: file.name,
           content_base64: contentBase64,
@@ -104,7 +100,7 @@ export function ResumeManager({
       });
 
       if (!response.ok) {
-        throw new Error(`Upload failed with status ${response.status}.`);
+        throw await apiError(response, "Upload failed");
       }
 
       const uploadedResume = (await response.json()) as ResumeData;
@@ -134,12 +130,12 @@ export function ResumeManager({
       setErrorMessage(null);
       const response = await fetch(`${apiBaseUrl}/resume/${resume.id}`, {
         method: "PUT",
-        headers,
+        headers: JSON_HEADERS,
         body: JSON.stringify(parsed.data),
       });
 
       if (!response.ok) {
-        throw new Error(`Save failed with status ${response.status}.`);
+        throw await apiError(response, "Save failed");
       }
 
       const updatedResume = (await response.json()) as ResumeData;

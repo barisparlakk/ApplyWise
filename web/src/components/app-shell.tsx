@@ -81,6 +81,10 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
             Analyze a job
           </Link>
         </div>
+        <div className="mt-3 flex gap-4 px-2 text-xs text-[#a9c1ba]">
+          <Link className="hover:text-white" href="/privacy">Privacy</Link>
+          <Link className="hover:text-white" href="/terms">Terms</Link>
+        </div>
       </aside>
 
       <div className="min-[900px]:pl-[236px]">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { ApplicationData, ApplicationStatus, InterviewPrepData } from "@/lib/api";
+import { apiError, JSON_HEADERS } from "@/lib/client-api";
 
 const STATUS_OPTIONS: ApplicationStatus[] = [
   "saved",
@@ -24,7 +25,6 @@ const STATUS_OPTIONS: ApplicationStatus[] = [
 
 type ApplicationDetailProps = {
   apiBaseUrl: string;
-  backendToken: string;
   initialApplication: ApplicationData;
   initialInterviewPrep: InterviewPrepData;
 };
@@ -37,7 +37,6 @@ type ToastState = {
 
 export function ApplicationDetail({
   apiBaseUrl,
-  backendToken,
   initialApplication,
   initialInterviewPrep,
 }: ApplicationDetailProps) {
@@ -55,21 +54,13 @@ export function ApplicationDetail({
   const [state, setState] = useState<SaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
-  const headers = useMemo(
-    () => ({
-      Authorization: `Bearer ${backendToken}`,
-      "Content-Type": "application/json",
-    }),
-    [backendToken],
-  );
-
   async function saveApplication() {
     try {
       setState("saving");
       setErrorMessage(null);
       const response = await fetch(`${apiBaseUrl}/applications/${application.id}`, {
         method: "PATCH",
-        headers,
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           status: form.status,
           deadline: emptyToNull(form.deadline),
@@ -82,7 +73,7 @@ export function ApplicationDetail({
       });
 
       if (!response.ok) {
-        throw new Error(`Save failed with status ${response.status}.`);
+        throw await apiError(response, "Save failed");
       }
 
       const updated = (await response.json()) as ApplicationData;

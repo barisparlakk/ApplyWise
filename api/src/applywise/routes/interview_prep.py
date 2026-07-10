@@ -17,6 +17,7 @@ from applywise.interview_prep import (
     interview_prep_to_content,
 )
 from applywise.models import Application, InterviewPrep, User
+from applywise.rate_limit import ai_action_limit_dependency
 
 router = APIRouter(prefix="/interview-prep", tags=["interview-prep"])
 current_user_dependency = Depends(get_current_user)
@@ -47,7 +48,7 @@ class InterviewPrepResponse(BaseModel):
 
 
 class RegenerateInterviewPrepPayload(BaseModel):
-    sections: list[InterviewPrepSection] = Field(min_length=1)
+    sections: list[InterviewPrepSection] = Field(min_length=1, max_length=len(SECTION_KEYS))
 
     @field_validator("sections")
     @classmethod
@@ -68,6 +69,26 @@ def read_interview_prep(
     session: Session = session_dependency,
 ) -> InterviewPrepResponse:
     application = get_owned_application(session, current_user, application_id)
+    prep = find_existing_interview_prep(session, current_user, application)
+    if prep is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview prep has not been generated yet.",
+        )
+    return interview_prep_to_response(prep, application)
+
+
+@router.post("/{application_id}", response_model=InterviewPrepResponse)
+def generate_interview_prep(
+    application_id: uuid.UUID,
+    current_user: User = current_user_dependency,
+    session: Session = session_dependency,
+    _rate_limit: None = ai_action_limit_dependency,
+) -> InterviewPrepResponse:
+    application = get_owned_application(session, current_user, application_id)
+    existing = find_existing_interview_prep(session, current_user, application)
+    if existing is not None:
+        return interview_prep_to_response(existing, application)
     prep = generate_or_update_interview_prep(session, user=current_user, application=application)
     session.commit()
     session.refresh(prep)
@@ -80,6 +101,7 @@ def regenerate_interview_prep(
     payload: RegenerateInterviewPrepPayload,
     current_user: User = current_user_dependency,
     session: Session = session_dependency,
+    _rate_limit: None = ai_action_limit_dependency,
 ) -> InterviewPrepResponse:
     application = get_owned_application(session, current_user, application_id)
     prep = generate_or_update_interview_prep(
@@ -91,6 +113,22 @@ def regenerate_interview_prep(
     session.commit()
     session.refresh(prep)
     return interview_prep_to_response(prep, application)
+
+
+def find_existing_interview_prep(
+    session: Session,
+    user: User,
+    application: Application,
+) -> InterviewPrep | None:
+    return session.scalars(
+        select(InterviewPrep)
+        .where(
+            InterviewPrep.user_id == user.id,
+            InterviewPrep.application_id == application.id,
+        )
+        .order_by(InterviewPrep.updated_at.desc(), InterviewPrep.created_at.desc())
+        .limit(1)
+    ).first()
 
 
 def get_owned_application(

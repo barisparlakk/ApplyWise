@@ -14,7 +14,6 @@ import type {
 } from "@/lib/api";
 
 const apiBaseUrl = "http://localhost:8000";
-const backendToken = "component-smoke-token";
 
 const profileSnapshot: ProfileSnapshot = {
   profile: {
@@ -279,29 +278,24 @@ export function ComponentSmokeCases() {
     <>
       <ProfileBuilder
         apiBaseUrl={apiBaseUrl}
-        backendToken={backendToken}
         initialSnapshot={profileSnapshot}
       />
       <ResumeManager
         apiBaseUrl={apiBaseUrl}
-        backendToken={backendToken}
         initialResume={resume}
       />
       <GitHubAnalyzer
         apiBaseUrl={apiBaseUrl}
-        backendToken={backendToken}
         initialRepositories={[repository]}
       />
-      <JobPostForm apiBaseUrl={apiBaseUrl} backendToken={backendToken} />
+      <JobPostForm apiBaseUrl={apiBaseUrl} />
       <JobAnalysisView
         apiBaseUrl={apiBaseUrl}
-        backendToken={backendToken}
         jobPost={jobPost}
         roadmapDays={7}
       />
       <ApplicationDetail
         apiBaseUrl={apiBaseUrl}
-        backendToken={backendToken}
         initialApplication={application}
         initialInterviewPrep={interviewPrep}
       />

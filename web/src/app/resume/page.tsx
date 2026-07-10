@@ -1,15 +1,14 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { ResumeManager } from "@/app/resume/resume-manager";
 import { AppShell } from "@/components/app-shell";
 import { getResume } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+import { getBackendSession } from "@/lib/server-auth";
 
 export default async function ResumePage() {
-  const session = await getServerSession(authOptions);
+  const session = await getBackendSession();
 
-  if (!session?.backendToken) {
+  if (!session) {
     redirect("/login?callbackUrl=/resume");
   }
 
@@ -20,7 +19,6 @@ export default async function ResumePage() {
       <section className="mx-auto w-full max-w-7xl">
         <ResumeManager
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
-          backendToken={session.backendToken}
           initialResume={resume}
         />
       </section>

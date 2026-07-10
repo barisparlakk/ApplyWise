@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
@@ -30,7 +31,9 @@ Preferred
 """
 
 
-def test_analyze_job_route_persists_structured_analysis_and_embedding() -> None:
+def test_analyze_job_route_persists_structured_analysis_and_embedding(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
 
@@ -44,6 +47,10 @@ def test_analyze_job_route_persists_structured_analysis_and_embedding() -> None:
             AnalyzeJobPayload(content=SAMPLE_JOB, source_url="https://example.com/job"),
             current_user=user,
             session=session,
+        )
+        monkeypatch.setattr(
+            "applywise.routes.jobs.compute_and_store_fit_analysis",
+            lambda *_args, **_kwargs: pytest.fail("saved job reads must not regenerate fit"),
         )
         fetched = read_job(response.id, current_user=user, session=session)
         job_count = session.scalar(select(func.count()).select_from(JobPost))

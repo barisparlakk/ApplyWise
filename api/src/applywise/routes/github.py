@@ -19,6 +19,7 @@ from applywise.github_analyzer import (
     analyze_github_repository_url,
 )
 from applywise.models import GitHubRepository, GitHubRepositoryChunk, User
+from applywise.rate_limit import ai_action_auth_limit_dependency
 
 router = APIRouter(prefix="/github/repositories", tags=["github"])
 current_auth_dependency = Depends(get_current_auth)
@@ -121,6 +122,7 @@ def analyze_repository(
     payload: AnalyzeGitHubRepositoryPayload,
     current_auth: AuthContext = current_auth_dependency,
     session: Session = session_dependency,
+    _rate_limit: None = ai_action_auth_limit_dependency,
 ) -> GitHubRepositoryResponse:
     try:
         result = analyze_github_repository_url(

@@ -18,6 +18,7 @@ from applywise.models import (
     JobPost,
     User,
 )
+from applywise.validation import optional_http_url
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 current_user_dependency = Depends(get_current_user)
@@ -60,13 +61,18 @@ class UpdateApplicationPayload(BaseModel):
     job_url: str | None = Field(default=None, max_length=2048)
     applied_date: date | None = None
     interview_date: date | None = None
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=10000)
     next_action: str | None = Field(default=None, max_length=500)
 
-    @field_validator("job_url", "notes", "next_action")
+    @field_validator("notes", "next_action")
     @classmethod
     def strip_optional_fields(cls, value: str | None) -> str | None:
         return strip_optional_text(value)
+
+    @field_validator("job_url")
+    @classmethod
+    def validate_job_url(cls, value: str | None) -> str | None:
+        return optional_http_url(value)
 
 
 def application_to_response(

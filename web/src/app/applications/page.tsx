@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import type { ApplicationData, ApplicationStatus } from "@/lib/api";
 import { getApplications } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+import { getBackendSession } from "@/lib/server-auth";
 
 const STATUS_COLUMNS: Array<{ status: ApplicationStatus; label: string }> = [
   { status: "saved", label: "Saved" },
@@ -19,9 +18,9 @@ const STATUS_COLUMNS: Array<{ status: ApplicationStatus; label: string }> = [
 ];
 
 export default async function ApplicationsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getBackendSession();
 
-  if (!session?.backendToken) {
+  if (!session) {
     redirect("/login?callbackUrl=/applications");
   }
 

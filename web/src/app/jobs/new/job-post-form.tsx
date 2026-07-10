@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 
@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { JobPostData } from "@/lib/api";
+import { apiError, JSON_HEADERS } from "@/lib/client-api";
 
 const jobPostSchema = z.object({
-  content: z.string().trim().min(40),
+  content: z.string().trim().min(40).max(50000),
 });
 
 type JobPostFormProps = {
   apiBaseUrl: string;
-  backendToken: string;
 };
 
 type AnalyzeState = "idle" | "analyzing" | "error";
@@ -28,21 +28,13 @@ const OUTPUT_SIGNALS = [
   "Preparation gaps",
 ];
 
-export function JobPostForm({ apiBaseUrl, backendToken }: JobPostFormProps) {
+export function JobPostForm({ apiBaseUrl }: JobPostFormProps) {
   const router = useRouter();
   const [content, setContent] = useState("");
   const [state, setState] = useState<AnalyzeState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const trimmedLength = content.trim().length;
   const isReady = trimmedLength >= 40;
-
-  const headers = useMemo(
-    () => ({
-      Authorization: `Bearer ${backendToken}`,
-      "Content-Type": "application/json",
-    }),
-    [backendToken],
-  );
 
   async function analyzeJobPost() {
     const parsed = jobPostSchema.safeParse({ content });
@@ -57,12 +49,12 @@ export function JobPostForm({ apiBaseUrl, backendToken }: JobPostFormProps) {
       setErrorMessage(null);
       const response = await fetch(`${apiBaseUrl}/jobs/analyze`, {
         method: "POST",
-        headers,
+        headers: JSON_HEADERS,
         body: JSON.stringify(parsed.data),
       });
 
       if (!response.ok) {
-        throw new Error(`Analysis failed with status ${response.status}.`);
+        throw await apiError(response, "Analysis failed");
       }
 
       const jobPost = (await response.json()) as JobPostData;

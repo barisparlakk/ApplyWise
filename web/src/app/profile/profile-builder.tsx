@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { ProfileSnapshot } from "@/lib/api";
+import { JSON_HEADERS } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
 
 const languageSchema = z.object({
@@ -41,7 +42,6 @@ type SaveState = "idle" | "saving" | "saved" | "invalid" | "error";
 
 type ProfileBuilderProps = {
   apiBaseUrl: string;
-  backendToken: string;
   initialSnapshot: ProfileSnapshot;
 };
 
@@ -131,7 +131,6 @@ function getRoleTheme(role: string) {
 
 export function ProfileBuilder({
   apiBaseUrl,
-  backendToken,
   initialSnapshot,
 }: ProfileBuilderProps) {
   const [form, setForm] = useState<ProfileBuilderState>(() => snapshotToState(initialSnapshot));
@@ -142,14 +141,6 @@ export function ProfileBuilder({
   const saveRequest = useRef(0);
   const readiness = getReadiness(form);
 
-  const headers = useMemo(
-    () => ({
-      Authorization: `Bearer ${backendToken}`,
-      "Content-Type": "application/json",
-    }),
-    [backendToken],
-  );
-
   const persistProfile = useCallback(async (payload: ProfileBuilderState) => {
     const requestId = ++saveRequest.current;
     setSaveState("saving");
@@ -159,7 +150,7 @@ export function ProfileBuilder({
       const responses = await Promise.all([
         fetch(`${apiBaseUrl}/profile`, {
           method: "PUT",
-          headers,
+          headers: JSON_HEADERS,
           body: JSON.stringify({
             education: payload.education,
             github_url: payload.github_url,
@@ -172,12 +163,12 @@ export function ProfileBuilder({
         }),
         fetch(`${apiBaseUrl}/profile/skills`, {
           method: "PUT",
-          headers,
+          headers: JSON_HEADERS,
           body: JSON.stringify({ skills: payload.skills }),
         }),
         fetch(`${apiBaseUrl}/profile/projects`, {
           method: "PUT",
-          headers,
+          headers: JSON_HEADERS,
           body: JSON.stringify({ projects: payload.projects.filter((project) => project.name) }),
         }),
       ]);
@@ -195,7 +186,7 @@ export function ProfileBuilder({
         setSaveError(error instanceof Error ? error.message : "The profile could not be saved.");
       }
     }
-  }, [apiBaseUrl, headers]);
+  }, [apiBaseUrl]);
 
   useEffect(() => {
     if (!hasMounted.current) {

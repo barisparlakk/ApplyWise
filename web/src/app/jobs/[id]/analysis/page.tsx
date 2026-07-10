@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { JobAnalysisView } from "@/app/jobs/[id]/analysis/job-analysis-view";
 import { AppShell } from "@/components/app-shell";
 import { getJobPost } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+import { getBackendSession } from "@/lib/server-auth";
 
 type JobAnalysisPageProps = {
   params: Promise<{
@@ -17,11 +16,11 @@ type JobAnalysisPageProps = {
 
 export default async function JobAnalysisPage({ params, searchParams }: JobAnalysisPageProps) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await getBackendSession();
   const query = await searchParams;
   const roadmapDays = parseRoadmapDays(query.days);
 
-  if (!session?.backendToken) {
+  if (!session) {
     redirect(`/login?callbackUrl=/jobs/${id}/analysis`);
   }
 
@@ -32,7 +31,6 @@ export default async function JobAnalysisPage({ params, searchParams }: JobAnaly
       <section className="mx-auto w-full max-w-7xl">
         <JobAnalysisView
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
-          backendToken={session.backendToken}
           jobPost={jobPost}
           roadmapDays={roadmapDays}
         />

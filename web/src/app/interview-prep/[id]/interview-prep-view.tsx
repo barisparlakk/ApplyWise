@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,10 @@ import type {
   InterviewPrepSection,
   InterviewPrepStarTemplate,
 } from "@/lib/api";
+import { apiError, JSON_HEADERS } from "@/lib/client-api";
 
 type InterviewPrepViewProps = {
   apiBaseUrl: string;
-  backendToken: string;
   initialPrep: InterviewPrepData;
 };
 
@@ -33,21 +33,12 @@ const SECTION_LABELS: Record<InterviewPrepSection, string> = {
 
 export function InterviewPrepView({
   apiBaseUrl,
-  backendToken,
   initialPrep,
 }: InterviewPrepViewProps) {
   const [prep, setPrep] = useState(initialPrep);
   const [state, setState] = useState<PrepState>("ready");
   const [activeSection, setActiveSection] = useState<InterviewPrepSection | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const headers = useMemo(
-    () => ({
-      Authorization: `Bearer ${backendToken}`,
-      "Content-Type": "application/json",
-    }),
-    [backendToken],
-  );
-
   async function regenerateSection(section: InterviewPrepSection) {
     try {
       setState("regenerating");
@@ -57,13 +48,13 @@ export function InterviewPrepView({
         `${apiBaseUrl}/interview-prep/${prep.application.id}/regenerate`,
         {
           method: "POST",
-          headers,
+          headers: JSON_HEADERS,
           body: JSON.stringify({ sections: [section] }),
         },
       );
 
       if (!response.ok) {
-        throw new Error(`Regeneration failed with status ${response.status}.`);
+        throw await apiError(response, "Regeneration failed");
       }
 
       setPrep((await response.json()) as InterviewPrepData);

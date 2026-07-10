@@ -9,7 +9,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from applywise.auth import create_backend_jwt, decode_backend_jwt, get_current_user
-from applywise.models import Base, User
+from applywise.models import Base, JobPost, Profile, User
+from applywise.routes.auth import delete_current_user
 
 
 def test_decode_backend_jwt_validates_claims() -> None:
@@ -59,3 +60,31 @@ def test_current_user_auto_provisions_user() -> None:
     assert saved_user is not None
     assert saved_user.email == "ada@example.com"
     assert saved_user.auth_subject == "email:ada@example.com"
+
+
+def test_delete_current_user_removes_owned_workspace_data() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        user = User(email="delete@example.com", full_name="Delete User")
+        session.add(user)
+        session.flush()
+        session.add(Profile(user_id=user.id, skills=[], target_roles=[], languages=[]))
+        session.add(
+            JobPost(
+                user_id=user.id,
+                company_name="Example",
+                title="Backend Intern",
+                description="A job description",
+            )
+        )
+        session.commit()
+        user_id = user.id
+
+        response = delete_current_user(current_user=user, session=session)
+
+        assert response.status_code == 204
+        assert session.get(User, user_id) is None
+        assert session.query(Profile).count() == 0
+        assert session.query(JobPost).count() == 0

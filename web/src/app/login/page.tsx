@@ -9,7 +9,7 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const callbackUrl = params.callbackUrl ?? "/dashboard";
+  const callbackUrl = safeCallbackUrl(params.callbackUrl);
 
   return (
     <main className="grid min-h-screen bg-[#10221f] lg:grid-cols-2">
@@ -39,4 +39,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       </section>
     </main>
   );
+}
+
+function safeCallbackUrl(value: string | undefined) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
 }

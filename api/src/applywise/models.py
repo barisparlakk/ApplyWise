@@ -119,7 +119,10 @@ class User(TimestampedUuidMixin, Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
-    job_posts: Mapped[list[JobPost]] = relationship(back_populates="user")
+    job_posts: Mapped[list[JobPost]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
     applications: Mapped[list[Application]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",

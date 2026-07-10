@@ -17,6 +17,7 @@ from applywise.models import (
 from applywise.routes.applications import create_application_from_job
 from applywise.routes.interview_prep import (
     RegenerateInterviewPrepPayload,
+    generate_interview_prep,
     read_interview_prep,
     regenerate_interview_prep,
 )
@@ -113,6 +114,11 @@ def test_interview_prep_generates_grounded_sections_and_regenerates_one_section(
         session.commit()
 
         application = create_application_from_job(job_post.id, current_user=user, session=session)
+        generated_prep = generate_interview_prep(
+            application.id,
+            current_user=user,
+            session=session,
+        )
         prep = read_interview_prep(application.id, current_user=user, session=session)
         regenerated = regenerate_interview_prep(
             application.id,
@@ -122,6 +128,7 @@ def test_interview_prep_generates_grounded_sections_and_regenerates_one_section(
         )
         prep_count = session.scalar(select(func.count()).select_from(InterviewPrep))
 
+    assert generated_prep.id == prep.id
     assert prep.job.company_name == "ApplyWise Labs"
     assert prep.content.technical_questions
     assert prep.content.behavioral_questions

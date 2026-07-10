@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { ApplicationDetail } from "@/app/applications/[id]/application-detail";
 import { AppShell } from "@/components/app-shell";
 import { getApplication, getInterviewPrep } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+import { getBackendSession } from "@/lib/server-auth";
 
 type ApplicationDetailPageProps = {
   params: Promise<{
@@ -14,9 +13,9 @@ type ApplicationDetailPageProps = {
 
 export default async function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
   const { id } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await getBackendSession();
 
-  if (!session?.backendToken) {
+  if (!session) {
     redirect(`/login?callbackUrl=/applications/${id}`);
   }
 
@@ -30,7 +29,6 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
       <section className="mx-auto w-full max-w-7xl">
         <ApplicationDetail
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
-          backendToken={session.backendToken}
           initialApplication={application}
           initialInterviewPrep={interviewPrep}
         />

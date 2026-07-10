@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { GitHubRepositoryData } from "@/lib/api";
+import { apiError, JSON_HEADERS } from "@/lib/client-api";
 
 const analyzeSchema = z.object({
   repo_url: z
@@ -26,27 +27,17 @@ type AnalyzeState = "idle" | "analyzing" | "ready" | "error";
 
 type GitHubAnalyzerProps = {
   apiBaseUrl: string;
-  backendToken: string;
   initialRepositories: GitHubRepositoryData[];
 };
 
 export function GitHubAnalyzer({
   apiBaseUrl,
-  backendToken,
   initialRepositories,
 }: GitHubAnalyzerProps) {
   const [repoUrl, setRepoUrl] = useState("");
   const [repositories, setRepositories] = useState(initialRepositories);
   const [state, setState] = useState<AnalyzeState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const headers = useMemo(
-    () => ({
-      Authorization: `Bearer ${backendToken}`,
-      "Content-Type": "application/json",
-    }),
-    [backendToken],
-  );
 
   async function analyzeRepository() {
     const parsed = analyzeSchema.safeParse({ repo_url: repoUrl });
@@ -61,13 +52,12 @@ export function GitHubAnalyzer({
       setErrorMessage(null);
       const response = await fetch(`${apiBaseUrl}/github/repositories/analyze`, {
         method: "POST",
-        headers,
+        headers: JSON_HEADERS,
         body: JSON.stringify(parsed.data),
       });
 
       if (!response.ok) {
-        const body = (await response.json().catch(() => null)) as { detail?: string } | null;
-        throw new Error(body?.detail ?? `Analysis failed with status ${response.status}.`);
+        throw await apiError(response, "Analysis failed");
       }
 
       const repository = (await response.json()) as GitHubRepositoryData;

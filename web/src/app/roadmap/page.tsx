@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import type { RoadmapData } from "@/lib/api";
 import { getRoadmaps } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+import { getBackendSession } from "@/lib/server-auth";
 import { AppShell } from "@/components/app-shell";
 
 type RoadmapPageProps = {
@@ -14,11 +13,11 @@ type RoadmapPageProps = {
 };
 
 export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
-  const session = await getServerSession(authOptions);
+  const session = await getBackendSession();
   const params = await searchParams;
   const durationDays = parseRoadmapDays(params.days);
 
-  if (!session?.backendToken) {
+  if (!session) {
     redirect("/login?callbackUrl=/roadmap");
   }
 

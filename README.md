@@ -11,8 +11,9 @@ The monorepo is split into a Next.js frontend, a FastAPI backend, a Dramatiq wor
 ```mermaid
 flowchart LR
     User["Student"] --> Web["Next.js App Router"]
-    Web --> Auth["Auth.js Session + Backend JWT"]
-    Auth --> API["FastAPI API"]
+    Web --> Auth["Encrypted Auth.js session"]
+    Auth --> BFF["Same-origin server proxy"]
+    BFF --> API["FastAPI + short-lived JWT"]
     API --> Postgres[("PostgreSQL + pgvector")]
     API --> Redis[("Redis")]
     Worker["Dramatiq Worker"] --> Redis
@@ -52,7 +53,7 @@ The local stack uses the same-origin `/api/backend` proxy for browser requests, 
 
 ## Production Deployment
 
-The root [docker-compose.yml](/Users/barisparlak/Desktop/ApplyWise/docker-compose.yml) is the production topology. It exposes only the Next.js web service; API, Redis, and PostgreSQL remain on a private Docker network. The web service proxies authenticated browser API requests internally.
+The root [docker-compose.yml](docker-compose.yml) is the production topology. It exposes only the Next.js web service; API, Redis, and PostgreSQL remain on a private Docker network. The browser never receives the backend bearer token: the web service validates the encrypted Auth.js session and injects a short-lived credential while proxying requests internally.
 
 ```mermaid
 flowchart LR
@@ -79,15 +80,18 @@ openssl rand -base64 48
 openssl rand -base64 48
 ```
 
-4. Set at least `NEXTAUTH_URL`, `CORS_ORIGINS`, `NEXTAUTH_SECRET`, `AUTH_JWT_SECRET`, `POSTGRES_PASSWORD`, `DATABASE_URL`, `GITHUB_ID`, and `GITHUB_SECRET`. Use URL-safe PostgreSQL credentials, and keep the password in `DATABASE_URL` aligned with `POSTGRES_PASSWORD`.
+4. Set every placeholder in `.env.production`, including the public URLs, independent secrets, PostgreSQL credentials, GitHub OAuth credentials, monitored `SUPPORT_EMAIL`, and the OpenAI-compatible LLM endpoint, key, and model. Use URL-safe PostgreSQL credentials, and keep the password in `DATABASE_URL` aligned with `POSTGRES_PASSWORD`.
 5. In the GitHub OAuth application, set the authorization callback URL to `https://your-domain.example/api/auth/callback/github`. Its homepage URL should match `NEXTAUTH_URL`.
-6. Build and start the production stack:
+6. Review the public [privacy notice](web/src/app/privacy/page.tsx) and [terms of use](web/src/app/terms/page.tsx) for your legal entity, jurisdiction, backup-retention policy, and provider contracts.
+7. Run the release gate and start the production stack:
 
 ```bash
 make deploy
 ```
 
-The `migrate` service upgrades Alembic migrations before the API and worker start. Production startup rejects development secrets, default database credentials, non-HTTPS CORS origins, and incomplete GitHub OAuth credentials. The unrestricted local email provider is disabled in production; use GitHub OAuth until a transactional email provider is added.
+`make deploy` runs the backend/frontend tests, lint checks, production image builds, Compose validation, and runtime environment validation before starting containers. The `migrate` service then upgrades Alembic migrations before the API and worker start.
+
+Production startup rejects development secrets, default database credentials, wildcard hosts, non-HTTPS origins, placeholder support details, invalid request limits, incomplete GitHub OAuth, and missing external LLM configuration. The unrestricted local email provider is disabled in production. Any GitHub user can self-provision without an allowlist; supporting users without GitHub requires a real transactional email provider.
 
 Verify the public web health endpoint after the platform or proxy is routing traffic:
 
@@ -103,14 +107,27 @@ Expected response:
 
 When using a host reverse proxy, forward the original host and HTTPS scheme to port `3000`. For example, the upstream needs the equivalent of `Host`, `X-Forwarded-Host`, and `X-Forwarded-Proto: https` headers. Keep port `3000` private to that proxy where possible; PostgreSQL, Redis, and FastAPI are already private to the Compose network.
 
-Production logs and shutdown commands:
+Production status, logs, backup, and shutdown commands:
 
 ```bash
+make deploy-status
 make deploy-logs
+make backup
 make deploy-down
 ```
 
-Do not run `make seed` against a production database.
+Store backups in encrypted off-host storage and test restoration before launch. Do not run `make seed` against a production database.
+
+## Public Launch Checklist
+
+- DNS points to the selected host and HTTPS is active before OAuth is enabled.
+- GitHub OAuth homepage and callback URLs match the production origin exactly.
+- The support inbox is monitored, and the privacy notice and terms have owner/legal approval.
+- The external LLM provider has billing limits, data-retention settings, and an API key restricted to this service.
+- `AI_ACTIONS_PER_HOUR` matches the launch budget; Redis-backed quotas fail closed if usage controls are unavailable.
+- `/api/health` is monitored externally, and container logs are shipped or retained by the hosting platform.
+- `make backup` is scheduled and encrypted copies are stored off-host.
+- A rollback keeps the previous image or commit available, with a database backup taken before migrations.
 
 ## Demo Login
 
@@ -130,24 +147,25 @@ make test
 make lint
 make migrate
 make seed
+make deploy-check
+make release-check
 make deploy   # production stack using .env.production
 ```
 
 ## Environment Variables
 
-Use [web/.env.example](/Users/barisparlak/Desktop/ApplyWise/web/.env.example) and [api/.env.example](/Users/barisparlak/Desktop/ApplyWise/api/.env.example) for local process development. Use [.env.production.example](/Users/barisparlak/Desktop/ApplyWise/.env.production.example) as the production deployment template.
+Use [web/.env.example](web/.env.example) and [api/.env.example](api/.env.example) for local process development. Use [.env.production.example](.env.production.example) as the production deployment template.
 
-- `api/.env.example`: FastAPI runtime, PostgreSQL, Redis, backend JWT validation, and optional LLM provider settings.
+- `api/.env.example`: FastAPI runtime, PostgreSQL, Redis, backend JWT validation, quotas, request limits, and LLM provider settings.
 - `web/.env.example`: same-origin browser API proxy, server-side API URL, Auth.js secrets, backend JWT signing values, and optional GitHub OAuth credentials.
 - `.env.production`: untracked production credentials and public-domain configuration.
 
 Keep `AUTH_JWT_SECRET`, `AUTH_JWT_AUDIENCE`, and `AUTH_JWT_ISSUER` aligned between the frontend and backend.
 
-For a backup before a host migration or upgrade:
+For a timestamped backup before a host migration or upgrade:
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.yml exec -T postgres \
-  sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > applywise-backup.sql
+make backup
 ```
 
 ## Verification
@@ -156,6 +174,7 @@ After `make dev`, verify both the internal API and the web health endpoint:
 
 ```bash
 curl http://localhost:8000/health
+curl http://localhost:8000/ready
 curl http://localhost:3000/api/health
 ```
 

@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from applywise.auth import get_current_user
 from applywise.database import get_session
 from applywise.models import Profile, Project, Skill, User
+from applywise.validation import bounded_text_values, optional_http_url
 
 TARGET_ROLE_OPTIONS = (
     "Data Science Intern",
@@ -34,14 +35,17 @@ class LanguagePayload(BaseModel):
     @field_validator("name", "level")
     @classmethod
     def strip_text(cls, value: str) -> str:
-        return value.strip()
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("Language fields cannot be empty.")
+        return stripped
 
 
 class ProjectPayload(BaseModel):
     name: str = Field(max_length=255)
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=5000)
     url: str | None = Field(default=None, max_length=2048)
-    skills: list[str] = Field(default_factory=list)
+    skills: list[str] = Field(default_factory=list, max_length=50)
 
     @field_validator("name")
     @classmethod
@@ -56,6 +60,19 @@ class ProjectPayload(BaseModel):
     def normalize_skills(cls, value: list[str]) -> list[str]:
         return normalize_tags(value)
 
+    @field_validator("description")
+    @classmethod
+    def strip_description(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        stripped = value.strip()
+        return stripped or None
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, value: str | None) -> str | None:
+        return optional_http_url(value)
+
 
 class ProjectResponse(ProjectPayload):
     id: uuid.UUID
@@ -64,10 +81,10 @@ class ProjectResponse(ProjectPayload):
 class ProfilePayload(BaseModel):
     education: str | None = Field(default=None, max_length=120)
     github_url: str | None = Field(default=None, max_length=2048)
-    target_roles: list[str] = Field(default_factory=list)
+    target_roles: list[str] = Field(default_factory=list, max_length=len(TARGET_ROLE_OPTIONS))
     preferred_location: str | None = Field(default=None, max_length=255)
     internship_type: str | None = Field(default=None, max_length=120)
-    languages: list[LanguagePayload] = Field(default_factory=list)
+    languages: list[LanguagePayload] = Field(default_factory=list, max_length=20)
     experience_level: str | None = Field(default=None, max_length=120)
 
     @field_validator(
@@ -93,9 +110,14 @@ class ProfilePayload(BaseModel):
             raise ValueError(f"Unsupported target role: {invalid_roles[0]}")
         return roles
 
+    @field_validator("github_url")
+    @classmethod
+    def validate_github_url(cls, value: str | None) -> str | None:
+        return optional_http_url(value)
+
 
 class SkillPayload(BaseModel):
-    skills: list[str] = Field(default_factory=list)
+    skills: list[str] = Field(default_factory=list, max_length=100)
 
     @field_validator("skills")
     @classmethod
@@ -104,7 +126,7 @@ class SkillPayload(BaseModel):
 
 
 class ProjectsPayload(BaseModel):
-    projects: list[ProjectPayload] = Field(default_factory=list)
+    projects: list[ProjectPayload] = Field(default_factory=list, max_length=25)
 
 
 class ProfileResponse(ProfilePayload):
@@ -119,6 +141,7 @@ class ProfileSnapshot(BaseModel):
 
 
 def normalize_tags(values: list[str]) -> list[str]:
+    values = bounded_text_values(values, max_items=100, max_item_length=120)
     seen: set[str] = set()
     tags: list[str] = []
     for raw_value in values:

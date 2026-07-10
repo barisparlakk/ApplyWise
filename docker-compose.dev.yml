@@ -13,6 +13,7 @@ services:
       AUTH_JWT_ISSUER: applywise-web
       GITHUB_ID: ""
       GITHUB_SECRET: ""
+      SUPPORT_EMAIL: support@applywise.local
       NODE_ENV: development
     volumes:
       - ./web:/app
@@ -43,8 +44,12 @@ services:
       AUTH_JWT_ISSUER: applywise-web
       CORS_ORIGINS: http://localhost:3000
       LLM_PROVIDER: local
+      REQUIRE_EXTERNAL_LLM: "false"
     ports:
       - "8000:8000"
+    networks:
+      - edge
+      - backend
     volumes:
       - ./api:/app
 
@@ -69,10 +74,16 @@ services:
       POSTGRES_DB: applywise
     ports:
       - "5432:5432"
+    networks:
+      - edge
+      - backend
 
   redis:
     ports:
       - "6379:6379"
+    networks:
+      - edge
+      - backend
 
 volumes:
   web_node_modules:

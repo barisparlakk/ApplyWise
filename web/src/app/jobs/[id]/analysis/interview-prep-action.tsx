@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import type { ApplicationData } from "@/lib/api";
+import { apiError, JSON_HEADERS } from "@/lib/client-api";
 
 type InterviewPrepActionProps = {
   apiBaseUrl: string;
-  backendToken: string;
   jobPostId: string;
 };
 
@@ -16,20 +16,11 @@ type ActionState = "idle" | "creating" | "error";
 
 export function InterviewPrepAction({
   apiBaseUrl,
-  backendToken,
   jobPostId,
 }: InterviewPrepActionProps) {
   const router = useRouter();
   const [state, setState] = useState<ActionState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const headers = useMemo(
-    () => ({
-      Authorization: `Bearer ${backendToken}`,
-      "Content-Type": "application/json",
-    }),
-    [backendToken],
-  );
-
   async function startPrep() {
     await createTrackerEntry("preparing", true);
   }
@@ -44,7 +35,7 @@ export function InterviewPrepAction({
       setErrorMessage(null);
       const response = await fetch(`${apiBaseUrl}/applications/from-job/${jobPostId}`, {
         method: "POST",
-        headers,
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           status,
           next_action:
@@ -55,7 +46,7 @@ export function InterviewPrepAction({
       });
 
       if (!response.ok) {
-        throw new Error(`Could not create application: ${response.status}.`);
+        throw await apiError(response, "Could not create application");
       }
 
       const application = (await response.json()) as ApplicationData;

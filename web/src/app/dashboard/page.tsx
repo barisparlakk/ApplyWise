@@ -1,19 +1,18 @@
 import Link from "next/link";
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import type { ApplicationData } from "@/lib/api";
 import { getApplications, getCurrentUser } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+import { getBackendSession } from "@/lib/server-auth";
 
 const ACTIVE_STATUSES = new Set(["saved", "preparing", "applied", "assessment", "interview"]);
 const CLOSED_STATUSES = new Set(["rejected", "offer", "archived"]);
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getBackendSession();
 
-  if (!session?.backendToken) {
+  if (!session) {
     redirect("/login?callbackUrl=/dashboard");
   }
 

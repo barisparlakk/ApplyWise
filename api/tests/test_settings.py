@@ -22,6 +22,8 @@ def test_production_rejects_default_credentials(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setenv("AUTH_JWT_AUDIENCE", "applywise-api")
     monkeypatch.setenv("AUTH_JWT_ISSUER", "applywise-web")
     monkeypatch.setenv("CORS_ORIGINS", "https://app.applywise.example")
+    monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("ALLOWED_HOSTS", "api,localhost,127.0.0.1")
 
     with pytest.raises(RuntimeError, match="DATABASE_URL"):
         validate_runtime_environment()
@@ -37,5 +39,32 @@ def test_production_accepts_complete_secure_configuration(monkeypatch: pytest.Mo
     monkeypatch.setenv("AUTH_JWT_AUDIENCE", "applywise-api")
     monkeypatch.setenv("AUTH_JWT_ISSUER", "applywise-web")
     monkeypatch.setenv("CORS_ORIGINS", "https://app.applywise.example")
+    monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("ALLOWED_HOSTS", "api,localhost,127.0.0.1")
 
+    validate_runtime_environment()
+
+
+def test_production_can_require_an_external_llm(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://deploy_user:secure-production-password@postgres:5432/applywise",
+    )
+    monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("AUTH_JWT_SECRET", "a" * 48)
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "applywise-api")
+    monkeypatch.setenv("AUTH_JWT_ISSUER", "applywise-web")
+    monkeypatch.setenv("CORS_ORIGINS", "https://app.applywise.example")
+    monkeypatch.setenv("ALLOWED_HOSTS", "api,localhost,127.0.0.1")
+    monkeypatch.setenv("REQUIRE_EXTERNAL_LLM", "true")
+    monkeypatch.setenv("LLM_PROVIDER", "local")
+
+    with pytest.raises(RuntimeError, match="external LLM"):
+        validate_runtime_environment()
+
+    monkeypatch.setenv("LLM_PROVIDER", "openai-compatible")
+    monkeypatch.setenv("LLM_API_URL", "https://llm.example.test/v1/chat/completions")
+    monkeypatch.setenv("LLM_API_KEY", "test-provider-key")
+    monkeypatch.setenv("LLM_MODEL", "test-model")
     validate_runtime_environment()

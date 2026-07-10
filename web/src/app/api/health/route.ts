@@ -7,7 +7,7 @@ export async function GET() {
   const baseUrl = process.env.API_INTERNAL_URL ?? "http://api:8000";
 
   try {
-    const response = await fetch(`${baseUrl.replace(/\/$/, "")}/health`, {
+    const response = await fetch(`${baseUrl.replace(/\/$/, "")}/ready`, {
       cache: "no-store",
     });
 

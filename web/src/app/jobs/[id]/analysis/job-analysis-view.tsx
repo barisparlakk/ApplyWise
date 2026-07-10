@@ -5,14 +5,12 @@ import type { JobPostData } from "@/lib/api";
 
 type JobAnalysisViewProps = {
   apiBaseUrl: string;
-  backendToken: string;
   jobPost: JobPostData;
   roadmapDays: number;
 };
 
 export function JobAnalysisView({
   apiBaseUrl,
-  backendToken,
   jobPost,
   roadmapDays,
 }: JobAnalysisViewProps) {
@@ -156,7 +154,6 @@ export function JobAnalysisView({
           <div className="mt-5">
             <InterviewPrepAction
               apiBaseUrl={apiBaseUrl}
-              backendToken={backendToken}
               jobPostId={jobPost.id}
             />
           </div>
