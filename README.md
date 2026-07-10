@@ -8,6 +8,8 @@ This MVP is wired for a local demo without external accounts: deterministic loca
 
 The monorepo is split into a Next.js frontend, a FastAPI backend, a Dramatiq worker, PostgreSQL with pgvector, and Redis. The frontend never calls AI providers directly; all backend and AI workflows are routed through the API service. Scoring is hybrid: Python computes component scores and totals, while the AI provider interface supplies structured qualitative feedback.
 
+GitHub Actions runs the API tests and lint checks, frontend type/lint/build checks, production dependency audit, Compose validation, and both production image builds on every pull request and push to `main`. Dependabot checks the npm, Python, Docker, and Actions dependency surfaces weekly.
+
 ```mermaid
 flowchart LR
     User["Student"] --> Web["Next.js App Router"]

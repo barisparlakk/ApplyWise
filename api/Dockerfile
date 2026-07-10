@@ -7,18 +7,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 COPY pyproject.toml ./
+COPY constraints.txt ./
 COPY alembic.ini ./
 COPY alembic ./alembic
 COPY src ./src
 
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir .
+    && pip install --no-cache-dir -c constraints.txt .
 
 FROM runtime-base AS development
 
 COPY tests ./tests
 
-RUN pip install --no-cache-dir -e ".[dev]"
+RUN pip install --no-cache-dir -c constraints.txt -e ".[dev]"
 
 EXPOSE 8000
 
