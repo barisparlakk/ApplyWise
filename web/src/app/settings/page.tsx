@@ -1,9 +1,24 @@
+import {
+  ArrowRight,
+  FileText,
+  Fingerprint,
+  GitFork,
+  LockKeyhole,
+  Mail,
+  Settings,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { DeleteAccountButton } from "@/app/settings/delete-account-button";
 import { SignOutButton } from "@/app/settings/sign-out-button";
 import { AppShell } from "@/components/app-shell";
+import { Reveal } from "@/components/motion";
+import { PageHeader, SectionHeading } from "@/components/page-header";
+import { SignalField } from "@/components/signal-field";
 import { getCurrentUser } from "@/lib/api";
 import { getBackendSession } from "@/lib/server-auth";
 
@@ -18,42 +33,70 @@ export default async function SettingsPage() {
 
   return (
     <AppShell>
-      <section className="mx-auto w-full max-w-6xl">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="app-kicker">
-              Settings
-            </p>
-            <h1 className="app-title">Account</h1>
+      <div className="mx-auto w-full max-w-[1200px] space-y-6">
+        <PageHeader
+          action={<SignOutButton />}
+          description="Manage account identity, session access, and the evidence stored in your workspace."
+          eyebrow="Workspace controls"
+          icon={Settings}
+          title="Account settings"
+        />
+
+        <Reveal className="relative overflow-hidden rounded-lg bg-[#101318] text-white shadow-[0_20px_46px_rgba(16,19,24,0.14)]">
+          <SignalField className="left-auto w-[48%] opacity-45" compact />
+          <div className="relative flex min-h-[210px] flex-col justify-between gap-7 p-6 sm:flex-row sm:items-center sm:p-8">
+            <div className="flex min-w-0 items-center gap-4">
+              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg border border-white/12 bg-white/8 text-xl font-bold text-[#FF786D]">{initials(user.full_name ?? user.email)}</span>
+              <div className="min-w-0"><p className="text-[10px] font-bold uppercase text-[#2BC3CE]">Active account</p><h2 className="mt-2 truncate text-2xl font-bold">{user.full_name ?? "ApplyWise user"}</h2><p className="mt-1 truncate text-sm text-white/52">{user.email}</p></div>
+            </div>
+            <div className="border-t border-white/10 pt-5 sm:border-l sm:border-t-0 sm:pl-7 sm:pt-0"><p className="text-[10px] font-bold uppercase text-white/38">Account ID</p><p className="mt-2 max-w-[280px] break-all font-mono text-xs leading-5 text-white/62">{user.id}</p></div>
           </div>
-          <SignOutButton />
+        </Reveal>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <Reveal className="app-surface overflow-hidden" delay={0.04}>
+            <div className="border-b border-border p-5 sm:p-6"><SectionHeading description="Identity shared with your private ApplyWise workspace." title="Account identity" /></div>
+            <dl className="divide-y divide-border">
+              <IdentityRow icon={UserRound} label="Name" value={user.full_name ?? "Not set"} />
+              <IdentityRow icon={Mail} label="Email" value={user.email} />
+              <IdentityRow icon={Fingerprint} label="User ID" value={user.id} />
+            </dl>
+          </Reveal>
+
+          <Reveal className="app-surface overflow-hidden" delay={0.08}>
+            <div className="border-b border-border p-5"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><ShieldCheck className="h-4 w-4" />Evidence controls</div></div>
+            <div className="divide-y divide-border">
+              <SettingsLink href="/profile" icon={UserRound} label="Profile evidence" />
+              <SettingsLink href="/resume" icon={FileText} label="CV library" />
+              <SettingsLink href="/projects" icon={GitFork} label="Repository evidence" />
+            </div>
+          </Reveal>
         </div>
 
-        <dl className="mt-10 grid max-w-xl gap-4 text-sm">
-          <div className="app-surface p-4">
-            <dt className="font-medium text-muted-foreground">Name</dt>
-            <dd className="mt-1 text-foreground">{user.full_name ?? "Not set"}</dd>
-          </div>
-          <div className="app-surface p-4">
-            <dt className="font-medium text-muted-foreground">Email</dt>
-            <dd className="mt-1 text-foreground">{user.email}</dd>
-          </div>
-          <div className="app-surface p-4">
-            <dt className="font-medium text-muted-foreground">User ID</dt>
-            <dd className="mt-1 break-all text-foreground">{user.id}</dd>
-          </div>
-        </dl>
+        <Reveal className="grid border-y border-border bg-white lg:grid-cols-[240px_1fr]" delay={0.1}>
+          <div className="border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#167D87]"><LockKeyhole className="h-4 w-4" />Data and privacy</div><p className="mt-3 text-sm leading-6 text-muted-foreground">Your evidence remains tied to your account.</p></div>
+          <div className="p-5 sm:p-6"><p className="text-sm leading-7 text-muted-foreground">Review the <Link className="font-bold text-[#D9473F] hover:text-foreground" href="/privacy">privacy notice</Link> and <Link className="font-bold text-[#D9473F] hover:text-foreground" href="/terms">terms of use</Link> for details on storage, processing, and deletion.</p></div>
+        </Reveal>
 
-        <section className="mt-10 max-w-2xl border-t border-border pt-8">
-          <h2 className="text-lg font-semibold text-foreground">Data and privacy</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Review the <Link className="font-semibold text-primary hover:underline" href="/privacy">privacy notice</Link> and <Link className="font-semibold text-primary hover:underline" href="/terms">terms of use</Link>. You can permanently remove your account and associated workspace data here.
-          </p>
-          <div className="mt-5">
+        <Reveal className="border-l-2 border-[#FF5A4E] bg-[#fff5f4] p-5 sm:p-6" delay={0.14}>
+          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start">
+            <div><p className="text-xs font-bold uppercase text-[#A63832]">Danger zone</p><h2 className="mt-2 text-lg font-bold text-foreground">Delete workspace and account</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Permanently removes your profile, CVs, repository analyses, roles, applications, roadmaps, and interview preparation.</p></div>
             <DeleteAccountButton />
           </div>
-        </section>
-      </section>
+        </Reveal>
+      </div>
     </AppShell>
   );
+}
+
+function IdentityRow({ icon: Icon, label, value }: Readonly<{ icon: LucideIcon; label: string; value: string }>) {
+  return <div className="grid gap-2 px-5 py-4 sm:grid-cols-[150px_1fr] sm:items-center sm:px-6"><dt className="flex items-center gap-2 text-xs font-bold uppercase text-muted-foreground"><Icon className="h-4 w-4 text-[#D9473F]" />{label}</dt><dd className="break-all text-sm font-semibold text-foreground">{value}</dd></div>;
+}
+
+function SettingsLink({ href, icon: Icon, label }: Readonly<{ href: string; icon: LucideIcon; label: string }>) {
+  return <Link className="group flex items-center justify-between gap-3 px-5 py-4 text-sm font-bold text-foreground transition hover:bg-[#f8f9fa] hover:text-[#D9473F]" href={href}><span className="flex items-center gap-2"><Icon className="h-4 w-4 text-muted-foreground group-hover:text-[#D9473F]" />{label}</span><ArrowRight className="h-4 w-4" /></Link>;
+}
+
+function initials(value: string) {
+  return value.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "AW";
 }

@@ -23,7 +23,7 @@ export default async function InterviewPrepPage({ params }: InterviewPrepPagePro
 
   return (
     <AppShell>
-      <section className="mx-auto w-full max-w-7xl">
+      <section className="mx-auto w-full max-w-[1400px]">
         <InterviewPrepView
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           initialPrep={prep}
