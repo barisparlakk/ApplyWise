@@ -1,19 +1,36 @@
 "use client";
 
+import {
+  ArrowUpRight,
+  BriefcaseBusiness,
+  FileText,
+  Gauge,
+  GitBranch,
+  LayoutDashboard,
+  Plus,
+  Route,
+  SearchCheck,
+  Settings,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { BrandLockup, BrandMark } from "@/components/brand";
+import { PageMotion } from "@/components/motion";
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { href: "/dashboard", label: "Overview", shortLabel: "OV" },
-  { href: "/applications", label: "Applications", shortLabel: "AP" },
-  { href: "/jobs/new", label: "Analyze a job", shortLabel: "JB" },
-  { href: "/profile", label: "Profile", shortLabel: "PR" },
-  { href: "/resume", label: "CV library", shortLabel: "CV" },
-  { href: "/projects", label: "Projects", shortLabel: "GH" },
-  { href: "/roadmap", label: "Skill roadmap", shortLabel: "RM" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Home", group: "Workspace" },
+  { href: "/applications", icon: BriefcaseBusiness, label: "Pipeline", group: "Workspace" },
+  { href: "/jobs/new", icon: SearchCheck, label: "Analyze role", group: "Workspace" },
+  { href: "/roadmap", icon: Route, label: "Roadmaps", group: "Workspace" },
+  { href: "/profile", icon: UserRound, label: "Profile", group: "Evidence" },
+  { href: "/resume", icon: FileText, label: "CV library", group: "Evidence" },
+  { href: "/projects", icon: GitBranch, label: "Projects", group: "Evidence" },
 ];
+
+const mobileNavigation = navigation.slice(0, 4);
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -23,122 +40,129 @@ function isActive(pathname: string, href: string) {
   return href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 }
 
+function pageContext(pathname: string) {
+  if (pathname.startsWith("/applications")) return "Application pipeline";
+  if (pathname.startsWith("/jobs")) return "Role intelligence";
+  if (pathname.startsWith("/profile")) return "Candidate evidence";
+  if (pathname.startsWith("/resume")) return "CV intelligence";
+  if (pathname.startsWith("/projects")) return "Project evidence";
+  if (pathname.startsWith("/roadmap")) return "Readiness roadmap";
+  if (pathname.startsWith("/interview-prep")) return "Interview room";
+  if (pathname.startsWith("/settings")) return "Workspace settings";
+  return "Career command center";
+}
+
 export function AppShell({ children }: Readonly<AppShellProps>) {
   const pathname = usePathname();
+  const groups = ["Workspace", "Evidence"];
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 hidden w-[236px] border-r border-border bg-[#10221f] px-4 py-5 text-white min-[900px]:flex min-[900px]:flex-col">
-        <Link className="flex items-center gap-3 px-2" href="/dashboard">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#d7f75b] text-sm font-bold text-[#10221f]">
-            AW
-          </span>
-          <span>
-            <span className="block text-base font-semibold tracking-wide">ApplyWise</span>
-            <span className="block text-xs text-[#a9c1ba]">Career intelligence</span>
-          </span>
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[252px] border-r border-white/8 bg-[#101318] text-white min-[960px]:flex min-[960px]:flex-col">
+        <Link className="flex h-[76px] items-center border-b border-white/8 px-5" href="/dashboard">
+          <BrandLockup />
         </Link>
 
-        <nav className="mt-10 space-y-1" aria-label="Primary navigation">
-          {navigation.map((item) => {
-            const active = isActive(pathname, item.href);
-            return (
-              <Link
-                className={cn(
-                  "motion-nav group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
-                  active
-                    ? "bg-white text-[#10221f] shadow-sm"
-                    : "text-[#bed0cb] hover:bg-white/10 hover:text-white",
-                )}
-                href={item.href}
-                key={item.href}
-              >
-                <span
-                  className={cn(
-                    "grid h-6 w-7 place-items-center rounded text-[10px] font-semibold tracking-wide",
-                    active ? "bg-[#d7f75b] text-[#10221f]" : "bg-white/10 text-[#d6e4df]",
-                  )}
-                >
-                  {item.shortLabel}
-                </span>
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto px-3 py-5">
+          {groups.map((group) => (
+            <div className="mb-6" key={group}>
+              <p className="px-3 text-[10px] font-semibold uppercase text-white/35">{group}</p>
+              <div className="mt-2 space-y-1">
+                {navigation.filter((item) => item.group === group).map((item) => {
+                  const active = isActive(pathname, item.href);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "motion-nav group relative flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium",
+                        active
+                          ? "bg-white text-[#101318] shadow-[0_6px_18px_rgba(0,0,0,0.2)]"
+                          : "text-white/62 hover:bg-white/7 hover:text-white",
+                      )}
+                      href={item.href}
+                      key={item.href}
+                    >
+                      {active ? <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[#FF5A4E]" /> : null}
+                      <Icon aria-hidden="true" className={cn("h-[18px] w-[18px]", active ? "text-[#D9473F]" : "text-white/44 group-hover:text-[#2BC3CE]")} />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        <div className="mt-auto rounded-lg border border-white/10 bg-white/5 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a9c1ba]">
-            Your next move
-          </p>
-          <p className="mt-2 text-sm font-medium leading-5 text-white">
-            Analyze a role to turn your profile into an application plan.
-          </p>
-          <Link
-            className="motion-control mt-4 inline-flex h-9 items-center rounded-md bg-[#d7f75b] px-3 text-xs font-semibold text-[#10221f] hover:bg-[#e3ff82]"
-            href="/jobs/new"
-          >
-            Analyze a job
+        <div className="border-t border-white/8 px-5 py-5">
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase text-white/38">
+            <Gauge className="h-3.5 w-3.5 text-[#2BC3CE]" />
+            Next signal
+          </div>
+          <p className="mt-2 text-sm leading-5 text-white/72">Turn one target role into a scored action plan.</p>
+          <Link className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#FF786D] hover:text-white" href="/jobs/new">
+            Analyze a role <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
-        </div>
-        <div className="mt-3 flex gap-4 px-2 text-xs text-[#a9c1ba]">
-          <Link className="hover:text-white" href="/privacy">Privacy</Link>
-          <Link className="hover:text-white" href="/terms">Terms</Link>
         </div>
       </aside>
 
-      <div className="min-[900px]:pl-[236px]">
-        <header className="sticky top-0 z-20 border-b border-border/80 bg-background/95 backdrop-blur">
-          <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3 min-[900px]:hidden">
-              <Link className="grid h-8 w-8 place-items-center rounded-md bg-[#10221f] text-[10px] font-bold text-[#d7f75b]" href="/dashboard">
-                AW
+      <div className="min-w-0 min-[960px]:pl-[252px]">
+        <header className="sticky top-0 z-20 border-b border-border bg-white/92 backdrop-blur-xl">
+          <div className="flex h-[68px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+            <div className="flex min-w-0 items-center gap-3">
+              <Link className="min-[960px]:hidden" href="/dashboard">
+                <BrandMark className="h-8 w-8" />
               </Link>
-              <p className="text-sm font-semibold text-foreground">ApplyWise</p>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-foreground">{pageContext(pathname)}</p>
+                <p className="hidden text-xs text-muted-foreground sm:block">Evidence in, clearer decisions out</p>
+              </div>
             </div>
-            <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto min-[900px]:flex" aria-label="Breadcrumb">
-              <span className="text-sm text-muted-foreground">Workspace</span>
-              <span className="text-sm text-border">/</span>
-              <span className="text-sm font-medium text-foreground">Career command center</span>
-            </nav>
-            <div className="flex items-center gap-2 sm:gap-3">
+
+            <div className="flex items-center gap-2">
               <Link
-                className="motion-control hidden h-9 items-center rounded-md border border-border bg-white px-3 text-sm font-medium text-foreground hover:border-[#6cb5a3] hover:bg-[#f4fbf8] sm:inline-flex"
-                href="/settings"
+                className="motion-control hidden h-10 items-center gap-2 rounded-md bg-[#101318] px-3.5 text-xs font-bold text-white shadow-sm hover:bg-[#282c34] sm:inline-flex"
+                href="/jobs/new"
               >
-                Settings
+                <Plus className="h-4 w-4 text-[#FF6B60]" />
+                Analyze role
               </Link>
               <Link
                 aria-label="Open settings"
-                className="motion-control grid h-9 w-9 place-items-center rounded-full bg-[#e6f2ee] text-xs font-bold text-[#16675a] hover:bg-[#d7f75b]"
+                className={cn(
+                  "motion-control grid h-10 w-10 place-items-center rounded-md border border-border bg-white text-muted-foreground hover:border-[#a8afb8] hover:text-foreground",
+                  pathname.startsWith("/settings") && "border-[#D9473F] text-[#D9473F]",
+                )}
                 href="/settings"
-                title="Open settings"
+                title="Settings"
               >
-                AW
+                <Settings className="h-[18px] w-[18px]" />
               </Link>
             </div>
           </div>
-          <nav className="flex gap-1 overflow-x-auto border-t border-border/70 px-3 py-2 min-[900px]:hidden" aria-label="Mobile navigation">
-            {navigation.map((item) => (
-              <Link
-                className={cn(
-                  "motion-control whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium",
-                  isActive(pathname, item.href)
-                    ? "bg-[#10221f] text-white"
-                    : "text-muted-foreground hover:bg-muted",
-                )}
-                href={item.href}
-                key={item.href}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
         </header>
-        <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <div className="app-page" key={pathname}>{children}</div>
+
+        <main className="px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:py-8 min-[960px]:pb-8">
+          <PageMotion key={pathname}>{children}</PageMotion>
         </main>
       </div>
+
+      <nav aria-label="Mobile navigation" className="fixed inset-x-3 bottom-3 z-40 grid h-[62px] grid-cols-5 rounded-lg border border-white/10 bg-[#101318]/96 px-1 shadow-[0_16px_40px_rgba(16,19,24,0.28)] backdrop-blur-xl min-[960px]:hidden">
+        {mobileNavigation.map((item) => {
+          const active = isActive(pathname, item.href);
+          const Icon = item.icon;
+          return (
+            <Link className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-semibold", active ? "text-white" : "text-white/48")} href={item.href} key={item.href}>
+              <Icon className={cn("h-[18px] w-[18px]", active && "text-[#FF6B60]")} />
+              <span className="max-w-full truncate">{item.label}</span>
+            </Link>
+          );
+        })}
+        <Link className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-semibold", ["/profile", "/resume", "/projects", "/settings"].some((path) => pathname.startsWith(path)) ? "text-white" : "text-white/48")} href="/profile">
+          <UserRound className="h-[18px] w-[18px]" />
+          <span>Evidence</span>
+        </Link>
+      </nav>
     </div>
   );
 }

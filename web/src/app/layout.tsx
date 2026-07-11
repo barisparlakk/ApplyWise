@@ -3,7 +3,10 @@ import { Providers } from "@/app/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ApplyWise",
+  title: {
+    default: "ApplyWise",
+    template: "%s | ApplyWise",
+  },
   description: "Internship intelligence for computer engineering and data/AI students.",
 };
 
