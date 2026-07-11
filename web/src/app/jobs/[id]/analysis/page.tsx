@@ -28,7 +28,7 @@ export default async function JobAnalysisPage({ params, searchParams }: JobAnaly
 
   return (
     <AppShell>
-      <section className="mx-auto w-full max-w-7xl">
+      <section className="mx-auto w-full max-w-[1400px]">
         <JobAnalysisView
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           jobPost={jobPost}

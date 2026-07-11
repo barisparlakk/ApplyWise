@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertTriangle, BookmarkPlus, LoaderCircle, MessagesSquare } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -61,7 +62,8 @@ export function InterviewPrepAction({
     <div>
       <div className="grid gap-2">
         <Button disabled={state === "creating"} onClick={() => void saveApplication()} type="button">
-          Save application
+          {state === "creating" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <BookmarkPlus className="h-4 w-4" />}
+          Save to pipeline
         </Button>
         <Button
           disabled={state === "creating"}
@@ -69,10 +71,11 @@ export function InterviewPrepAction({
           type="button"
           variant="secondary"
         >
-          {state === "creating" ? "Saving" : "Prepare interview"}
+          <MessagesSquare className="h-4 w-4" />
+          {state === "creating" ? "Creating workspace" : "Start interview prep"}
         </Button>
       </div>
-      {errorMessage ? <p className="mt-2 text-sm text-red-700">{errorMessage}</p> : null}
+      {errorMessage ? <p className="mt-3 flex items-start gap-2 rounded-md border border-[#f0b5b0] bg-[#fff3f2] p-3 text-sm font-semibold text-[#A63832]"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{errorMessage}</p> : null}
     </div>
   );
 }
