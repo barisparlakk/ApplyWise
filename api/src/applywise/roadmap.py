@@ -312,42 +312,154 @@ def build_dated_plan(
 
 
 def day_focus(index: int, skill: MissingSkill, job_post: JobPost) -> str:
-    if index == 0:
-        return f"Close the highest-impact gap: {skill.name}"
-    if index == 1:
-        return f"Apply {skill.name} to a {job_post.title} task"
-    if index == 2:
-        return f"Turn {skill.name} into interview-ready evidence"
-    return f"Deepen {skill.name} for {job_post.title}"
+    stage = plan_stage(index)
+    stage_labels = {
+        "learn": "Build the foundation",
+        "apply": "Apply it to the role",
+        "prove": "Create evidence",
+        "explain": "Explain your decisions",
+        "simulate": "Practice under interview conditions",
+        "refine": "Find and fix weak spots",
+        "package": "Package the evidence",
+    }
+    return f"{stage_labels[stage]}: {skill.name} for {job_post.title}"
 
 
 def day_tasks(index: int, skill: MissingSkill, job_post: JobPost) -> list[str]:
-    role = job_post.title
-    if index % 3 == 0:
+    stage = plan_stage(index)
+    responsibility = job_responsibility(job_post, index)
+    practice_task = skill_practice_task(skill.name, job_post)
+    advanced_task = (
+        "Repeat the exercise with a larger input, an edge case, or less guidance."
+        if index >= 7
+        else "Keep the exercise small enough to finish and document today."
+    )
+
+    if stage == "learn":
         return [
-            f"Review one concise tutorial or documentation section for {skill.name}.",
-            f"Write 5 bullet notes connecting {skill.name} to {role} responsibilities.",
-            "Update your profile or CV with one concrete evidence gap to fill.",
+            f"Review the core concepts for {skill.name} and write five role-specific notes.",
+            practice_task,
+            f"Connect your notes to this responsibility: {responsibility}.",
         ]
-    if index % 3 == 1:
+    if stage == "apply":
         return [
-            f"Build a 60-90 minute mini exercise using {skill.name}.",
-            f"Tie the exercise to this job: {', '.join((job_post.responsibilities or [])[:2])}.",
-            "Commit or document the result with a short README-style summary.",
+            practice_task,
+            f"Use the result to address this responsibility: {responsibility}.",
+            "Record one measurable result and one limitation in a short README.",
+        ]
+    if stage == "prove":
+        return [
+            f"Turn the {skill.name} exercise into a reviewable repository, notebook, "
+            "or case study.",
+            "Add a test, validation check, or before-and-after comparison.",
+            f"Write two evidence bullets tied to {responsibility}.",
+        ]
+    if stage == "explain":
+        return [
+            f"Record a 90-second explanation of how you used {skill.name}.",
+            f"Explain one tradeoff you would make while working on: {responsibility}.",
+            "Rewrite the answer once using a clear problem, decision, result structure.",
+        ]
+    if stage == "simulate":
+        return [
+            f"Complete a 45-minute timed {skill.name} exercise without tutorial help.",
+            practice_task,
+            "Score the attempt for correctness, clarity, and communication; list the top two gaps.",
+        ]
+    if stage == "refine":
+        return [
+            f"Revisit the weakest part of your {skill.name} evidence and fix one failure mode.",
+            advanced_task,
+            f"Check that the improved result supports: {responsibility}.",
         ]
     return [
-        f"Prepare a STAR-style interview story involving {skill.name}.",
-        "Practice explaining tradeoffs, failure modes, and what you would improve next.",
-        "Add one measurable result or screenshot/link to your application tracker.",
+        f"Add the strongest {skill.name} result to the role-specific CV or GitHub summary.",
+        f"Write three concise bullets showing how it supports {responsibility}.",
+        "Attach the evidence to the application and set the next preparation action.",
     ]
 
 
 def day_outcome(index: int, skill: MissingSkill, job_post: JobPost) -> str:
-    if index % 3 == 0:
-        return f"You can explain why {skill.name} matters for {job_post.title}."
-    if index % 3 == 1:
-        return f"You have a small artifact proving practical {skill.name} usage."
-    return f"You have an interview-ready answer for the {skill.name} gap."
+    outcomes = {
+        "learn": f"You can explain the {skill.name} fundamentals this role uses.",
+        "apply": f"You have a role-specific {skill.name} exercise with a measurable result.",
+        "prove": f"You have reviewable evidence of practical {skill.name} usage.",
+        "explain": f"You have a concise, interview-ready {skill.name} explanation.",
+        "simulate": f"You know how your {skill.name} performance holds up under time pressure.",
+        "refine": f"Your {skill.name} evidence covers one realistic failure mode.",
+        "package": f"Your {skill.name} proof is attached to the {job_post.title} application.",
+    }
+    return outcomes[plan_stage(index)]
+
+
+def plan_stage(index: int) -> str:
+    stages = ("learn", "apply", "prove", "explain", "simulate", "refine", "package")
+    return stages[index % len(stages)]
+
+
+def job_responsibility(job_post: JobPost, index: int) -> str:
+    responsibilities = [value.strip() for value in job_post.responsibilities or [] if value.strip()]
+    if responsibilities:
+        return responsibilities[index % len(responsibilities)]
+    domain = job_post.domain or job_post.title
+    return f"deliver a reliable {domain} outcome"
+
+
+def skill_practice_task(skill_name: str, job_post: JobPost) -> str:
+    skill = skill_name.casefold()
+    role = job_post.title
+    domain = job_post.domain or role
+
+    if any(value in skill for value in ("opencv", "computer vision", "image")):
+        return (
+            "Build a small image pipeline, choose one evaluation metric, and inspect three "
+            "failure cases."
+        )
+    if any(
+        value in skill
+        for value in ("machine learning", "deep learning", "pytorch", "tensorflow", "model")
+    ):
+        return (
+            "Train or evaluate a compact baseline, report the metric choice, and explain one "
+            "source of model error."
+        )
+    if any(value in skill for value in ("sql", "postgres", "database", "data model")):
+        return (
+            "Create a small relational dataset, answer three business questions with SQL, and "
+            "inspect one query plan or index choice."
+        )
+    if any(value in skill for value in ("api", "backend", "fastapi", "django", "spring")):
+        return (
+            "Implement one validated API endpoint with an error path and an automated test."
+        )
+    if any(value in skill for value in ("react", "typescript", "javascript", "frontend")):
+        return (
+            "Build one accessible user workflow with loading, empty, success, and error states."
+        )
+    if any(value in skill for value in ("docker", "ci", "deployment", "cloud", "kubernetes")):
+        return (
+            "Package a small service, add a health check, and document one repeatable build or "
+            "deployment command."
+        )
+    if any(value in skill for value in ("excel", "power bi", "tableau", "analyst", "process")):
+        return (
+            "Analyze a small dataset, define two decision metrics, and present one actionable "
+            "recommendation."
+        )
+    if any(value in skill for value in ("english", "communication", "narrative")):
+        return (
+            f"Prepare and record a 90-second explanation of a project relevant to {role}."
+        )
+    if "profile" in skill or "project proof" in skill:
+        return (
+            "Select one existing project and rewrite its evidence around a concrete "
+            f"{role} outcome."
+        )
+    if "domain" in skill:
+        return (
+            f"Map five {domain} concepts to the job responsibilities and one existing project."
+        )
+    return f"Complete a focused {skill_name} exercise using a realistic {domain} scenario."
 
 
 def roadmap_duration_from_query(value: int) -> int:

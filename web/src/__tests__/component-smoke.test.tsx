@@ -2,6 +2,7 @@ import { ApplicationDetail } from "@/app/applications/[id]/application-detail";
 import { JobPostForm } from "@/app/jobs/new/job-post-form";
 import { JobAnalysisView } from "@/app/jobs/[id]/analysis/job-analysis-view";
 import { LoginForm } from "@/app/login/login-form";
+import { OnboardingForm } from "@/app/onboarding/onboarding-form";
 import { GitHubAnalyzer } from "@/app/projects/github-analyzer";
 import { ProfileBuilder } from "@/app/profile/profile-builder";
 import { ResumeManager } from "@/app/resume/resume-manager";
@@ -282,6 +283,13 @@ export function ComponentSmokeCases() {
         emailEnabled={false}
         githubEnabled={false}
         googleEnabled
+      />
+      <OnboardingForm
+        apiBaseUrl={apiBaseUrl}
+        initialResume={resume}
+        initialSnapshot={profileSnapshot}
+        nextPath="/dashboard"
+        userName="Demo User"
       />
       <ProfileBuilder
         apiBaseUrl={apiBaseUrl}

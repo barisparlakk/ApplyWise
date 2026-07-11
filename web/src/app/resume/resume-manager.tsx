@@ -161,6 +161,12 @@ export function ResumeManager({
     saved: "CV indexed",
     error: "Needs attention",
   }[saveState];
+  const populatedSectionCount = Object.values(parsedData).filter(
+    (values) => values.length > 0,
+  ).length;
+  const missingSectionLabels = Object.entries(parsedData)
+    .filter(([, values]) => values.length === 0)
+    .map(([section]) => section.charAt(0).toUpperCase() + section.slice(1));
 
   return (
     <div className="space-y-6">
@@ -177,7 +183,7 @@ export function ResumeManager({
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#a9c1ba]">Document status</p>
             <p className="mt-2 text-xl font-semibold">{status}</p>
             <p className="mt-2 text-sm text-[#c5d8d2]">
-              {resume ? `${resume.chunk_count} indexed sections` : "PDF and DOCX supported"}
+              {resume ? `${resume.chunk_count} indexed chunks` : "PDF and DOCX supported"}
             </p>
           </div>
         </div>
@@ -227,6 +233,11 @@ export function ResumeManager({
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">Review extracted evidence</h2>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">Edit anything the parser missed before using it in fit analyses.</p>
+                  {missingSectionLabels.length ? (
+                    <p className="mt-2 text-sm font-medium text-[#9b554f]">
+                      Review needed: {missingSectionLabels.join(", ")}.
+                    </p>
+                  ) : null}
                 </div>
                 <Button disabled={saveState === "saving"} onClick={() => void saveCorrections()} type="button">
                   {saveState === "saving" ? "Saving" : "Save corrections"}
@@ -264,7 +275,7 @@ export function ResumeManager({
             <p className="text-base font-semibold text-foreground">CV signals</p>
             <dl className="mt-5 space-y-4 text-sm">
               <SummaryItem label="File" value={resume ? "Stored" : "Not uploaded"} />
-              <SummaryItem label="Sections" value={resume ? "4 extracted" : "-"} />
+              <SummaryItem label="Sections" value={resume ? `${populatedSectionCount}/4 populated` : "-"} />
               <SummaryItem label="Indexed chunks" value={resume?.chunk_count.toString() ?? "0"} />
               <SummaryItem label="Review state" value={resume ? "Ready" : "Waiting"} />
             </dl>

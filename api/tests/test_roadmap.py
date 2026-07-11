@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+from datetime import date
+
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from applywise.embeddings import DeterministicEmbeddingProvider
 from applywise.fit_score import compute_and_store_fit_analysis
 from applywise.models import Base, JobPost, LearningRoadmap, Profile, Project, User
-from applywise.roadmap import build_and_store_roadmap, roadmap_to_plan
+from applywise.roadmap import (
+    MissingSkill,
+    build_and_store_roadmap,
+    build_dated_plan,
+    roadmap_to_plan,
+)
 
 embedding_provider = DeterministicEmbeddingProvider()
 
@@ -92,3 +99,59 @@ def test_roadmap_ranks_missing_skills_and_builds_dated_plan() -> None:
     assert plan.missing_skills[0].impact_score >= plan.missing_skills[-1].impact_score
     assert plan.plan[0].date.isoformat()
     assert plan.plan[0].tasks
+    assert any("Build APIs" in task for task in plan.plan[0].tasks)
+
+
+def test_roadmap_tasks_change_with_role_and_responsibility() -> None:
+    backend_job = JobPost(
+        user_id=None,
+        company_name="Northstar",
+        title="Backend Intern",
+        description="Build APIs with SQL.",
+        required_skills=["SQL"],
+        nice_to_have_skills=[],
+        responsibilities=["Design reliable reporting APIs"],
+        domain="Backend",
+        hidden_expectations=[],
+        business_expectations=[],
+        communication_expectations=[],
+    )
+    ml_job = JobPost(
+        user_id=None,
+        company_name="Vision Labs",
+        title="AI/ML Intern",
+        description="Evaluate image models.",
+        required_skills=["Computer Vision"],
+        nice_to_have_skills=[],
+        responsibilities=["Evaluate model failure cases"],
+        domain="Computer Vision",
+        hidden_expectations=[],
+        business_expectations=[],
+        communication_expectations=[],
+    )
+
+    backend_plan = build_dated_plan(
+        missing_skills=[
+            MissingSkill(rank=1, name="SQL", impact_score=90, reason="Required skill")
+        ],
+        job_post=backend_job,
+        duration_days=3,
+        start_date=date(2026, 7, 11),
+    )
+    ml_plan = build_dated_plan(
+        missing_skills=[
+            MissingSkill(
+                rank=1,
+                name="Computer Vision",
+                impact_score=90,
+                reason="Required skill",
+            )
+        ],
+        job_post=ml_job,
+        duration_days=3,
+        start_date=date(2026, 7, 11),
+    )
+
+    assert backend_plan[0].tasks != ml_plan[0].tasks
+    assert any("Design reliable reporting APIs" in task for task in backend_plan[0].tasks)
+    assert any("Evaluate model failure cases" in task for task in ml_plan[0].tasks)

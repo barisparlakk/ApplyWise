@@ -14,6 +14,7 @@ from applywise.resume_parser import (
 )
 
 FIXTURE_PATH = Path(__file__).parent / "fixtures" / "sample_cv.txt"
+REALISTIC_FIXTURE_PATH = Path(__file__).parent / "fixtures" / "realistic_cv.txt"
 
 
 class InvalidOnceProvider:
@@ -65,6 +66,26 @@ def test_structured_resume_extraction_retries_invalid_provider_output() -> None:
 
     assert provider.calls == 2
     assert parsed_resume.skills == ["Python"]
+
+
+def test_parser_handles_aliases_inline_headings_and_table_style_rows() -> None:
+    fixture_text = REALISTIC_FIXTURE_PATH.read_text()
+    parsed_resume = extract_structured_resume(fixture_text)
+
+    assert parsed_resume.education == [
+        "BSc Computer Engineering, ApplyWise University, 2023-2027"
+    ]
+    assert "backend engineering intern" in parsed_resume.experience[0].casefold()
+    assert parsed_resume.skills == [
+        "Python",
+        "FastAPI",
+        "SQL",
+        "PostgreSQL",
+        "Docker",
+        "GitHub Actions",
+    ]
+    assert len(parsed_resume.projects) == 2
+    assert all("CERTIFICATIONS" not in value for value in parsed_resume.projects)
 
 
 def test_parser_rejects_unsupported_file_type() -> None:

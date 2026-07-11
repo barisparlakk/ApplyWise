@@ -1,0 +1,17 @@
+Jordan Lee
+jordan@example.com | github.com/jordanlee
+
+Academic Background: BSc Computer Engineering, ApplyWise University, 2023-2027
+
+Employment History
+BACKEND ENGINEERING INTERN | Northstar Labs | June 2025 - August 2025
+Built FastAPI services and PostgreSQL queries for an internal analytics workflow.
+
+Technical Skills & Tools | Python, FastAPI, SQL, PostgreSQL, Docker, GitHub Actions
+
+Selected Projects
+Internship Fit Analyzer - Developed a Python scoring API with automated tests.
+Computer Vision Lab - Implemented an OpenCV image classification prototype.
+
+CERTIFICATIONS
+Cloud fundamentals

@@ -9,7 +9,8 @@ type LoginPageProps = {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const callbackUrl = safeCallbackUrl(params.callbackUrl);
+  const destination = safeCallbackUrl(params.callbackUrl);
+  const callbackUrl = `/start?next=${encodeURIComponent(destination)}`;
 
   return (
     <main className="grid min-h-screen bg-[#10221f] lg:grid-cols-2">
