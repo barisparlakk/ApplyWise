@@ -23,10 +23,12 @@ export function Reveal({
   children,
   className,
   delay = 0,
+  id,
 }: {
   children: React.ReactNode;
   className?: string;
   delay?: number;
+  id?: string;
 }) {
   const reduceMotion = useReducedMotion();
 
@@ -37,6 +39,7 @@ export function Reveal({
       viewport={{ amount: 0.2, once: true }}
       whileInView={{ opacity: 1, y: 0 }}
       className={className}
+      id={id}
     >
       {children}
     </motion.div>

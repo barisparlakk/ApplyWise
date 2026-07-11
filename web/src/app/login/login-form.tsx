@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Github, Mail } from "lucide-react";
+import { ArrowRight, GitFork, Mail } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
@@ -34,7 +34,7 @@ export function LoginForm({ callbackUrl, emailEnabled, githubEnabled, googleEnab
           ) : null}
           {githubEnabled ? (
             <button className="motion-control flex h-12 w-full items-center justify-between rounded-md border border-border bg-white px-4 text-sm font-bold text-foreground shadow-sm hover:border-[#a8afb8] hover:bg-[#fafafa] disabled:opacity-60" disabled={pendingProvider !== null} onClick={() => void continueWith("github")} type="button">
-              <span className="flex items-center gap-3"><Github className="h-5 w-5" />Continue with GitHub</span>
+              <span className="flex items-center gap-3"><GitFork className="h-5 w-5" />Continue with GitHub</span>
               <ArrowRight className="h-4 w-4 text-muted-foreground" />
             </button>
           ) : null}
