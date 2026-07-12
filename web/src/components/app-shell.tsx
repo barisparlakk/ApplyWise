@@ -58,15 +58,15 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[252px] border-r border-white/8 bg-[#101318] text-white min-[960px]:flex min-[960px]:flex-col">
-        <Link className="flex h-[76px] items-center border-b border-white/8 px-5" href="/dashboard">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[252px] border-r border-white/[0.08] bg-[#101318] text-white min-[960px]:flex min-[960px]:flex-col">
+        <Link className="flex h-[76px] items-center border-b border-white/[0.08] px-5" href="/dashboard">
           <BrandLockup />
         </Link>
 
         <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto px-3 py-5">
           {groups.map((group) => (
             <div className="mb-6" key={group}>
-              <p className="px-3 text-[10px] font-semibold uppercase text-white/35">{group}</p>
+              <p className="px-3 text-[10px] font-semibold uppercase text-white/[0.35]">{group}</p>
               <div className="mt-2 space-y-1">
                 {navigation.filter((item) => item.group === group).map((item) => {
                   const active = isActive(pathname, item.href);
@@ -78,13 +78,13 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
                         "motion-nav group relative flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium",
                         active
                           ? "bg-white text-[#101318] shadow-[0_6px_18px_rgba(0,0,0,0.2)]"
-                          : "text-white/62 hover:bg-white/7 hover:text-white",
+                          : "text-white/[0.62] hover:bg-white/[0.07] hover:text-white",
                       )}
                       href={item.href}
                       key={item.href}
                     >
                       {active ? <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[#FF5A4E]" /> : null}
-                      <Icon aria-hidden="true" className={cn("h-[18px] w-[18px]", active ? "text-[#D9473F]" : "text-white/44 group-hover:text-[#2BC3CE]")} />
+                      <Icon aria-hidden="true" className={cn("h-[18px] w-[18px]", active ? "text-[#D9473F]" : "text-white/[0.44] group-hover:text-[#2BC3CE]")} />
                       <span>{item.label}</span>
                     </Link>
                   );
@@ -94,12 +94,12 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
           ))}
         </nav>
 
-        <div className="border-t border-white/8 px-5 py-5">
-          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase text-white/38">
+        <div className="border-t border-white/[0.08] px-5 py-5">
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase text-white/[0.38]">
             <Gauge className="h-3.5 w-3.5 text-[#2BC3CE]" />
             Next signal
           </div>
-          <p className="mt-2 text-sm leading-5 text-white/72">Turn one target role into a scored action plan.</p>
+          <p className="mt-2 text-sm leading-5 text-white/[0.72]">Turn one target role into a scored action plan.</p>
           <Link className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#FF786D] hover:text-white" href="/jobs/new">
             Analyze a role <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
@@ -107,7 +107,7 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
       </aside>
 
       <div className="min-w-0 min-[960px]:pl-[252px]">
-        <header className="sticky top-0 z-20 border-b border-border bg-white/92 backdrop-blur-xl">
+        <header className="sticky top-0 z-20 border-b border-border bg-white/[0.92] backdrop-blur-xl">
           <div className="flex h-[68px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <Link className="min-[960px]:hidden" href="/dashboard">
@@ -147,18 +147,18 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
         </main>
       </div>
 
-      <nav aria-label="Mobile navigation" className="fixed inset-x-3 bottom-3 z-40 grid h-[62px] grid-cols-5 rounded-lg border border-white/10 bg-[#101318]/96 px-1 shadow-[0_16px_40px_rgba(16,19,24,0.28)] backdrop-blur-xl min-[960px]:hidden">
+      <nav aria-label="Mobile navigation" className="fixed inset-x-3 bottom-3 z-40 grid h-[62px] grid-cols-5 rounded-lg border border-white/[0.10] bg-[#101318]/[0.96] px-1 shadow-[0_16px_40px_rgba(16,19,24,0.28)] backdrop-blur-xl min-[960px]:hidden">
         {mobileNavigation.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = item.icon;
           return (
-            <Link className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-semibold", active ? "text-white" : "text-white/48")} href={item.href} key={item.href}>
+            <Link aria-current={active ? "page" : undefined} className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-semibold", active ? "text-white" : "text-white/[0.48]")} href={item.href} key={item.href}>
               <Icon className={cn("h-[18px] w-[18px]", active && "text-[#FF6B60]")} />
               <span className="max-w-full truncate">{item.label}</span>
             </Link>
           );
         })}
-        <Link className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-semibold", ["/profile", "/resume", "/projects", "/settings"].some((path) => pathname.startsWith(path)) ? "text-white" : "text-white/48")} href="/profile">
+        <Link aria-current={["/profile", "/resume", "/projects", "/settings"].some((path) => pathname.startsWith(path)) ? "page" : undefined} className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-semibold", ["/profile", "/resume", "/projects", "/settings"].some((path) => pathname.startsWith(path)) ? "text-white" : "text-white/[0.48]")} href="/profile">
           <UserRound className="h-[18px] w-[18px]" />
           <span>Evidence</span>
         </Link>

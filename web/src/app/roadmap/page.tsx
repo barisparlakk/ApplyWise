@@ -56,9 +56,9 @@ export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
             <div className="p-6 sm:p-8">
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><Flame className="h-3.5 w-3.5" />Highest-leverage gap</div>
               <h2 className="mt-4 text-2xl font-bold">{topGap?.name ?? "Analyze a target role to reveal the next gap"}</h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-white/55">{topGap?.reason ?? "Roadmaps are generated from your computed fit components and role requirements."}</p>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">{topGap?.reason ?? "Roadmaps are generated from your computed fit components and role requirements."}</p>
             </div>
-            <div className="grid grid-cols-3 border-t border-white/10 lg:border-l lg:border-t-0">
+            <div className="grid grid-cols-3 border-t border-white/[0.10] lg:border-l lg:border-t-0">
               <RoadmapMetric label="Plans" value={roadmaps.length.toString()} />
               <RoadmapMetric label="Gaps" value={gapCount.toString()} />
               <RoadmapMetric label="Tasks" value={taskCount.toString()} />
@@ -137,7 +137,7 @@ function EmptyRoadmap() {
 }
 
 function RoadmapMetric({ label, value }: Readonly<{ label: string; value: string }>) {
-  return <div className="flex flex-col justify-center border-r border-white/10 p-5 last:border-r-0 sm:p-6"><p className="text-3xl font-bold text-white">{value}</p><p className="mt-1 text-[10px] font-bold uppercase text-white/42">{label}</p></div>;
+  return <div className="flex flex-col justify-center border-r border-white/[0.10] p-5 last:border-r-0 sm:p-6"><p className="text-3xl font-bold text-white">{value}</p><p className="mt-1 text-[10px] font-bold uppercase text-white/[0.42]">{label}</p></div>;
 }
 
 function DurationLinks({ selectedDays }: Readonly<{ selectedDays: number }>) {

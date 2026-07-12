@@ -208,19 +208,19 @@ export function ResumeManager({
               Active document
             </div>
             <h2 className="mt-4 truncate text-2xl font-bold">{resume?.filename ?? "No CV uploaded yet"}</h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/55">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">
               {resume ? `${resume.chunk_count} searchable chunks are available to role analysis and interview RAG.` : "Upload a PDF or DOCX to create your first evidence index."}
             </p>
           </div>
-          <div className="border-t border-white/10 p-6 sm:p-8 lg:border-l lg:border-t-0">
+          <div className="border-t border-white/[0.10] p-6 sm:p-8 lg:border-l lg:border-t-0">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-[10px] font-bold uppercase text-white/45">Section coverage</p>
+                <p className="text-[10px] font-bold uppercase text-white/[0.45]">Section coverage</p>
                 <p className="mt-2 text-4xl font-bold">{resume ? `${populatedSectionCount}/4` : "0/4"}</p>
               </div>
-              <span className="text-xs font-semibold text-white/48">Education / Experience / Skills / Projects</span>
+              <span className="text-xs font-semibold text-white/[0.48]">Education / Experience / Skills / Projects</span>
             </div>
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.10]">
               <MotionBar className={populatedSectionCount === 4 ? "bg-[#2BC3CE]" : "bg-[#FF5A4E]"} value={populatedSectionCount * 25} />
             </div>
           </div>
@@ -312,10 +312,10 @@ export function ResumeManager({
           </Reveal>
 
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] text-white" delay={0.1}>
-            <div className="border-b border-white/10 px-5 py-4">
+            <div className="border-b border-white/[0.10] px-5 py-4">
               <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><Layers3 className="h-4 w-4" />Document signals</div>
             </div>
-            <dl className="divide-y divide-white/10 text-sm">
+            <dl className="divide-y divide-white/[0.10] text-sm">
               <SummaryItem label="File" value={resume ? "Stored" : "Not uploaded"} />
               <SummaryItem label="Sections" value={resume ? `${populatedSectionCount}/4 populated` : "0/4 populated"} />
               <SummaryItem label="Indexed chunks" value={resume?.chunk_count.toString() ?? "0"} />
@@ -365,7 +365,7 @@ function ParsedSection({
 function SummaryItem({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
     <div className="flex items-center justify-between gap-3 px-5 py-3.5">
-      <dt className="text-white/45">{label}</dt>
+      <dt className="text-white/[0.45]">{label}</dt>
       <dd className="text-right font-bold text-white">{value}</dd>
     </div>
   );

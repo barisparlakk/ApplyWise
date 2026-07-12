@@ -119,7 +119,7 @@ function BoardView({ applications }: Readonly<{ applications: ApplicationData[] 
                 <span className="grid h-6 min-w-6 place-items-center rounded-md border border-border bg-white px-1 text-xs font-bold text-muted-foreground">{items.length}</span>
               </div>
               <div className="space-y-3 p-3">
-                {items.length ? items.map((application) => <ApplicationCard application={application} key={application.id} />) : <div className="grid min-h-28 place-items-center rounded-md border border-dashed border-[#cfd3d8] bg-white/60 px-4 text-center text-xs leading-5 text-muted-foreground">No opportunities in this stage</div>}
+                {items.length ? items.map((application) => <ApplicationCard application={application} key={application.id} />) : <div className="grid min-h-28 place-items-center rounded-md border border-dashed border-[#cfd3d8] bg-white/[0.60] px-4 text-center text-xs leading-5 text-muted-foreground">No opportunities in this stage</div>}
               </div>
             </section>
           );
@@ -169,7 +169,7 @@ function ApplicationCard({ application }: Readonly<{ application: ApplicationDat
 }
 
 function PipelineMetric({ icon: Icon, label, value }: Readonly<{ icon: typeof Target; label: string; value: string }>) {
-  return <div className="relative border-b border-r border-white/10 p-5 last:border-r-0 sm:p-6 lg:border-b-0"><Icon className="h-4 w-4 text-[#2BC3CE]" /><p className="mt-4 text-3xl font-bold">{value}</p><p className="mt-1 text-[10px] font-bold uppercase text-white/42">{label}</p></div>;
+  return <div className="relative border-b border-r border-white/[0.10] p-5 last:border-r-0 sm:p-6 lg:border-b-0"><Icon className="h-4 w-4 text-[#2BC3CE]" /><p className="mt-4 text-3xl font-bold">{value}</p><p className="mt-1 text-[10px] font-bold uppercase text-white/[0.42]">{label}</p></div>;
 }
 
 function ViewButton({ active, icon: Icon, label, onClick }: Readonly<{ active: boolean; icon: typeof Columns3; label: string; onClick: () => void }>) {

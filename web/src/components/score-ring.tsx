@@ -28,7 +28,7 @@ export function ScoreRing({ className, label = "Fit score", value }: ScoreRingPr
       role="img"
     >
       <svg aria-hidden="true" className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" fill="none" r="50" stroke="currentColor" strokeWidth="7" className="text-white/10" />
+        <circle cx="60" cy="60" fill="none" r="50" stroke="currentColor" strokeWidth="7" className="text-white/[0.10]" />
         <motion.circle
           animate={{ strokeDashoffset: 1 - normalized / 100 }}
           cx="60"
@@ -46,7 +46,7 @@ export function ScoreRing({ className, label = "Fit score", value }: ScoreRingPr
       </svg>
       <div className="relative text-center">
         <p className="text-3xl font-bold text-white">{value === null ? "--" : Math.round(value)}</p>
-        <p className="mt-0.5 text-[10px] font-semibold uppercase text-white/50">{label}</p>
+        <p className="mt-0.5 text-[10px] font-semibold uppercase text-white/[0.50]">{label}</p>
       </div>
     </div>
   );

@@ -107,9 +107,9 @@ export function InterviewPrepView({ apiBaseUrl, initialPrep }: InterviewPrepView
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><Sparkles className="h-3.5 w-3.5" />Grounded preparation brief</div>
             <h2 className="mt-4 text-2xl font-bold">Practice with evidence from your real profile</h2>
-            <div className="mt-4 flex flex-wrap gap-2">{prep.focus_areas.map((area) => <span className="rounded-md border border-white/12 bg-white/7 px-2.5 py-1.5 text-xs font-semibold text-white/72" key={area}>{area}</span>)}</div>
+            <div className="mt-4 flex flex-wrap gap-2">{prep.focus_areas.map((area) => <span className="rounded-md border border-white/[0.12] bg-white/[0.07] px-2.5 py-1.5 text-xs font-semibold text-white/[0.72]" key={area}>{area}</span>)}</div>
           </div>
-          <div className="grid grid-cols-3 border-t border-white/10 lg:border-l lg:border-t-0">
+          <div className="grid grid-cols-3 border-t border-white/[0.10] lg:border-l lg:border-t-0">
             <PrepMetric label="Technical" value={content.technical_questions.length.toString()} />
             <PrepMetric label="Behavioral" value={content.behavioral_questions.length.toString()} />
             <PrepMetric label="Drills" value={content.weak_area_drill_questions.length.toString()} />
@@ -240,5 +240,5 @@ function EvidenceList({ evidence }: Readonly<{ evidence: string[] }>) {
 }
 
 function PrepMetric({ label, value }: Readonly<{ label: string; value: string }>) {
-  return <div className="flex flex-col justify-center border-r border-white/10 p-5 last:border-r-0"><CircleHelp className="h-4 w-4 text-[#2BC3CE]" /><p className="mt-3 text-3xl font-bold text-white">{value}</p><p className="mt-1 text-[10px] font-bold uppercase text-white/42">{label}</p></div>;
+  return <div className="flex flex-col justify-center border-r border-white/[0.10] p-5 last:border-r-0"><CircleHelp className="h-4 w-4 text-[#2BC3CE]" /><p className="mt-3 text-3xl font-bold text-white">{value}</p><p className="mt-1 text-[10px] font-bold uppercase text-white/[0.42]">{label}</p></div>;
 }

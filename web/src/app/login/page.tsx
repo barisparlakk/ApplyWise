@@ -27,15 +27,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="relative z-10 max-w-2xl pb-4">
           <BrandMark animated className="h-16 w-16" />
           <h1 className="mt-7 text-6xl font-bold leading-none xl:text-7xl">ApplyWise</h1>
-          <p className="mt-5 max-w-xl text-xl leading-8 text-white/72">Turn your evidence into clearer internship decisions.</p>
-          <div className="mt-10 grid max-w-xl grid-cols-3 border-y border-white/12 py-5">
+          <p className="mt-5 max-w-xl text-xl leading-8 text-white/[0.72]">Turn your evidence into clearer internship decisions.</p>
+          <div className="mt-10 grid max-w-xl grid-cols-3 border-y border-white/[0.12] py-5">
             <SignalStat icon={Radar} label="Role fit" value="7 signals" />
             <SignalStat icon={Activity} label="Next move" value="Prioritized" />
             <SignalStat icon={CircleCheck} label="Evidence" value="Grounded" />
           </div>
         </div>
 
-        <div className="relative z-10 flex items-center justify-between text-xs text-white/42">
+        <div className="relative z-10 flex items-center justify-between text-xs text-white/[0.42]">
           <span>Career signal system</span>
           <span className="flex items-center gap-1.5">Built for early-career engineers <ArrowUpRight className="h-3.5 w-3.5" /></span>
         </div>
@@ -67,9 +67,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
 function SignalStat({ icon: Icon, label, value }: { icon: typeof Radar; label: string; value: string }) {
   return (
-    <div className="border-r border-white/12 px-4 first:pl-0 last:border-r-0">
+    <div className="border-r border-white/[0.12] px-4 first:pl-0 last:border-r-0">
       <Icon className="h-4 w-4 text-[#2BC3CE]" />
-      <p className="mt-3 text-xs text-white/45">{label}</p>
+      <p className="mt-3 text-xs text-white/[0.45]">{label}</p>
       <p className="mt-1 text-sm font-bold text-white">{value}</p>
     </div>
   );

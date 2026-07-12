@@ -290,17 +290,17 @@ export function ProfileBuilder({
               Next profile signal
             </div>
             <h2 className="mt-4 max-w-xl text-2xl font-bold">{nextSignal.title}</h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/55">{nextSignal.description}</p>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">{nextSignal.description}</p>
           </div>
-          <div className="border-t border-white/10 p-6 sm:p-8 lg:border-l lg:border-t-0">
+          <div className="border-t border-white/[0.10] p-6 sm:p-8 lg:border-l lg:border-t-0">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-[10px] font-bold uppercase text-white/45">Evidence readiness</p>
+                <p className="text-[10px] font-bold uppercase text-white/[0.45]">Evidence readiness</p>
                 <p className="mt-2 text-4xl font-bold">{readiness.percentage}%</p>
               </div>
-              <p className="text-xs font-semibold text-white/50">{readiness.completed} / {readiness.total} signals</p>
+              <p className="text-xs font-semibold text-white/[0.50]">{readiness.completed} / {readiness.total} signals</p>
             </div>
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.10]">
               <MotionBar className="bg-[#2BC3CE]" value={readiness.percentage} />
             </div>
           </div>
@@ -473,7 +473,7 @@ export function ProfileBuilder({
           </Reveal>
 
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] text-white" delay={0.1}>
-            <div className="border-b border-white/10 px-5 py-4">
+            <div className="border-b border-white/[0.10] px-5 py-4">
               <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><Languages className="h-4 w-4" />Evidence inventory</div>
             </div>
             <dl className="grid grid-cols-2">
@@ -558,8 +558,8 @@ function Field({
 
 function Signal({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
-    <div className="border-b border-r border-white/10 p-5 even:border-r-0 last:border-b-0 [&:nth-last-child(2)]:border-b-0">
-      <dt className="text-[10px] font-bold uppercase text-white/42">{label}</dt>
+    <div className="border-b border-r border-white/[0.10] p-5 even:border-r-0 last:border-b-0 [&:nth-last-child(2)]:border-b-0">
+      <dt className="text-[10px] font-bold uppercase text-white/[0.42]">{label}</dt>
       <dd className="mt-2 text-2xl font-bold text-white">{value}</dd>
     </div>
   );

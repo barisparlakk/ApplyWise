@@ -168,12 +168,12 @@ export function ApplicationDetail({
       <Reveal className="relative overflow-hidden rounded-lg bg-[#101318] text-white shadow-[0_20px_46px_rgba(16,19,24,0.14)]">
         <SignalField className="left-auto w-[50%] opacity-45" compact />
         <div className="relative grid lg:grid-cols-[1fr_390px]">
-          <div className="flex min-h-[250px] flex-col justify-between border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
+          <div className="flex min-h-[250px] flex-col justify-between border-b border-white/[0.10] p-6 sm:p-8 lg:border-b-0 lg:border-r">
             <div>
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><Target className="h-3.5 w-3.5" />Current next action</div>
               <h2 className="mt-4 max-w-2xl text-2xl font-bold leading-tight">{form.next_action || "Define the next concrete action for this opportunity."}</h2>
             </div>
-            <div className="mt-7 flex flex-wrap items-center gap-3"><StatusPill status={form.status} /><span className="text-xs font-semibold text-white/45">Deadline {formatDate(form.deadline || null)}</span></div>
+            <div className="mt-7 flex flex-wrap items-center gap-3"><StatusPill status={form.status} /><span className="text-xs font-semibold text-white/[0.45]">Deadline {formatDate(form.deadline || null)}</span></div>
           </div>
           <div className="relative flex items-center justify-center gap-7 p-6 sm:p-8">
             <ScoreRing className="w-36" label="Fit score" value={application.fit_score} />
@@ -237,10 +237,10 @@ export function ApplicationDetail({
 
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] p-5 text-white" delay={0.1}>
             <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><FileText className="h-4 w-4" />Export application report</div>
-            <p className="mt-3 text-sm leading-6 text-white/52">Includes fit evidence, gaps, next action, and interview preparation.</p>
+            <p className="mt-3 text-sm leading-6 text-white/[0.52]">Includes fit evidence, gaps, next action, and interview preparation.</p>
             <div className="mt-5 grid gap-2">
               <Button onClick={downloadMarkdownReport} type="button"><Download className="h-4 w-4" />Download Markdown</Button>
-              <Button className="border-white/16 bg-white/8 text-white hover:bg-white/14" onClick={printPdfReport} type="button" variant="secondary"><Printer className="h-4 w-4" />Print PDF</Button>
+              <Button className="border-white/[0.16] bg-white/[0.08] text-white hover:bg-white/[0.14]" onClick={printPdfReport} type="button" variant="secondary"><Printer className="h-4 w-4" />Print PDF</Button>
             </div>
           </Reveal>
         </aside>
@@ -276,11 +276,11 @@ function LinkButton({ children, href, icon: Icon }: Readonly<{ children: ReactNo
 }
 
 function StatusPill({ status }: Readonly<{ status: ApplicationStatus }>) {
-  return <span className="inline-flex items-center gap-2 rounded-md border border-white/12 bg-white/8 px-3 py-1.5 text-xs font-bold capitalize text-white"><span className="h-2 w-2 rounded-full bg-[#2BC3CE]" />{status}</span>;
+  return <span className="inline-flex items-center gap-2 rounded-md border border-white/[0.12] bg-white/[0.08] px-3 py-1.5 text-xs font-bold capitalize text-white"><span className="h-2 w-2 rounded-full bg-[#2BC3CE]" />{status}</span>;
 }
 
 function HeroSignal({ label, value }: Readonly<{ label: string; value: string }>) {
-  return <div className="border-l border-white/15 pl-3"><p className="text-sm font-bold text-white">{value}</p><p className="mt-0.5 text-[10px] font-bold uppercase text-white/42">{label}</p></div>;
+  return <div className="border-l border-white/[0.15] pl-3"><p className="text-sm font-bold text-white">{value}</p><p className="mt-0.5 text-[10px] font-bold uppercase text-white/[0.42]">{label}</p></div>;
 }
 
 function emptyToNull(value: string) {

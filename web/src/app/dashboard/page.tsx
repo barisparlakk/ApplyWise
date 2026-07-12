@@ -63,7 +63,7 @@ export default async function DashboardPage() {
       <div className="mx-auto w-full max-w-[1400px]">
         <PageHeader
           action={(
-            <Link className="motion-control inline-flex h-10 items-center gap-2 rounded-md bg-[#101318] px-4 text-sm font-bold text-white hover:bg-[#292d34]" href="/jobs/new">
+            <Link className="motion-control inline-flex h-10 items-center gap-2 rounded-md bg-[#101318] px-4 text-sm font-bold text-white hover:bg-[#292d34] min-[960px]:hidden" href="/jobs/new">
               <Radar className="h-4 w-4 text-[#FF6B60]" />
               Analyze a role
             </Link>
@@ -77,7 +77,7 @@ export default async function DashboardPage() {
         <Reveal className="relative mt-6 overflow-hidden rounded-lg bg-[#101318] text-white shadow-[0_22px_50px_rgba(16,19,24,0.16)]">
           <SignalField className="left-auto w-[58%] opacity-65" compact />
           <div className="relative grid min-h-[260px] lg:grid-cols-[1.3fr_0.7fr]">
-            <div className="flex flex-col justify-between border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
+            <div className="flex flex-col justify-between border-b border-white/[0.10] p-6 sm:p-8 lg:border-b-0 lg:border-r">
               <div>
                 <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]">
                   <Sparkles className="h-3.5 w-3.5" />
@@ -88,7 +88,7 @@ export default async function DashboardPage() {
                     <h2 className="mt-4 max-w-2xl text-2xl font-bold leading-tight sm:text-[1.75rem]">
                       {leadAction.action}
                     </h2>
-                    <p className="mt-3 text-sm text-white/55">
+                    <p className="mt-3 text-sm text-white/[0.55]">
                       {leadAction.application.company} / {leadAction.application.role}
                     </p>
                   </>
@@ -97,7 +97,7 @@ export default async function DashboardPage() {
                     <h2 className="mt-4 max-w-xl text-2xl font-bold leading-tight sm:text-[1.75rem]">
                       Analyze your first target role to activate your decision queue.
                     </h2>
-                    <p className="mt-3 max-w-xl text-sm leading-6 text-white/55">
+                    <p className="mt-3 max-w-xl text-sm leading-6 text-white/[0.55]">
                       ApplyWise will compare the role against your CV, projects, skills, and profile evidence.
                     </p>
                   </>
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
           </div>
         </Reveal>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[1.45fr_0.75fr]">
+        <div className="mt-6 grid gap-6 xl:grid-cols-[1.45fr_0.75fr] xl:items-start">
           <Reveal className="app-surface overflow-hidden" delay={0.05}>
             <div className="border-b border-border px-5 py-5 sm:px-6">
               <SectionHeading
@@ -268,9 +268,9 @@ export default async function DashboardPage() {
 
 function SignalMetric({ label, value }: Readonly<{ label: string; value: string }>) {
   return (
-    <div className="border-l border-white/15 pl-4">
+    <div className="border-l border-white/[0.15] pl-4">
       <p className="text-xl font-bold text-white">{value}</p>
-      <p className="mt-0.5 text-[10px] font-semibold uppercase text-white/45">{label}</p>
+      <p className="mt-0.5 text-[10px] font-semibold uppercase text-white/[0.45]">{label}</p>
     </div>
   );
 }

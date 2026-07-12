@@ -260,7 +260,7 @@ export function OnboardingForm({
           <div className="mt-14 hidden lg:block">
             <p className="flex items-center gap-2 text-xs font-bold uppercase text-[#FF786D]"><ScanSearch className="h-4 w-4" /> Evidence setup</p>
             <h1 className="mt-5 text-4xl font-bold leading-tight">Give every decision a stronger signal.</h1>
-            <p className="mt-4 max-w-sm text-sm leading-6 text-white/62">Start with your current CV. ApplyWise will map what you have before asking where you want to go.</p>
+            <p className="mt-4 max-w-sm text-sm leading-6 text-white/[0.62]">Start with your current CV. ApplyWise will map what you have before asking where you want to go.</p>
           </div>
         </div>
 
@@ -396,8 +396,8 @@ export function OnboardingForm({
 
 function SetupStep({ active, complete, icon: Icon, label, number }: { active: boolean; complete: boolean; icon: LucideIcon; label: string; number: string }) {
   return (
-    <li className={cn("flex items-center gap-3 rounded-md border px-3 py-3 transition", active ? "border-white/18 bg-white/9 text-white" : "border-transparent text-white/42")}>
-      <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-md border text-[10px] font-bold", active || complete ? "border-[#FF786D]/45 bg-[#FF5A4E]/12 text-[#FF8C83]" : "border-white/10")}>{complete ? <Check className="h-3.5 w-3.5" /> : number}</span>
+    <li className={cn("flex items-center gap-3 rounded-md border px-3 py-3 transition", active ? "border-white/[0.18] bg-white/[0.09] text-white" : "border-transparent text-white/[0.42]")}>
+      <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-md border text-[10px] font-bold", active || complete ? "border-[#FF786D]/[0.45] bg-[#FF5A4E]/[0.12] text-[#FF8C83]" : "border-white/[0.10]")}>{complete ? <Check className="h-3.5 w-3.5" /> : number}</span>
       <Icon className="hidden h-4 w-4 lg:block" />
       <span className="text-xs font-bold sm:text-sm">{label}</span>
     </li>

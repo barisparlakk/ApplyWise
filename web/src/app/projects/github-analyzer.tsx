@@ -129,14 +129,14 @@ export function GitHubAnalyzer({
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><Radio className="h-3.5 w-3.5" />Engineering signal coverage</div>
             <h2 className="mt-4 text-2xl font-bold">{repositories.length ? `${repositories.length} repositories analyzed` : "No project evidence indexed yet"}</h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/55">Tests, CI, Docker, documentation, architecture, and activity are checked before qualitative analysis is generated.</p>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">Tests, CI, Docker, documentation, architecture, and activity are checked before qualitative analysis is generated.</p>
           </div>
-          <div className="border-t border-white/10 p-6 sm:p-8 lg:border-l lg:border-t-0">
+          <div className="border-t border-white/[0.10] p-6 sm:p-8 lg:border-l lg:border-t-0">
             <div className="flex items-end justify-between gap-4">
-              <div><p className="text-[10px] font-bold uppercase text-white/45">Delivery coverage</p><p className="mt-2 text-4xl font-bold">{deliveryCoverage}%</p></div>
-              <p className="text-xs font-semibold text-white/48">Tests + CI + Docker</p>
+              <div><p className="text-[10px] font-bold uppercase text-white/[0.45]">Delivery coverage</p><p className="mt-2 text-4xl font-bold">{deliveryCoverage}%</p></div>
+              <p className="text-xs font-semibold text-white/[0.48]">Tests + CI + Docker</p>
             </div>
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10"><MotionBar className={deliveryCoverage >= 70 ? "bg-[#2BC3CE]" : "bg-[#FF5A4E]"} value={deliveryCoverage} /></div>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.10]"><MotionBar className={deliveryCoverage >= 70 ? "bg-[#2BC3CE]" : "bg-[#FF5A4E]"} value={deliveryCoverage} /></div>
           </div>
         </div>
       </Reveal>
@@ -174,7 +174,7 @@ export function GitHubAnalyzer({
 
         <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] text-white" delay={0.06}>
-            <div className="border-b border-white/10 px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><ShieldCheck className="h-4 w-4" />Portfolio coverage</div></div>
+            <div className="border-b border-white/[0.10] px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><ShieldCheck className="h-4 w-4" />Portfolio coverage</div></div>
             <dl className="grid grid-cols-2">
               <CoverageSignal icon={GitFork} label="Repositories" value={repositories.length} />
               <CoverageSignal icon={TestTube2} label="With tests" value={withTests} />
@@ -282,10 +282,10 @@ function AnalyzerStatus({ state, text }: Readonly<{ state: AnalyzeState; text: s
 
 function CoverageSignal({ icon: Icon, label, value }: Readonly<{ icon: typeof GitFork; label: string; value: number }>) {
   return (
-    <div className="border-b border-r border-white/10 p-5 even:border-r-0 last:border-b-0 [&:nth-last-child(2)]:border-b-0">
+    <div className="border-b border-r border-white/[0.10] p-5 even:border-r-0 last:border-b-0 [&:nth-last-child(2)]:border-b-0">
       <Icon className="h-4 w-4 text-[#2BC3CE]" />
       <dd className="mt-3 text-2xl font-bold text-white">{value}</dd>
-      <dt className="mt-1 text-[10px] font-bold uppercase text-white/42">{label}</dt>
+      <dt className="mt-1 text-[10px] font-bold uppercase text-white/[0.42]">{label}</dt>
     </div>
   );
 }

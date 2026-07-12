@@ -39,11 +39,11 @@ export default async function Home() {
     <main className="min-h-screen bg-[#f5f6f8] text-foreground">
       <section className="relative flex min-h-[82svh] flex-col overflow-hidden bg-[#101318] text-white">
         <SignalField className="opacity-85" />
-        <header className="relative z-10 border-b border-white/10">
+        <header className="relative z-10 border-b border-white/[0.10]">
           <div className="mx-auto flex h-[72px] w-full max-w-[1440px] items-center justify-between px-5 sm:px-8">
             <BrandLockup />
             <div className="flex items-center gap-2">
-              <Link className="motion-control hidden h-10 items-center px-3 text-sm font-bold text-white/68 hover:text-white sm:inline-flex" href="/login?callbackUrl=/dashboard">Sign in</Link>
+              <Link className="motion-control hidden h-10 items-center px-3 text-sm font-bold text-white/[0.68] hover:text-white sm:inline-flex" href="/login?callbackUrl=/dashboard">Sign in</Link>
               <Link className="motion-control inline-flex h-10 items-center gap-2 rounded-md bg-white px-4 text-sm font-bold text-[#101318] hover:bg-[#f0f1f3]" href="/login?callbackUrl=/dashboard">Enter workspace <ArrowRight className="h-4 w-4 text-[#D9473F]" /></Link>
             </div>
           </div>
@@ -53,14 +53,14 @@ export default async function Home() {
           <BrandMark animated className="h-14 w-14" />
           <p className="mt-6 flex items-center gap-2 text-xs font-bold uppercase text-[#FF786D]"><span className="h-1.5 w-1.5 rounded-full bg-[#FF5A4E]" />Internship intelligence system</p>
           <h1 className="mt-4 max-w-5xl text-6xl font-bold leading-none sm:text-7xl lg:text-8xl">ApplyWise</h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/68 sm:text-xl">Know which roles fit, what evidence is missing, and the exact next move before you spend another application.</p>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/[0.68] sm:text-xl">Know which roles fit, what evidence is missing, and the exact next move before you spend another application.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link className="motion-control inline-flex h-11 items-center gap-2 rounded-md bg-[#FF5A4E] px-5 text-sm font-bold text-white shadow-[0_10px_30px_rgba(255,90,78,0.22)] hover:bg-[#D9473F]" href="/login?callbackUrl=/dashboard"><Sparkles className="h-4 w-4" />Start free beta</Link>
-            <a className="motion-control inline-flex h-11 items-center gap-2 rounded-md border border-white/16 bg-white/7 px-5 text-sm font-bold text-white hover:bg-white/12" href="#product"><ScanSearch className="h-4 w-4 text-[#2BC3CE]" />See the workflow</a>
+            <a className="motion-control inline-flex h-11 items-center gap-2 rounded-md border border-white/[0.16] bg-white/[0.07] px-5 text-sm font-bold text-white hover:bg-white/[0.12]" href="#product"><ScanSearch className="h-4 w-4 text-[#2BC3CE]" />See the workflow</a>
           </div>
         </div>
 
-        <div className="relative z-10 border-t border-white/10">
+        <div className="relative z-10 border-t border-white/[0.10]">
           <div className="mx-auto grid w-full max-w-[1440px] grid-cols-2 px-5 sm:grid-cols-4 sm:px-8">
             <HeroMetric icon={Radar} label="Fit model" value="7 deterministic signals" />
             <HeroMetric icon={Target} label="Decision" value="Next action prioritized" />
@@ -116,7 +116,7 @@ export default async function Home() {
 }
 
 function HeroMetric({ icon: Icon, label, tone = "default", value }: Readonly<{ icon: typeof Radar; label: string; tone?: "default" | "healthy" | "error"; value: string }>) {
-  return <div className="border-b border-r border-white/10 py-4 pr-4 even:border-r-0 sm:border-b-0 sm:px-4 sm:first:pl-0 sm:even:border-r sm:last:border-r-0"><Icon className={tone === "error" ? "h-4 w-4 text-[#FF5A4E]" : "h-4 w-4 text-[#2BC3CE]"} /><p className="mt-2 text-[10px] font-bold uppercase text-white/35">{label}</p><p className="mt-1 text-xs font-bold text-white/72">{value}</p></div>;
+  return <div className="border-b border-r border-white/[0.10] py-4 pr-4 even:border-r-0 sm:border-b-0 sm:px-4 sm:first:pl-0 sm:even:border-r sm:last:border-r-0"><Icon className={tone === "error" ? "h-4 w-4 text-[#FF5A4E]" : "h-4 w-4 text-[#2BC3CE]"} /><p className="mt-2 text-[10px] font-bold uppercase text-white/[0.35]">{label}</p><p className="mt-1 text-xs font-bold text-white/[0.72]">{value}</p></div>;
 }
 
 function ProductPreview() {
@@ -130,7 +130,7 @@ function ProductPreview() {
         </div>
         <div className="border-t border-border bg-[#101318] p-5 text-white lg:border-l lg:border-t-0">
           <p className="text-[10px] font-bold uppercase text-[#2BC3CE]">Next action</p><p className="mt-3 text-sm font-bold leading-6">Add evaluation metrics and deployment notes to your strongest ML project.</p>
-          <div className="mt-6 border-t border-white/10 pt-4"><p className="text-[10px] font-bold uppercase text-white/35">Highest-impact gap</p><p className="mt-2 text-sm font-semibold text-white/72">Model evaluation</p><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><MotionBar className="bg-[#FF5A4E]" value={88} /></div></div>
+          <div className="mt-6 border-t border-white/[0.10] pt-4"><p className="text-[10px] font-bold uppercase text-white/[0.35]">Highest-impact gap</p><p className="mt-2 text-sm font-semibold text-white/[0.72]">Model evaluation</p><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.10]"><MotionBar className="bg-[#FF5A4E]" value={88} /></div></div>
         </div>
       </div>
     </div>

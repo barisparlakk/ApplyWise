@@ -46,10 +46,10 @@ export default async function SettingsPage() {
           <SignalField className="left-auto w-[48%] opacity-45" compact />
           <div className="relative flex min-h-[210px] flex-col justify-between gap-7 p-6 sm:flex-row sm:items-center sm:p-8">
             <div className="flex min-w-0 items-center gap-4">
-              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg border border-white/12 bg-white/8 text-xl font-bold text-[#FF786D]">{initials(user.full_name ?? user.email)}</span>
-              <div className="min-w-0"><p className="text-[10px] font-bold uppercase text-[#2BC3CE]">Active account</p><h2 className="mt-2 truncate text-2xl font-bold">{user.full_name ?? "ApplyWise user"}</h2><p className="mt-1 truncate text-sm text-white/52">{user.email}</p></div>
+              <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg border border-white/[0.12] bg-white/[0.08] text-xl font-bold text-[#FF786D]">{initials(user.full_name ?? user.email)}</span>
+              <div className="min-w-0"><p className="text-[10px] font-bold uppercase text-[#2BC3CE]">Active account</p><h2 className="mt-2 truncate text-2xl font-bold">{user.full_name ?? "ApplyWise user"}</h2><p className="mt-1 truncate text-sm text-white/[0.52]">{user.email}</p></div>
             </div>
-            <div className="border-t border-white/10 pt-5 sm:border-l sm:border-t-0 sm:pl-7 sm:pt-0"><p className="text-[10px] font-bold uppercase text-white/38">Account ID</p><p className="mt-2 max-w-[280px] break-all font-mono text-xs leading-5 text-white/62">{user.id}</p></div>
+            <div className="border-t border-white/[0.10] pt-5 sm:border-l sm:border-t-0 sm:pl-7 sm:pt-0"><p className="text-[10px] font-bold uppercase text-white/[0.38]">Account ID</p><p className="mt-2 max-w-[280px] break-all font-mono text-xs leading-5 text-white/[0.62]">{user.id}</p></div>
           </div>
         </Reveal>
 

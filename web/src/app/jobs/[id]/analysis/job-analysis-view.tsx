@@ -74,14 +74,14 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
       <Reveal className="relative overflow-hidden rounded-lg bg-[#101318] text-white shadow-[0_22px_50px_rgba(16,19,24,0.16)]">
         <SignalField className="left-auto w-[54%] opacity-50" compact />
         <div className="relative grid lg:grid-cols-[1fr_390px]">
-          <div className="flex min-h-[275px] flex-col justify-between border-b border-white/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
+          <div className="flex min-h-[275px] flex-col justify-between border-b border-white/[0.10] p-6 sm:p-8 lg:border-b-0 lg:border-r">
             <div>
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><TrendingUp className="h-3.5 w-3.5" />Recommended decision</div>
               <h2 className="mt-4 max-w-3xl text-2xl font-bold leading-tight sm:text-[1.75rem]">
                 {fitAnalysis?.explanation.recommended_action ?? "Fit analysis is not available for this role yet."}
               </h2>
             </div>
-            <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-xs font-semibold text-white/55">
+            <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-xs font-semibold text-white/[0.55]">
               <span className="flex items-center gap-2"><Building2 className="h-4 w-4 text-[#2BC3CE]" />{jobPost.company_name}</span>
               <span className="flex items-center gap-2"><Target className="h-4 w-4 text-[#2BC3CE]" />{analysis.domain}</span>
               <span className="flex items-center gap-2"><Gauge className="h-4 w-4 text-[#2BC3CE]" />{analysis.technical_difficulty}</span>
@@ -208,8 +208,8 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
           </Reveal>
 
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] text-white" delay={0.1}>
-            <div className="border-b border-white/10 px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><ScanText className="h-4 w-4" />Role signals</div></div>
-            <dl className="divide-y divide-white/10 text-sm">
+            <div className="border-b border-white/[0.10] px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><ScanText className="h-4 w-4" />Role signals</div></div>
+            <dl className="divide-y divide-white/[0.10] text-sm">
               <SummaryItem icon={Languages} label="English" value={analysis.english_requirement} />
               <SummaryItem icon={Globe2} label="Source" value={jobPost.source ?? "manual"} />
               <SummaryItem icon={Target} label="Location" value={jobPost.location ?? "Not specified"} />
@@ -233,7 +233,7 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
 }
 
 function HeroSignal({ label, value }: Readonly<{ label: string; value: string }>) {
-  return <div className="border-l border-white/15 pl-4"><p className="text-base font-bold text-white">{value}</p><p className="mt-0.5 text-[10px] font-bold uppercase text-white/42">{label}</p></div>;
+  return <div className="border-l border-white/[0.15] pl-4"><p className="text-base font-bold text-white">{value}</p><p className="mt-0.5 text-[10px] font-bold uppercase text-white/[0.42]">{label}</p></div>;
 }
 
 function DurationLinks({ jobPostId, selectedDays }: Readonly<{ jobPostId: string; selectedDays: number }>) {
@@ -281,7 +281,7 @@ function SummaryItem({ icon: Icon, label, value }: Readonly<{ icon: LucideIcon; 
   return (
     <div className="grid grid-cols-[22px_78px_1fr] items-center gap-2 px-5 py-3.5">
       <Icon className="h-4 w-4 text-[#2BC3CE]" />
-      <dt className="text-white/42">{label}</dt>
+      <dt className="text-white/[0.42]">{label}</dt>
       <dd className="text-right font-bold text-white">{value}</dd>
     </div>
   );

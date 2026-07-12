@@ -103,14 +103,14 @@ export function JobPostForm({ apiBaseUrl }: JobPostFormProps) {
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><ScanSearch className="h-3.5 w-3.5" />Role scan intake</div>
             <h2 className="mt-4 text-2xl font-bold">{isReady ? "Source is ready for analysis" : "Paste the complete role listing"}</h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/55">Include responsibilities, requirements, company context, location, and language expectations when available.</p>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">Include responsibilities, requirements, company context, location, and language expectations when available.</p>
           </div>
-          <div className="border-t border-white/10 p-6 sm:p-8 lg:border-l lg:border-t-0">
+          <div className="border-t border-white/[0.10] p-6 sm:p-8 lg:border-l lg:border-t-0">
             <div className="flex items-end justify-between gap-4">
-              <div><p className="text-[10px] font-bold uppercase text-white/45">Source depth</p><p className="mt-2 text-4xl font-bold">{trimmedLength}</p></div>
-              <span className="text-xs font-semibold text-white/48">characters captured</span>
+              <div><p className="text-[10px] font-bold uppercase text-white/[0.45]">Source depth</p><p className="mt-2 text-4xl font-bold">{trimmedLength}</p></div>
+              <span className="text-xs font-semibold text-white/[0.48]">characters captured</span>
             </div>
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10"><MotionBar className={isReady ? "bg-[#2BC3CE]" : "bg-[#FF5A4E]"} value={sourceProgress} /></div>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.10]"><MotionBar className={isReady ? "bg-[#2BC3CE]" : "bg-[#FF5A4E]"} value={sourceProgress} /></div>
           </div>
         </div>
       </Reveal>
@@ -141,11 +141,11 @@ export function JobPostForm({ apiBaseUrl }: JobPostFormProps) {
 
         <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] text-white" delay={0.06}>
-            <div className="border-b border-white/10 px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><Layers3 className="h-4 w-4" />Analysis output</div></div>
-            <ol className="divide-y divide-white/10">
+            <div className="border-b border-white/[0.10] px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><Layers3 className="h-4 w-4" />Analysis output</div></div>
+            <ol className="divide-y divide-white/[0.10]">
               {OUTPUT_SIGNALS.map((signal, index) => {
                 const Icon = signal.icon;
-                return <li className="grid grid-cols-[28px_1fr_auto] items-center gap-3 px-5 py-4" key={signal.label}><span className="text-[10px] font-bold text-white/35">{String(index + 1).padStart(2, "0")}</span><span className="flex items-center gap-2 text-sm font-semibold text-white/76"><Icon className="h-4 w-4 text-[#FF786D]" />{signal.label}</span><Check className="h-3.5 w-3.5 text-[#2BC3CE]" /></li>;
+                return <li className="grid grid-cols-[28px_1fr_auto] items-center gap-3 px-5 py-4" key={signal.label}><span className="text-[10px] font-bold text-white/[0.35]">{String(index + 1).padStart(2, "0")}</span><span className="flex items-center gap-2 text-sm font-semibold text-white/[0.76]"><Icon className="h-4 w-4 text-[#FF786D]" />{signal.label}</span><Check className="h-3.5 w-3.5 text-[#2BC3CE]" /></li>;
               })}
             </ol>
           </Reveal>
