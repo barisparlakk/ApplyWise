@@ -1,4 +1,5 @@
 import { LegalPage } from "@/components/legal-page";
+import { getTranslations } from "@/lib/server-i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -33,13 +34,18 @@ const sections = [
   },
 ];
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const t = await getTranslations();
+
   return (
     <LegalPage
-      introduction="These terms set the practical rules for using ApplyWise as a public career intelligence service."
-      sections={sections}
+      introduction={t("These terms set the practical rules for using ApplyWise as a public career intelligence service.")}
+      sections={sections.map((section) => ({
+        paragraphs: section.paragraphs.map((paragraph) => t(paragraph)),
+        title: t(section.title),
+      }))}
       supportEmail={process.env.SUPPORT_EMAIL ?? "support@applywise.local"}
-      title="Terms of use"
+      title={t("Terms of use")}
     />
   );
 }

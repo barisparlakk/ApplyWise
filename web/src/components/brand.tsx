@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 
+import { useTranslations } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 
 type BrandMarkProps = {
@@ -65,13 +66,15 @@ export function BrandMark({ animated = false, className }: BrandMarkProps) {
 }
 
 export function BrandLockup({ compact = false }: { compact?: boolean }) {
+  const t = useTranslations();
+
   return (
     <div className="flex min-w-0 items-center gap-3">
       <BrandMark className="h-9 w-9" />
       {compact ? null : (
         <div className="min-w-0">
           <p className="truncate text-[15px] font-bold text-current">ApplyWise</p>
-          <p className="truncate text-[11px] text-current opacity-55">Career signal system</p>
+          <p className="truncate text-[11px] text-current opacity-55">{t("Career signal system")}</p>
         </div>
       )}
     </div>

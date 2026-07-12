@@ -22,6 +22,7 @@ import { useState } from "react";
 import { z } from "zod";
 
 import { MotionBar, Reveal } from "@/components/motion";
+import { useLocale, useTranslations } from "@/components/locale-provider";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { SignalField } from "@/components/signal-field";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,7 @@ export function ResumeManager({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const reduceMotion = useReducedMotion();
+  const t = useTranslations();
 
   async function uploadResume(file: File | null) {
     if (!file) {
@@ -97,12 +99,12 @@ export function ResumeManager({
 
     const lowerName = file.name.toLowerCase();
     if (!lowerName.endsWith(".pdf") && !lowerName.endsWith(".docx")) {
-      setErrorMessage("Upload a PDF or DOCX file.");
+      setErrorMessage(t("Upload a PDF or DOCX file."));
       setSaveState("error");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage("Upload a file that is 10 MB or smaller.");
+      setErrorMessage(t("Upload a file that is 10 MB or smaller."));
       setSaveState("error");
       return;
     }
@@ -121,7 +123,7 @@ export function ResumeManager({
       });
 
       if (!response.ok) {
-        throw await apiError(response, "Upload failed");
+        throw await apiError(response, t("Upload failed"));
       }
 
       const uploadedResume = (await response.json()) as ResumeData;
@@ -129,7 +131,7 @@ export function ResumeManager({
       setParsedData(uploadedResume.parsed_data);
       setSaveState("saved");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Upload failed.");
+      setErrorMessage(error instanceof Error ? t(error.message) : t("Upload failed."));
       setSaveState("error");
     }
   }
@@ -141,7 +143,7 @@ export function ResumeManager({
 
     const parsed = parsedResumeSchema.safeParse(parsedData);
     if (!parsed.success) {
-      setErrorMessage("Each section needs at least one complete entry.");
+      setErrorMessage(t("Each section needs at least one complete entry."));
       setSaveState("error");
       return;
     }
@@ -156,7 +158,7 @@ export function ResumeManager({
       });
 
       if (!response.ok) {
-        throw await apiError(response, "Save failed");
+        throw await apiError(response, t("Save failed"));
       }
 
       const updatedResume = (await response.json()) as ResumeData;
@@ -164,7 +166,7 @@ export function ResumeManager({
       setParsedData(updatedResume.parsed_data);
       setSaveState("saved");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Save failed.");
+      setErrorMessage(error instanceof Error ? t(error.message) : t("Save failed."));
       setSaveState("error");
     }
   }
@@ -192,11 +194,11 @@ export function ResumeManager({
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <PageHeader
-        action={<DocumentStatus state={saveState} status={status} />}
-        description="Turn your CV into editable, searchable evidence for fit analysis and grounded preparation."
-        eyebrow="CV intelligence"
+        action={<DocumentStatus state={saveState} status={t(status)} />}
+        description={t("Turn your CV into editable, searchable evidence for fit analysis and grounded preparation.")}
+        eyebrow={t("CV intelligence")}
         icon={FileText}
-        title="Evidence extraction workspace"
+        title={t("Evidence extraction workspace")}
       />
 
       <Reveal className="relative overflow-hidden rounded-lg bg-[#101318] text-white shadow-[0_20px_46px_rgba(16,19,24,0.14)]">
@@ -205,20 +207,20 @@ export function ResumeManager({
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#2BC3CE]">
               <ScanSearch className="h-3.5 w-3.5" />
-              Active document
+              {t("Active document")}
             </div>
-            <h2 className="mt-4 truncate text-2xl font-bold">{resume?.filename ?? "No CV uploaded yet"}</h2>
+            <h2 className="mt-4 truncate text-2xl font-bold">{resume?.filename ?? t("No CV uploaded yet")}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">
-              {resume ? `${resume.chunk_count} searchable chunks are available to role analysis and interview RAG.` : "Upload a PDF or DOCX to create your first evidence index."}
+              {resume ? t("{count} searchable chunks are available to role analysis and interview RAG.", { count: resume.chunk_count }) : t("Upload a PDF or DOCX to create your first evidence index.")}
             </p>
           </div>
           <div className="border-t border-white/[0.10] p-6 sm:p-8 lg:border-l lg:border-t-0">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-[10px] font-bold uppercase text-white/[0.45]">Section coverage</p>
+                <p className="text-[10px] font-bold uppercase text-white/[0.45]">{t("Section coverage")}</p>
                 <p className="mt-2 text-4xl font-bold">{resume ? `${populatedSectionCount}/4` : "0/4"}</p>
               </div>
-              <span className="text-xs font-semibold text-white/[0.48]">Education / Experience / Skills / Projects</span>
+              <span className="text-xs font-semibold text-white/[0.48]">{t("Education / Experience / Skills / Projects")}</span>
             </div>
             <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.10]">
               <MotionBar className={populatedSectionCount === 4 ? "bg-[#2BC3CE]" : "bg-[#FF5A4E]"} value={populatedSectionCount * 25} />
@@ -232,8 +234,8 @@ export function ResumeManager({
           <Reveal className="app-surface p-5 sm:p-6" delay={0.04}>
             <SectionHeading
               action={resume ? <span className="data-chip max-w-[220px] truncate"><FileCheck2 className="mr-1.5 h-3.5 w-3.5 text-[#167D87]" />{resume.filename}</span> : undefined}
-              description="Replace the current document at any time. Accepted files are parsed immediately."
-              title="Upload source CV"
+              description={t("Replace the current document at any time. Accepted files are parsed immediately.")}
+              title={t("Upload source CV")}
             />
 
             <label
@@ -259,8 +261,8 @@ export function ResumeManager({
               <span className={cn("grid h-12 w-12 place-items-center rounded-md border bg-white shadow-sm transition group-hover:-translate-y-0.5", isDragging ? "border-[#FF5A4E] text-[#D9473F]" : "border-border text-foreground")}>
                 {saveState === "uploading" ? <ScanSearch className="h-5 w-5 animate-pulse" /> : <UploadCloud className="h-5 w-5" />}
               </span>
-              <span className="mt-4 text-base font-bold text-foreground">{saveState === "uploading" ? "Extracting four evidence sections" : "Drop a PDF or DOCX here"}</span>
-              <span className="mt-1 text-sm text-muted-foreground">{saveState === "uploading" ? "Text, structure, and embeddings are being prepared." : "Choose a file from your computer, up to 10 MB."}</span>
+              <span className="mt-4 text-base font-bold text-foreground">{saveState === "uploading" ? t("Extracting four evidence sections") : t("Drop a PDF or DOCX here")}</span>
+              <span className="mt-1 text-sm text-muted-foreground">{saveState === "uploading" ? t("Text, structure, and embeddings are being prepared.") : t("Choose a file from your computer, up to 10 MB.")}</span>
               <div className="mt-4 flex gap-2"><span className="data-chip">PDF</span><span className="data-chip">DOCX</span></div>
               <input accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="sr-only" id="resume-file" onChange={(event) => void uploadResume(event.target.files?.[0] ?? null)} type="file" />
             </label>
@@ -278,21 +280,21 @@ export function ResumeManager({
             <Reveal className="app-surface overflow-hidden" delay={0.08}>
               <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
                 <div>
-                  <h2 className="text-base font-bold text-foreground">Review extracted evidence</h2>
-                  <p className="mt-1 text-sm leading-6 text-muted-foreground">Every section is editable. Use one item per line for cleaner retrieval.</p>
-                  {missingSectionLabels.length ? <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-[#A63832]"><AlertTriangle className="h-4 w-4" />Review needed: {missingSectionLabels.join(", ")}.</p> : <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-[#167D87]"><Check className="h-4 w-4" />All four sections contain evidence.</p>}
+                  <h2 className="text-base font-bold text-foreground">{t("Review extracted evidence")}</h2>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{t("Every section is editable. Use one item per line for cleaner retrieval.")}</p>
+                  {missingSectionLabels.length ? <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-[#A63832]"><AlertTriangle className="h-4 w-4" />{t("Review needed: {sections}.", { sections: missingSectionLabels.map((section) => t(section)).join(", ") })}</p> : <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-[#167D87]"><Check className="h-4 w-4" />{t("All four sections contain evidence.")}</p>}
                 </div>
                 <Button disabled={saveState === "saving"} onClick={() => void saveCorrections()} type="button">
                   <Save className="h-4 w-4" />
-                  {saveState === "saving" ? "Saving" : "Save corrections"}
+                  {saveState === "saving" ? t("Saving") : t("Save corrections")}
                 </Button>
               </div>
 
               <div className="grid md:grid-cols-2">
-                <ParsedSection icon={GraduationCap} label="Education" onChange={(value) => setParsedData((current) => ({ ...current, education: linesToList(value) }))} value={listToLines(parsedData.education)} />
-                <ParsedSection icon={Sparkles} label="Experience" onChange={(value) => setParsedData((current) => ({ ...current, experience: linesToList(value) }))} value={listToLines(parsedData.experience)} />
-                <ParsedSection icon={Wrench} label="Skills" onChange={(value) => setParsedData((current) => ({ ...current, skills: linesToList(value) }))} value={listToLines(parsedData.skills)} />
-                <ParsedSection icon={Braces} label="Projects" onChange={(value) => setParsedData((current) => ({ ...current, projects: linesToList(value) }))} value={listToLines(parsedData.projects)} />
+                <ParsedSection icon={GraduationCap} label={t("Education")} onChange={(value) => setParsedData((current) => ({ ...current, education: linesToList(value) }))} value={listToLines(parsedData.education)} />
+                <ParsedSection icon={Sparkles} label={t("Experience")} onChange={(value) => setParsedData((current) => ({ ...current, experience: linesToList(value) }))} value={listToLines(parsedData.experience)} />
+                <ParsedSection icon={Wrench} label={t("Skills")} onChange={(value) => setParsedData((current) => ({ ...current, skills: linesToList(value) }))} value={listToLines(parsedData.skills)} />
+                <ParsedSection icon={Braces} label={t("Projects")} onChange={(value) => setParsedData((current) => ({ ...current, projects: linesToList(value) }))} value={listToLines(parsedData.projects)} />
               </div>
             </Reveal>
           ) : null}
@@ -301,25 +303,25 @@ export function ResumeManager({
         <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
           <Reveal className="app-surface overflow-hidden" delay={0.06}>
             <div className="border-b border-border px-5 py-4">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><ListChecks className="h-4 w-4" />Extraction pipeline</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><ListChecks className="h-4 w-4" />{t("Extraction pipeline")}</div>
             </div>
             <ol className="divide-y divide-border">
-              <PipelineStep complete={Boolean(resume)} index="01" label="Source text extracted" />
-              <PipelineStep complete={Boolean(resume)} index="02" label="Four sections structured" />
-              <PipelineStep complete={Boolean(resume?.chunk_count)} index="03" label="Chunks embedded" />
-              <PipelineStep complete={Boolean(resume) && !missingSectionLabels.length} index="04" label="Evidence reviewed" />
+              <PipelineStep complete={Boolean(resume)} index="01" label={t("Source text extracted")} />
+              <PipelineStep complete={Boolean(resume)} index="02" label={t("Four sections structured")} />
+              <PipelineStep complete={Boolean(resume?.chunk_count)} index="03" label={t("Chunks embedded")} />
+              <PipelineStep complete={Boolean(resume) && !missingSectionLabels.length} index="04" label={t("Evidence reviewed")} />
             </ol>
           </Reveal>
 
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] text-white" delay={0.1}>
             <div className="border-b border-white/[0.10] px-5 py-4">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><Layers3 className="h-4 w-4" />Document signals</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><Layers3 className="h-4 w-4" />{t("Document signals")}</div>
             </div>
             <dl className="divide-y divide-white/[0.10] text-sm">
-              <SummaryItem label="File" value={resume ? "Stored" : "Not uploaded"} />
-              <SummaryItem label="Sections" value={resume ? `${populatedSectionCount}/4 populated` : "0/4 populated"} />
-              <SummaryItem label="Indexed chunks" value={resume?.chunk_count.toString() ?? "0"} />
-              <SummaryItem label="Review state" value={resume && !missingSectionLabels.length ? "Complete" : "Waiting"} />
+              <SummaryItem label={t("File")} value={resume ? t("Stored") : t("Not uploaded")} />
+              <SummaryItem label={t("Sections")} value={resume ? t("{count}/4 populated", { count: populatedSectionCount }) : t("0/4 populated")} />
+              <SummaryItem label={t("Indexed chunks")} value={resume?.chunk_count.toString() ?? "0"} />
+              <SummaryItem label={t("Review state")} value={resume && !missingSectionLabels.length ? t("Complete") : t("Waiting")} />
             </dl>
           </Reveal>
 
@@ -327,7 +329,7 @@ export function ResumeManager({
             <Reveal delay={0.14}>
               <details className="app-surface group overflow-hidden">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-bold text-foreground">
-                  Source text
+                  {t("Source text")}
                   <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
                 </summary>
                 <pre className="max-h-[460px] overflow-auto whitespace-pre-wrap border-t border-border bg-[#f8f9fa] p-5 text-xs leading-5 text-muted-foreground">{resume.content_text}</pre>
@@ -351,13 +353,16 @@ function ParsedSection({
   onChange: (value: string) => void;
   value: string;
 }>) {
+  const locale = useLocale();
+  const t = useTranslations();
+
   return (
     <section className="border-b border-border p-5 even:border-l md:p-6 [&:nth-last-child(-n+2)]:border-b-0">
       <div className="flex items-center justify-between gap-3">
         <Label className="flex items-center gap-2"><Icon className="h-4 w-4 text-[#D9473F]" />{label}</Label>
-        <span className={cn("rounded-md px-2 py-1 text-[10px] font-bold uppercase", value ? "bg-[#e8f8f9] text-[#167D87]" : "bg-[#fff3f2] text-[#A63832]")}>{value ? `${linesToList(value).length} items` : "Missing"}</span>
+        <span className={cn("rounded-md px-2 py-1 text-[10px] font-bold uppercase", value ? "bg-[#e8f8f9] text-[#167D87]" : "bg-[#fff3f2] text-[#A63832]")}>{value ? t("{count} items", { count: linesToList(value).length }) : t("Missing")}</span>
       </div>
-      <Textarea className="mt-3 min-h-44 resize-y bg-[#fbfbfc]" onChange={(event) => onChange(event.target.value)} placeholder={`Add ${label.toLowerCase()} evidence, one item per line`} value={value} />
+      <Textarea className="mt-3 min-h-44 resize-y bg-[#fbfbfc]" onChange={(event) => onChange(event.target.value)} placeholder={t("Add {section} evidence, one item per line", { section: label.toLocaleLowerCase(locale === "tr" ? "tr-TR" : "en-US") })} value={value} />
     </section>
   );
 }

@@ -17,6 +17,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { BrandLockup, BrandMark } from "@/components/brand";
+import { useTranslations } from "@/components/locale-provider";
 import { PageMotion } from "@/components/motion";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +56,7 @@ function pageContext(pathname: string) {
 export function AppShell({ children }: Readonly<AppShellProps>) {
   const pathname = usePathname();
   const groups = ["Workspace", "Evidence"];
+  const t = useTranslations();
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,10 +65,10 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
           <BrandLockup />
         </Link>
 
-        <nav aria-label="Primary navigation" className="flex-1 overflow-y-auto px-3 py-5">
+        <nav aria-label={t("Primary navigation")} className="flex-1 overflow-y-auto px-3 py-5">
           {groups.map((group) => (
             <div className="mb-6" key={group}>
-              <p className="px-3 text-[10px] font-semibold uppercase text-white/[0.35]">{group}</p>
+              <p className="px-3 text-[10px] font-semibold uppercase text-white/[0.35]">{t(group)}</p>
               <div className="mt-2 space-y-1">
                 {navigation.filter((item) => item.group === group).map((item) => {
                   const active = isActive(pathname, item.href);
@@ -85,7 +87,7 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
                     >
                       {active ? <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-[#FF5A4E]" /> : null}
                       <Icon aria-hidden="true" className={cn("h-[18px] w-[18px]", active ? "text-[#D9473F]" : "text-white/[0.44] group-hover:text-[#2BC3CE]")} />
-                      <span>{item.label}</span>
+                      <span>{t(item.label)}</span>
                     </Link>
                   );
                 })}
@@ -97,11 +99,11 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
         <div className="border-t border-white/[0.08] px-5 py-5">
           <div className="flex items-center gap-2 text-[10px] font-semibold uppercase text-white/[0.38]">
             <Gauge className="h-3.5 w-3.5 text-[#2BC3CE]" />
-            Next signal
+            {t("Next signal")}
           </div>
-          <p className="mt-2 text-sm leading-5 text-white/[0.72]">Turn one target role into a scored action plan.</p>
+          <p className="mt-2 text-sm leading-5 text-white/[0.72]">{t("Turn one target role into a scored action plan.")}</p>
           <Link className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#FF786D] hover:text-white" href="/jobs/new">
-            Analyze a role <ArrowUpRight className="h-3.5 w-3.5" />
+            {t("Analyze a role")} <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </aside>
@@ -114,8 +116,8 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
                 <BrandMark className="h-8 w-8" />
               </Link>
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-foreground">{pageContext(pathname)}</p>
-                <p className="hidden text-xs text-muted-foreground sm:block">Evidence in, clearer decisions out</p>
+                <p className="truncate text-sm font-bold text-foreground">{t(pageContext(pathname))}</p>
+                <p className="hidden text-xs text-muted-foreground sm:block">{t("Evidence in, clearer decisions out")}</p>
               </div>
             </div>
 
@@ -125,16 +127,16 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
                 href="/jobs/new"
               >
                 <Plus className="h-4 w-4 text-[#FF6B60]" />
-                Analyze role
+                {t("Analyze role")}
               </Link>
               <Link
-                aria-label="Open settings"
+                aria-label={t("Open settings")}
                 className={cn(
                   "motion-control grid h-10 w-10 place-items-center rounded-md border border-border bg-white text-muted-foreground hover:border-[#a8afb8] hover:text-foreground",
                   pathname.startsWith("/settings") && "border-[#D9473F] text-[#D9473F]",
                 )}
                 href="/settings"
-                title="Settings"
+                title={t("Settings")}
               >
                 <Settings className="h-[18px] w-[18px]" />
               </Link>
@@ -147,20 +149,20 @@ export function AppShell({ children }: Readonly<AppShellProps>) {
         </main>
       </div>
 
-      <nav aria-label="Mobile navigation" className="fixed inset-x-3 bottom-3 z-40 grid h-[62px] grid-cols-5 rounded-lg border border-white/[0.10] bg-[#101318]/[0.96] px-1 shadow-[0_16px_40px_rgba(16,19,24,0.28)] backdrop-blur-xl min-[960px]:hidden">
+      <nav aria-label={t("Mobile navigation")} className="fixed inset-x-3 bottom-3 z-40 grid h-[62px] grid-cols-5 rounded-lg border border-white/[0.10] bg-[#101318]/[0.96] px-1 shadow-[0_16px_40px_rgba(16,19,24,0.28)] backdrop-blur-xl min-[960px]:hidden">
         {mobileNavigation.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = item.icon;
           return (
             <Link aria-current={active ? "page" : undefined} className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-semibold", active ? "text-white" : "text-white/[0.48]")} href={item.href} key={item.href}>
               <Icon className={cn("h-[18px] w-[18px]", active && "text-[#FF6B60]")} />
-              <span className="max-w-full truncate">{item.label}</span>
+              <span className="max-w-full truncate">{t(item.label)}</span>
             </Link>
           );
         })}
         <Link aria-current={["/profile", "/resume", "/projects", "/settings"].some((path) => pathname.startsWith(path)) ? "page" : undefined} className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-semibold", ["/profile", "/resume", "/projects", "/settings"].some((path) => pathname.startsWith(path)) ? "text-white" : "text-white/[0.48]")} href="/profile">
           <UserRound className="h-[18px] w-[18px]" />
-          <span>Evidence</span>
+          <span>{t("Evidence")}</span>
         </Link>
       </nav>
     </div>

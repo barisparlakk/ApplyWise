@@ -2,6 +2,19 @@
 
 import { SessionProvider } from "next-auth/react";
 
-export function Providers({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <SessionProvider>{children}</SessionProvider>;
+import { LocaleProvider } from "@/components/locale-provider";
+import type { Locale } from "@/lib/i18n";
+
+export function Providers({
+  children,
+  locale,
+}: Readonly<{
+  children: React.ReactNode;
+  locale: Locale;
+}>) {
+  return (
+    <LocaleProvider locale={locale}>
+      <SessionProvider>{children}</SessionProvider>
+    </LocaleProvider>
+  );
 }

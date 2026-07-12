@@ -1,4 +1,5 @@
 import { LegalPage } from "@/components/legal-page";
+import { getTranslations } from "@/lib/server-i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -33,13 +34,18 @@ const sections = [
   },
 ];
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const t = await getTranslations();
+
   return (
     <LegalPage
-      introduction="This notice explains what ApplyWise handles when you use the career intelligence workspace and the controls available to you."
-      sections={sections}
+      introduction={t("This notice explains what ApplyWise handles when you use the career intelligence workspace and the controls available to you.")}
+      sections={sections.map((section) => ({
+        paragraphs: section.paragraphs.map((paragraph) => t(paragraph)),
+        title: t(section.title),
+      }))}
       supportEmail={process.env.SUPPORT_EMAIL ?? "support@applywise.local"}
-      title="Privacy notice"
+      title={t("Privacy notice")}
     />
   );
 }

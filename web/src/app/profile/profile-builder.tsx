@@ -21,6 +21,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
 import { MotionBar, Reveal } from "@/components/motion";
+import { useTranslations } from "@/components/locale-provider";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { SignalField } from "@/components/signal-field";
 import { Button } from "@/components/ui/button";
@@ -168,6 +169,7 @@ export function ProfileBuilder({
   const [saveError, setSaveError] = useState<string | null>(null);
   const hasMounted = useRef(false);
   const saveRequest = useRef(0);
+  const t = useTranslations();
   const readiness = getReadiness(form);
   const nextSignal = getNextSignal(form);
 
@@ -213,10 +215,10 @@ export function ProfileBuilder({
     } catch (error) {
       if (requestId === saveRequest.current) {
         setSaveState("error");
-        setSaveError(error instanceof Error ? error.message : "The profile could not be saved.");
+        setSaveError(error instanceof Error ? t(error.message) : t("The profile could not be saved."));
       }
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, t]);
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -275,10 +277,10 @@ export function ProfileBuilder({
     <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <PageHeader
         action={<SaveIndicator onRetry={retrySave} state={saveState} />}
-        description="Shape the evidence ApplyWise uses to score roles, find gaps, and ground interview preparation."
-        eyebrow="Candidate evidence"
+        description={t("Shape the evidence ApplyWise uses to score roles, find gaps, and ground interview preparation.")}
+        eyebrow={t("Candidate evidence")}
         icon={UserRound}
-        title="Build your evidence profile"
+        title={t("Build your evidence profile")}
       />
 
       <Reveal className="relative overflow-hidden rounded-lg bg-[#101318] text-white shadow-[0_20px_46px_rgba(16,19,24,0.14)]">
@@ -287,18 +289,18 @@ export function ProfileBuilder({
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]">
               <Zap className="h-3.5 w-3.5" />
-              Next profile signal
+              {t("Next profile signal")}
             </div>
-            <h2 className="mt-4 max-w-xl text-2xl font-bold">{nextSignal.title}</h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">{nextSignal.description}</p>
+            <h2 className="mt-4 max-w-xl text-2xl font-bold">{t(nextSignal.title)}</h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">{t(nextSignal.description)}</p>
           </div>
           <div className="border-t border-white/[0.10] p-6 sm:p-8 lg:border-l lg:border-t-0">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-[10px] font-bold uppercase text-white/[0.45]">Evidence readiness</p>
+                <p className="text-[10px] font-bold uppercase text-white/[0.45]">{t("Evidence readiness")}</p>
                 <p className="mt-2 text-4xl font-bold">{readiness.percentage}%</p>
               </div>
-              <p className="text-xs font-semibold text-white/[0.50]">{readiness.completed} / {readiness.total} signals</p>
+              <p className="text-xs font-semibold text-white/[0.50]">{t("{completed} / {total} signals", { completed: readiness.completed, total: readiness.total })}</p>
             </div>
             <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.10]">
               <MotionBar className="bg-[#2BC3CE]" value={readiness.percentage} />
@@ -307,14 +309,14 @@ export function ProfileBuilder({
         </div>
       </Reveal>
 
-      <nav aria-label="Profile sections" className="flex gap-1 overflow-x-auto border-b border-border">
+      <nav aria-label={t("Profile sections")} className="flex gap-1 overflow-x-auto border-b border-border">
         {[
           ["#essentials", "Essentials"],
           ["#roles", "Target roles"],
           ["#evidence", "Skills and projects"],
         ].map(([href, label]) => (
           <a className="motion-control whitespace-nowrap border-b-2 border-transparent px-3 py-3 text-sm font-bold text-muted-foreground hover:border-[#FF5A4E] hover:text-foreground" href={href} key={href}>
-            {label}
+            {t(label)}
           </a>
         ))}
       </nav>
@@ -322,27 +324,27 @@ export function ProfileBuilder({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <section className="min-w-0 space-y-6">
           <Reveal className="app-surface p-5 sm:p-6" id="essentials">
-            <SectionHeading description="Context that changes which opportunities fit your constraints and level." title="Career essentials" />
+            <SectionHeading description={t("Context that changes which opportunities fit your constraints and level.")} title={t("Career essentials")} />
             <div className="mt-6 grid gap-x-5 gap-y-5 md:grid-cols-2">
-              <Field icon={GraduationCap} label="Education">
-                <Input onChange={(event) => updateField("education", emptyToNull(event.target.value))} placeholder="Computer Engineering, 3rd year" value={form.education ?? ""} />
+              <Field icon={GraduationCap} label={t("Education")}>
+                <Input onChange={(event) => updateField("education", emptyToNull(event.target.value))} placeholder={t("Computer Engineering, 3rd year")} value={form.education ?? ""} />
               </Field>
-              <Field icon={GitFork} label="GitHub URL">
+              <Field icon={GitFork} label={t("GitHub URL")}>
                 <Input onChange={(event) => updateField("github_url", emptyToNull(event.target.value))} placeholder="https://github.com/username" type="url" value={form.github_url ?? ""} />
               </Field>
-              <Field icon={MapPin} label="Preferred location">
-                <Input onChange={(event) => updateField("preferred_location", emptyToNull(event.target.value))} placeholder="Remote, Istanbul, Berlin" value={form.preferred_location ?? ""} />
+              <Field icon={MapPin} label={t("Preferred location")}>
+                <Input onChange={(event) => updateField("preferred_location", emptyToNull(event.target.value))} placeholder={t("Remote, Istanbul, Berlin")} value={form.preferred_location ?? ""} />
               </Field>
-              <Field icon={Target} label="Internship type">
+              <Field icon={Target} label={t("Internship type")}>
                 <Select onChange={(event) => updateField("internship_type", emptyToNull(event.target.value))} value={form.internship_type ?? ""}>
-                  <option value="">Select type</option>
-                  {internshipTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                  <option value="">{t("Select type")}</option>
+                  {internshipTypes.map((type) => <option key={type} value={type}>{t(type)}</option>)}
                 </Select>
               </Field>
-              <Field className="md:col-span-2" icon={Sparkles} label="Experience level">
+              <Field className="md:col-span-2" icon={Sparkles} label={t("Experience level")}>
                 <Select onChange={(event) => updateField("experience_level", emptyToNull(event.target.value))} value={form.experience_level ?? ""}>
-                  <option value="">Select experience level</option>
-                  {experienceLevels.map((level) => <option key={level} value={level}>{level}</option>)}
+                  <option value="">{t("Select experience level")}</option>
+                  {experienceLevels.map((level) => <option key={level} value={level}>{t(level)}</option>)}
                 </Select>
               </Field>
             </div>
@@ -350,7 +352,7 @@ export function ProfileBuilder({
 
           <Reveal className="app-surface overflow-hidden" delay={0.04} id="roles">
             <div className="border-b border-border p-5 sm:p-6">
-              <SectionHeading description="Choose every role you want the recommendation engine to optimize for." title="Target roles" />
+              <SectionHeading description={t("Choose every role you want the recommendation engine to optimize for.")} title={t("Target roles")} />
             </div>
             <div className="divide-y divide-border">
               {initialSnapshot.target_role_options.map((role, index) => {
@@ -370,11 +372,11 @@ export function ProfileBuilder({
                       {selected ? <Check className="h-4 w-4" /> : String(index + 1).padStart(2, "0")}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-sm font-bold text-foreground">{role}</span>
-                      <span className="mt-1 block text-xs text-muted-foreground">{getRoleTheme(role)}</span>
+                      <span className="block text-sm font-bold text-foreground">{t(role)}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">{t(getRoleTheme(role))}</span>
                     </span>
                     <span className={cn("hidden rounded-md px-2.5 py-1 text-[10px] font-bold uppercase sm:inline-flex", selected ? "bg-[#ffe2df] text-[#A63832]" : "bg-[#f0f1f3] text-muted-foreground")}>
-                      {selected ? "Tracking" : "Add target"}
+                      {selected ? t("Tracking") : t("Add target")}
                     </span>
                   </button>
                 );
@@ -387,15 +389,15 @@ export function ProfileBuilder({
               action={(
                 <Button onClick={() => updateField("projects", [...form.projects, { name: "", description: "", url: "", skills: [] }])} type="button" variant="secondary">
                   <Plus className="h-4 w-4" />
-                  Add project
+                  {t("Add project")}
                 </Button>
               )}
-              description="Make skills searchable and connect them to concrete work."
-              title="Skills and project evidence"
+              description={t("Make skills searchable and connect them to concrete work.")}
+              title={t("Skills and project evidence")}
             />
 
             <div className="mt-6 border-y border-border bg-[#f8f9fa] px-4 py-5 sm:px-5">
-              <p className="mb-3 text-xs font-bold uppercase text-muted-foreground">Skill inventory</p>
+              <p className="mb-3 text-xs font-bold uppercase text-muted-foreground">{t("Skill inventory")}</p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Input
                   onChange={(event) => setSkillInput(event.target.value)}
@@ -410,16 +412,16 @@ export function ProfileBuilder({
                 />
                 <Button className="shrink-0" onClick={addSkill} type="button">
                   <Plus className="h-4 w-4" />
-                  Add skill
+                  {t("Add skill")}
                 </Button>
               </div>
               <div className="mt-4 flex min-h-8 flex-wrap gap-2">
                 {form.skills.length ? form.skills.map((skill) => (
-                  <button aria-label={`Remove ${skill}`} className="motion-control inline-flex items-center gap-2 rounded-md border border-[#b7e7ea] bg-[#effbfc] px-2.5 py-1.5 text-sm font-semibold text-[#167D87] hover:border-[#2BC3CE] hover:bg-white" key={skill} onClick={() => updateField("skills", form.skills.filter((item) => item !== skill))} title={`Remove ${skill}`} type="button">
+                  <button aria-label={t("Remove {skill}", { skill })} className="motion-control inline-flex items-center gap-2 rounded-md border border-[#b7e7ea] bg-[#effbfc] px-2.5 py-1.5 text-sm font-semibold text-[#167D87] hover:border-[#2BC3CE] hover:bg-white" key={skill} onClick={() => updateField("skills", form.skills.filter((item) => item !== skill))} title={t("Remove {skill}", { skill })} type="button">
                     {skill}
                     <X aria-hidden="true" className="h-3.5 w-3.5" />
                   </button>
-                )) : <p className="text-sm text-muted-foreground">No skills added yet.</p>}
+                )) : <p className="text-sm text-muted-foreground">{t("No skills added yet.")}</p>}
               </div>
             </div>
 
@@ -430,23 +432,23 @@ export function ProfileBuilder({
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#101318] text-xs font-bold text-white">{String(index + 1).padStart(2, "0")}</span>
                       <div className="min-w-0">
-                        <h3 className="truncate text-base font-bold text-foreground">{project.name || "Untitled project"}</h3>
-                        <p className="mt-0.5 text-xs text-muted-foreground">Structured project evidence</p>
+                        <h3 className="truncate text-base font-bold text-foreground">{project.name || t("Untitled project")}</h3>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{t("Structured project evidence")}</p>
                       </div>
                     </div>
-                    <button aria-label={`Remove ${project.name || "project"}`} className="motion-control grid h-9 w-9 place-items-center rounded-md border border-border text-muted-foreground hover:border-[#f0b5b0] hover:bg-[#fff3f2] hover:text-[#D9473F]" onClick={() => updateField("projects", form.projects.filter((_, projectIndex) => projectIndex !== index))} title="Remove project" type="button">
+                    <button aria-label={t("Remove {skill}", { skill: project.name || t("project") })} className="motion-control grid h-9 w-9 place-items-center rounded-md border border-border text-muted-foreground hover:border-[#f0b5b0] hover:bg-[#fff3f2] hover:text-[#D9473F]" onClick={() => updateField("projects", form.projects.filter((_, projectIndex) => projectIndex !== index))} title={t("Remove project")} type="button">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="mt-5 grid gap-x-5 gap-y-4 md:grid-cols-2">
-                    <Field label="Project name"><Input onChange={(event) => { const projects = [...form.projects]; projects[index] = { ...project, name: event.target.value }; updateField("projects", projects); }} placeholder="RAG assistant" value={project.name} /></Field>
-                    <Field label="Project URL"><Input onChange={(event) => { const projects = [...form.projects]; projects[index] = { ...project, url: emptyToNull(event.target.value) }; updateField("projects", projects); }} placeholder="https://github.com/username/project" value={project.url ?? ""} /></Field>
-                    <Field className="md:col-span-2" label="What did you build?"><Textarea className="min-h-28" onChange={(event) => { const projects = [...form.projects]; projects[index] = { ...project, description: emptyToNull(event.target.value) }; updateField("projects", projects); }} placeholder="Describe the problem, your contribution, and outcome." value={project.description ?? ""} /></Field>
-                    <Field className="md:col-span-2" label="Project skills"><Input onChange={(event) => { const projects = [...form.projects]; projects[index] = { ...project, skills: splitTags(event.target.value) }; updateField("projects", projects); }} placeholder="Python, FastAPI, PostgreSQL" value={project.skills.join(", ")} /></Field>
+                    <Field label={t("Project name")}><Input onChange={(event) => { const projects = [...form.projects]; projects[index] = { ...project, name: event.target.value }; updateField("projects", projects); }} placeholder={t("RAG assistant")} value={project.name} /></Field>
+                    <Field label={t("Project URL")}><Input onChange={(event) => { const projects = [...form.projects]; projects[index] = { ...project, url: emptyToNull(event.target.value) }; updateField("projects", projects); }} placeholder="https://github.com/username/project" value={project.url ?? ""} /></Field>
+                    <Field className="md:col-span-2" label={t("What did you build?")}><Textarea className="min-h-28" onChange={(event) => { const projects = [...form.projects]; projects[index] = { ...project, description: emptyToNull(event.target.value) }; updateField("projects", projects); }} placeholder={t("Describe the problem, your contribution, and outcome.")} value={project.description ?? ""} /></Field>
+                    <Field className="md:col-span-2" label={t("Project skills")}><Input onChange={(event) => { const projects = [...form.projects]; projects[index] = { ...project, skills: splitTags(event.target.value) }; updateField("projects", projects); }} placeholder="Python, FastAPI, PostgreSQL" value={project.skills.join(", ")} /></Field>
                   </div>
                 </article>
               )) : (
-                <div className="flex items-center gap-3 py-8 text-sm text-muted-foreground"><CircleCheck className="h-5 w-5 text-[#2BC3CE]" />Add a project to strengthen your profile evidence.</div>
+                <div className="flex items-center gap-3 py-8 text-sm text-muted-foreground"><CircleCheck className="h-5 w-5 text-[#2BC3CE]" />{t("Add a project to strengthen your profile evidence.")}</div>
               )}
             </div>
           </Reveal>
@@ -455,40 +457,40 @@ export function ProfileBuilder({
         <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
           <Reveal className="app-surface p-5" delay={0.06}>
             <SectionHeading
-              action={<Button aria-label="Add language" onClick={() => updateField("languages", [...form.languages, { name: "", level: "B2" }])} size="icon" title="Add language" type="button" variant="secondary"><Plus className="h-4 w-4" /></Button>}
-              description="Languages you can interview in."
-              title="Languages"
+              action={<Button aria-label={t("Add language")} onClick={() => updateField("languages", [...form.languages, { name: "", level: "B2" }])} size="icon" title={t("Add language")} type="button" variant="secondary"><Plus className="h-4 w-4" /></Button>}
+              description={t("Languages you can interview in.")}
+              title={t("Languages")}
             />
             <div className="mt-5 space-y-3">
               {form.languages.length ? form.languages.map((language, index) => (
                 <div className="grid grid-cols-[minmax(0,1fr)_78px_auto] gap-2" key={`${language.name}-${index}`}>
-                  <Input aria-label={`Language ${index + 1}`} onChange={(event) => { const languages = [...form.languages]; languages[index] = { ...language, name: event.target.value }; updateField("languages", languages); }} placeholder="English" value={language.name} />
-                  <Select aria-label={`Language ${index + 1} level`} onChange={(event) => { const languages = [...form.languages]; languages[index] = { ...language, level: event.target.value }; updateField("languages", languages); }} value={language.level}>
-                    {languageLevels.map((level) => <option key={level} value={level}>{level}</option>)}
+                  <Input aria-label={t("Language {index}", { index: index + 1 })} onChange={(event) => { const languages = [...form.languages]; languages[index] = { ...language, name: event.target.value }; updateField("languages", languages); }} placeholder={t("English")} value={language.name} />
+                  <Select aria-label={t("Language {index} level", { index: index + 1 })} onChange={(event) => { const languages = [...form.languages]; languages[index] = { ...language, level: event.target.value }; updateField("languages", languages); }} value={language.level}>
+                    {languageLevels.map((level) => <option key={level} value={level}>{t(level)}</option>)}
                   </Select>
-                  <button aria-label={`Remove ${language.name || "language"}`} className="motion-control grid h-10 w-10 place-items-center rounded-md border border-border text-muted-foreground hover:border-[#f0b5b0] hover:text-[#D9473F] disabled:cursor-not-allowed disabled:opacity-40" disabled={form.languages.length === 1} onClick={() => updateField("languages", form.languages.filter((_, itemIndex) => itemIndex !== index))} title="Remove language" type="button"><X className="h-4 w-4" /></button>
+                  <button aria-label={t("Remove {skill}", { skill: language.name || t("language") })} className="motion-control grid h-10 w-10 place-items-center rounded-md border border-border text-muted-foreground hover:border-[#f0b5b0] hover:text-[#D9473F] disabled:cursor-not-allowed disabled:opacity-40" disabled={form.languages.length === 1} onClick={() => updateField("languages", form.languages.filter((_, itemIndex) => itemIndex !== index))} title={t("Remove language")} type="button"><X className="h-4 w-4" /></button>
                 </div>
-              )) : <p className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">No languages added.</p>}
+              )) : <p className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">{t("No languages added.")}</p>}
             </div>
           </Reveal>
 
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] text-white" delay={0.1}>
             <div className="border-b border-white/[0.10] px-5 py-4">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><Languages className="h-4 w-4" />Evidence inventory</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><Languages className="h-4 w-4" />{t("Evidence inventory")}</div>
             </div>
             <dl className="grid grid-cols-2">
-              <Signal label="Roles" value={form.target_roles.length.toString()} />
-              <Signal label="Skills" value={form.skills.length.toString()} />
-              <Signal label="Projects" value={form.projects.filter((project) => project.name).length.toString()} />
-              <Signal label="Languages" value={form.languages.filter((language) => language.name).length.toString()} />
+              <Signal label={t("Roles")} value={form.target_roles.length.toString()} />
+              <Signal label={t("Skills")} value={form.skills.length.toString()} />
+              <Signal label={t("Projects")} value={form.projects.filter((project) => project.name).length.toString()} />
+              <Signal label={t("Languages")} value={form.languages.filter((language) => language.name).length.toString()} />
             </dl>
           </Reveal>
 
           <Reveal className="border-l-2 border-[#FF5A4E] bg-[#fff5f4] px-5 py-5" delay={0.14}>
-            <p className="text-xs font-bold uppercase text-[#A63832]">Continue building</p>
+            <p className="text-xs font-bold uppercase text-[#A63832]">{t("Continue building")}</p>
             <div className="mt-3 grid gap-1">
-              <Link className="group flex items-center justify-between py-2 text-sm font-bold text-foreground" href="/resume">Review CV <ArrowRight className="h-4 w-4 text-[#D9473F] transition group-hover:translate-x-0.5" /></Link>
-              <Link className="group flex items-center justify-between py-2 text-sm font-bold text-foreground" href="/projects">Analyze projects <ArrowRight className="h-4 w-4 text-[#D9473F] transition group-hover:translate-x-0.5" /></Link>
+              <Link className="group flex items-center justify-between py-2 text-sm font-bold text-foreground" href="/resume">{t("Review CV")} <ArrowRight className="h-4 w-4 text-[#D9473F] transition group-hover:translate-x-0.5" /></Link>
+              <Link className="group flex items-center justify-between py-2 text-sm font-bold text-foreground" href="/projects">{t("Analyze projects")} <ArrowRight className="h-4 w-4 text-[#D9473F] transition group-hover:translate-x-0.5" /></Link>
             </div>
           </Reveal>
         </aside>
@@ -505,6 +507,7 @@ function SaveIndicator({
   onRetry: () => void;
   state: SaveState;
 }>) {
+  const t = useTranslations();
   const copy = {
     idle: "Changes save automatically",
     saving: "Saving changes",
@@ -524,10 +527,10 @@ function SaveIndicator({
   return (
     <div aria-live="polite" className="flex min-h-10 flex-wrap items-center gap-2 rounded-md border border-border bg-white px-3 text-xs font-semibold text-muted-foreground">
       <span className={cn("h-2 w-2 rounded-full", dot)} />
-      <span>{copy}</span>
+      <span>{t(copy)}</span>
       {state === "error" ? (
         <button className="motion-control font-bold text-[#D9473F] hover:text-foreground" onClick={onRetry} type="button">
-          Retry save
+          {t("Retry save")}
         </button>
       ) : null}
     </div>

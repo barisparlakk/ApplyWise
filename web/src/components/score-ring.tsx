@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 
+import { useTranslations } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 
 type ScoreRingProps = {
@@ -17,13 +18,15 @@ function scoreColor(value: number | null) {
   return "#FF5A4E";
 }
 
-export function ScoreRing({ className, label = "Fit score", value }: ScoreRingProps) {
+export function ScoreRing({ className, label, value }: ScoreRingProps) {
   const reduceMotion = useReducedMotion();
+  const t = useTranslations();
+  const resolvedLabel = label ?? t("Fit score");
   const normalized = value === null ? 0 : Math.max(0, Math.min(100, value));
 
   return (
     <div
-      aria-label={`${label}: ${value === null ? "not available" : `${Math.round(value)} percent`}`}
+      aria-label={`${resolvedLabel}: ${value === null ? t("not available") : t("{value} percent", { value: Math.round(value) })}`}
       className={cn("relative grid aspect-square w-32 place-items-center", className)}
       role="img"
     >
@@ -46,7 +49,7 @@ export function ScoreRing({ className, label = "Fit score", value }: ScoreRingPr
       </svg>
       <div className="relative text-center">
         <p className="text-3xl font-bold text-white">{value === null ? "--" : Math.round(value)}</p>
-        <p className="mt-0.5 text-[10px] font-semibold uppercase text-white/[0.50]">{label}</p>
+        <p className="mt-0.5 text-[10px] font-semibold uppercase text-white/[0.50]">{resolvedLabel}</p>
       </div>
     </div>
   );

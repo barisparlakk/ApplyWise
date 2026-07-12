@@ -27,6 +27,7 @@ import { useState } from "react";
 import { z } from "zod";
 
 import { MotionBar, Reveal } from "@/components/motion";
+import { useTranslations } from "@/components/locale-provider";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { SignalField } from "@/components/signal-field";
 import { Button } from "@/components/ui/button";
@@ -65,12 +66,13 @@ export function GitHubAnalyzer({
   const [state, setState] = useState<AnalyzeState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
+  const t = useTranslations();
 
   async function analyzeRepository() {
     const parsed = analyzeSchema.safeParse({ repo_url: repoUrl });
     if (!parsed.success) {
       setState("error");
-      setErrorMessage("Enter a GitHub repository URL.");
+      setErrorMessage(t("Enter a GitHub repository URL."));
       return;
     }
 
@@ -84,7 +86,7 @@ export function GitHubAnalyzer({
       });
 
       if (!response.ok) {
-        throw await apiError(response, "Analysis failed");
+        throw await apiError(response, t("Analysis failed"));
       }
 
       const repository = (await response.json()) as GitHubRepositoryData;
@@ -95,7 +97,7 @@ export function GitHubAnalyzer({
       setRepoUrl("");
       setState("ready");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Analysis failed.");
+      setErrorMessage(error instanceof Error ? t(error.message) : t("Analysis failed."));
       setState("error");
     }
   }
@@ -116,25 +118,25 @@ export function GitHubAnalyzer({
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <PageHeader
-        action={<AnalyzerStatus state={state} text={statusText} />}
-        description="Expose the engineering signals behind each project, then map that evidence to roles where it matters."
-        eyebrow="Project evidence"
+        action={<AnalyzerStatus state={state} text={t(statusText)} />}
+        description={t("Expose the engineering signals behind each project, then map that evidence to roles where it matters.")}
+        eyebrow={t("Project evidence")}
         icon={GitBranch}
-        title="Repository intelligence"
+        title={t("Repository intelligence")}
       />
 
       <Reveal className="relative overflow-hidden rounded-lg bg-[#101318] text-white shadow-[0_20px_46px_rgba(16,19,24,0.14)]">
         <SignalField className="left-auto w-[50%] opacity-45" compact />
         <div className="relative grid lg:grid-cols-[1fr_420px]">
           <div className="p-6 sm:p-8">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><Radio className="h-3.5 w-3.5" />Engineering signal coverage</div>
-            <h2 className="mt-4 text-2xl font-bold">{repositories.length ? `${repositories.length} repositories analyzed` : "No project evidence indexed yet"}</h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">Tests, CI, Docker, documentation, architecture, and activity are checked before qualitative analysis is generated.</p>
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><Radio className="h-3.5 w-3.5" />{t("Engineering signal coverage")}</div>
+            <h2 className="mt-4 text-2xl font-bold">{repositories.length ? t("{count} repositories analyzed", { count: repositories.length }) : t("No project evidence indexed yet")}</h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/[0.55]">{t("Tests, CI, Docker, documentation, architecture, and activity are checked before qualitative analysis is generated.")}</p>
           </div>
           <div className="border-t border-white/[0.10] p-6 sm:p-8 lg:border-l lg:border-t-0">
             <div className="flex items-end justify-between gap-4">
-              <div><p className="text-[10px] font-bold uppercase text-white/[0.45]">Delivery coverage</p><p className="mt-2 text-4xl font-bold">{deliveryCoverage}%</p></div>
-              <p className="text-xs font-semibold text-white/[0.48]">Tests + CI + Docker</p>
+              <div><p className="text-[10px] font-bold uppercase text-white/[0.45]">{t("Delivery coverage")}</p><p className="mt-2 text-4xl font-bold">{deliveryCoverage}%</p></div>
+              <p className="text-xs font-semibold text-white/[0.48]">{t("Tests + CI + Docker")}</p>
             </div>
             <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.10]"><MotionBar className={deliveryCoverage >= 70 ? "bg-[#2BC3CE]" : "bg-[#FF5A4E]"} value={deliveryCoverage} /></div>
           </div>
@@ -144,16 +146,16 @@ export function GitHubAnalyzer({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <section className="min-w-0 space-y-6">
           <Reveal className="app-surface p-5 sm:p-6" delay={0.04}>
-            <SectionHeading action={<span className="data-chip"><GitFork className="mr-1.5 h-3.5 w-3.5" />Public GitHub</span>} description="Paste a URL, owner/repository reference, or SSH remote." title="Analyze repository" />
+            <SectionHeading action={<span className="data-chip"><GitFork className="mr-1.5 h-3.5 w-3.5" />{t("Public GitHub")}</span>} description={t("Paste a URL, owner/repository reference, or SSH remote.")} title={t("Analyze repository")} />
             <div className="relative mt-6 grid gap-3 sm:grid-cols-[1fr_auto]">
               {state === "analyzing" && !reduceMotion ? <motion.span animate={{ x: [0, 260, 0] }} className="absolute -top-1 left-0 h-0.5 w-24 bg-[#FF5A4E]" transition={{ duration: 1.8, ease: "easeInOut", repeat: Infinity }} /> : null}
               <div>
-                <Label htmlFor="repo-url">Repository source</Label>
+                <Label htmlFor="repo-url">{t("Repository source")}</Label>
                 <div className="relative mt-2"><GitFork className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-10" id="repo-url" onChange={(event) => setRepoUrl(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void analyzeRepository(); } }} placeholder="https://github.com/owner/repo" value={repoUrl} /></div>
               </div>
               <Button className="self-end" disabled={state === "analyzing"} onClick={() => void analyzeRepository()} type="button">
                 {state === "analyzing" ? <ScanSearch className="h-4 w-4 animate-pulse" /> : <Sparkles className="h-4 w-4" />}
-                {state === "analyzing" ? "Auditing repository" : "Analyze repository"}
+                {state === "analyzing" ? t("Auditing repository") : t("Analyze repository")}
               </Button>
             </div>
             <AnimatePresence initial={false}>{errorMessage ? <motion.div animate={{ opacity: 1, y: 0 }} className="mt-4 flex items-start gap-2 rounded-md border border-[#f0b5b0] bg-[#fff3f2] p-3 text-sm font-semibold text-[#A63832]" exit={{ opacity: 0, y: -4 }} initial={{ opacity: 0, y: -4 }} role="alert"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{errorMessage}</motion.div> : null}</AnimatePresence>
@@ -165,8 +167,8 @@ export function GitHubAnalyzer({
             )) : (
               <Reveal className="border-y border-dashed border-border bg-white px-6 py-12 text-center" delay={0.08}>
                 <GitFork className="mx-auto h-8 w-8 text-[#D9473F]" />
-                <h2 className="mt-4 text-base font-bold text-foreground">Add your first repository</h2>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">Choose work that demonstrates how you solve, test, document, and ship a real problem.</p>
+                <h2 className="mt-4 text-base font-bold text-foreground">{t("Add your first repository")}</h2>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">{t("Choose work that demonstrates how you solve, test, document, and ship a real problem.")}</p>
               </Reveal>
             )}
           </div>
@@ -174,19 +176,19 @@ export function GitHubAnalyzer({
 
         <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] text-white" delay={0.06}>
-            <div className="border-b border-white/[0.10] px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><ShieldCheck className="h-4 w-4" />Portfolio coverage</div></div>
+            <div className="border-b border-white/[0.10] px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><ShieldCheck className="h-4 w-4" />{t("Portfolio coverage")}</div></div>
             <dl className="grid grid-cols-2">
-              <CoverageSignal icon={GitFork} label="Repositories" value={repositories.length} />
-              <CoverageSignal icon={TestTube2} label="With tests" value={withTests} />
-              <CoverageSignal icon={Workflow} label="With CI" value={withCi} />
-              <CoverageSignal icon={Container} label="With Docker" value={withDocker} />
+              <CoverageSignal icon={GitFork} label={t("Repositories")} value={repositories.length} />
+              <CoverageSignal icon={TestTube2} label={t("With tests")} value={withTests} />
+              <CoverageSignal icon={Workflow} label={t("With CI")} value={withCi} />
+              <CoverageSignal icon={Container} label={t("With Docker")} value={withDocker} />
             </dl>
           </Reveal>
 
           <Reveal className="app-surface p-5" delay={0.1}>
-            <p className="text-xs font-bold uppercase text-[#D9473F]">What gets checked</p>
+            <p className="text-xs font-bold uppercase text-[#D9473F]">{t("What gets checked")}</p>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-              {["README and documentation quality", "Testing and delivery automation", "Architecture and complexity signals", "Commit activity and role relevance"].map((item) => <li className="flex items-start gap-2" key={item}><Check className="mt-0.5 h-4 w-4 shrink-0 text-[#2BC3CE]" />{item}</li>)}
+              {["README and documentation quality", "Testing and delivery automation", "Architecture and complexity signals", "Commit activity and role relevance"].map((item) => <li className="flex items-start gap-2" key={item}><Check className="mt-0.5 h-4 w-4 shrink-0 text-[#2BC3CE]" />{t(item)}</li>)}
             </ul>
           </Reveal>
         </aside>
@@ -198,45 +200,46 @@ export function GitHubAnalyzer({
 function RepositoryCard({ repository }: Readonly<{ repository: GitHubRepositoryData }>) {
   const analysis = repository.analysis;
   const signals = repository.deterministic_signals;
+  const t = useTranslations();
 
   return (
     <article className="app-surface app-surface-hover overflow-hidden">
       <header className="grid gap-5 border-b border-border p-5 sm:p-6 lg:grid-cols-[1fr_auto]">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground"><GitFork className="h-3.5 w-3.5 text-[#D9473F]" />Repository audit</div>
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-muted-foreground"><GitFork className="h-3.5 w-3.5 text-[#D9473F]" />{t("Repository audit")}</div>
           <a className="mt-3 inline-flex max-w-full items-center gap-2 text-xl font-bold text-foreground hover:text-[#D9473F]" href={repository.html_url} rel="noreferrer" target="_blank"><span className="truncate">{repository.full_name}</span><ExternalLink className="h-4 w-4 shrink-0" /></a>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{repository.description ?? "No repository description provided."}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{repository.description ?? t("No repository description provided.")}</p>
           <div className="mt-4 flex flex-wrap gap-2">{analysis.tech_stack.map((item) => <span className="data-chip" key={item}><Code2 className="mr-1.5 h-3 w-3 text-[#167D87]" />{item}</span>)}</div>
         </div>
         <div className="grid grid-cols-2 border border-border text-sm sm:min-w-[300px]">
-          <Metric icon={Star} label="Stars" value={repository.stars.toString()} />
+          <Metric icon={Star} label={t("Stars")} value={repository.stars.toString()} />
           <Metric icon={FileText} label="README" value={analysis.readme_quality} />
-          <Metric icon={Boxes} label="Complexity" value={analysis.complexity} />
-          <Metric icon={Activity} label="Activity" value={analysis.commit_activity} />
+          <Metric icon={Boxes} label={t("Complexity")} value={analysis.complexity} />
+          <Metric icon={Activity} label={t("Activity")} value={analysis.commit_activity} />
         </div>
       </header>
 
       <div className="border-b border-border bg-[#f8f9fa] px-5 py-4 sm:px-6">
-        <p className="text-[10px] font-bold uppercase text-muted-foreground">Deterministic delivery signals</p>
+        <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("Deterministic delivery signals")}</p>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-          <AuditSignal active={signals.has_tests} icon={TestTube2} label="Tests" />
+          <AuditSignal active={signals.has_tests} icon={TestTube2} label={t("Tests")} />
           <AuditSignal active={signals.has_ci} icon={Workflow} label="CI" />
           <AuditSignal active={signals.has_docker} icon={Container} label="Docker" />
-          <AuditSignal active={signals.has_docs} icon={FileText} label="Docs" />
-          <AuditSignal active={signals.has_deployment_config} icon={ArrowUpRight} label="Deploy" />
+          <AuditSignal active={signals.has_docs} icon={FileText} label={t("Docs")} />
+          <AuditSignal active={signals.has_deployment_config} icon={ArrowUpRight} label={t("Deploy")} />
           <AuditSignal active={signals.readme_length >= 300} icon={ShieldCheck} label="README" />
         </div>
       </div>
 
       <div className="grid lg:grid-cols-3">
-        <ListPanel icon={CircleCheck} items={analysis.strengths} title="Strengths" tone="positive" />
-        <ListPanel icon={CircleX} items={analysis.weaknesses} title="Weaknesses" tone="negative" />
-        <ListPanel icon={Sparkles} items={analysis.best_fit_roles} title="Best-fit roles" tone="accent" />
+        <ListPanel icon={CircleCheck} items={analysis.strengths} title={t("Strengths")} tone="positive" />
+        <ListPanel icon={CircleX} items={analysis.weaknesses} title={t("Weaknesses")} tone="negative" />
+        <ListPanel icon={Sparkles} items={analysis.best_fit_roles.map((role) => t(role))} title={t("Best-fit roles")} tone="accent" />
       </div>
 
       <div className="grid border-t border-border sm:grid-cols-2">
-        <ListPanel icon={ScanSearch} items={analysis.recommendations} title="Recommended upgrades" tone="default" />
-        <ListPanel icon={GitBranch} items={analysis.architecture_signals} title="Architecture signals" tone="default" />
+        <ListPanel icon={ScanSearch} items={analysis.recommendations} title={t("Recommended upgrades")} tone="default" />
+        <ListPanel icon={GitBranch} items={analysis.architecture_signals} title={t("Architecture signals")} tone="default" />
       </div>
     </article>
   );
@@ -253,10 +256,11 @@ function Metric({ icon: Icon, label, value }: Readonly<{ icon: typeof Star; labe
 
 function ListPanel({ icon: Icon, items, title, tone }: Readonly<{ icon: typeof Star; items: string[]; title: string; tone: "positive" | "negative" | "accent" | "default" }>) {
   const color = { positive: "text-[#167D87]", negative: "text-[#D9473F]", accent: "text-[#B66A0A]", default: "text-[#4d545e]" }[tone];
+  const t = useTranslations();
   return (
     <section className="border-b border-border p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0 sm:p-6">
       <h3 className="flex items-center gap-2 text-xs font-bold uppercase text-foreground"><Icon className={`h-4 w-4 ${color}`} />{title}</h3>
-      <ul className="mt-4 space-y-2.5 text-sm leading-6 text-muted-foreground">{items.length ? items.map((item) => <li className="flex items-start gap-2" key={item}><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${tone === "negative" ? "bg-[#FF5A4E]" : tone === "positive" ? "bg-[#2BC3CE]" : "bg-[#89909A]"}`} />{item}</li>) : <li>None detected</li>}</ul>
+      <ul className="mt-4 space-y-2.5 text-sm leading-6 text-muted-foreground">{items.length ? items.map((item) => <li className="flex items-start gap-2" key={item}><span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${tone === "negative" ? "bg-[#FF5A4E]" : tone === "positive" ? "bg-[#2BC3CE]" : "bg-[#89909A]"}`} />{item}</li>) : <li>{t("None detected")}</li>}</ul>
     </section>
   );
 }

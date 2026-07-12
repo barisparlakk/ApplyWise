@@ -27,6 +27,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { Reveal } from "@/components/motion";
+import { useLocale, useTranslations } from "@/components/locale-provider";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { ScoreRing } from "@/components/score-ring";
 import { SignalField } from "@/components/signal-field";
@@ -37,6 +38,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { ApplicationData, ApplicationStatus, InterviewPrepData } from "@/lib/api";
 import { apiError, JSON_HEADERS } from "@/lib/client-api";
+import { localeTag, type Translator } from "@/lib/i18n";
 
 const STATUS_OPTIONS: ApplicationStatus[] = [
   "saved",
@@ -80,6 +82,8 @@ export function ApplicationDetail({
   const [state, setState] = useState<SaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
+  const locale = localeTag(useLocale());
+  const t = useTranslations();
   async function saveApplication() {
     try {
       setState("saving");
@@ -99,7 +103,7 @@ export function ApplicationDetail({
       });
 
       if (!response.ok) {
-        throw await apiError(response, "Save failed");
+        throw await apiError(response, t("Save failed"));
       }
 
       const updated = (await response.json()) as ApplicationData;
@@ -114,17 +118,17 @@ export function ApplicationDetail({
         next_action: updated.next_action ?? "",
       });
       setState("saved");
-      showToast("success", "Application saved.");
+      showToast("success", t("Application saved."));
     } catch (error) {
       setState("error");
-      const message = error instanceof Error ? error.message : "Save failed.";
+      const message = error instanceof Error ? t(error.message) : t("Save failed.");
       setErrorMessage(message);
       showToast("error", message);
     }
   }
 
   function downloadMarkdownReport() {
-    const markdown = buildMarkdownReport(application, interviewPrep);
+    const markdown = buildMarkdownReport(application, interviewPrep, locale, t);
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -134,20 +138,20 @@ export function ApplicationDetail({
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-    showToast("success", "Markdown report downloaded.");
+    showToast("success", t("Markdown report downloaded."));
   }
 
   function printPdfReport() {
     const reportWindow = window.open("", "_blank");
     if (!reportWindow) {
-      showToast("error", "Allow popups to export the PDF report.");
+      showToast("error", t("Allow popups to export the PDF report."));
       return;
     }
-    reportWindow.document.write(buildPrintableReport(application, interviewPrep));
+    reportWindow.document.write(buildPrintableReport(application, interviewPrep, locale, t));
     reportWindow.document.close();
     reportWindow.focus();
     reportWindow.print();
-    showToast("success", "PDF report opened. Choose Save as PDF in the print dialog.");
+    showToast("success", t("PDF report opened. Choose Save as PDF in the print dialog."));
   }
 
   function showToast(tone: "success" | "error", message: string) {
@@ -158,9 +162,9 @@ export function ApplicationDetail({
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <PageHeader
-        action={<Link className="motion-control inline-flex h-10 items-center gap-2 rounded-md border border-border bg-white px-3.5 text-xs font-bold text-foreground hover:border-[#FF5A4E] hover:text-[#D9473F]" href="/applications"><ArrowLeft className="h-4 w-4" />Back to pipeline</Link>}
+        action={<Link className="motion-control inline-flex h-10 items-center gap-2 rounded-md border border-border bg-white px-3.5 text-xs font-bold text-foreground hover:border-[#FF5A4E] hover:text-[#D9473F]" href="/applications"><ArrowLeft className="h-4 w-4" />{t("Back to pipeline")}</Link>}
         description={application.role}
-        eyebrow="Application workspace"
+        eyebrow={t("Application workspace")}
         icon={BriefcaseBusiness}
         title={application.company}
       />
@@ -170,14 +174,14 @@ export function ApplicationDetail({
         <div className="relative grid lg:grid-cols-[1fr_390px]">
           <div className="flex min-h-[250px] flex-col justify-between border-b border-white/[0.10] p-6 sm:p-8 lg:border-b-0 lg:border-r">
             <div>
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><Target className="h-3.5 w-3.5" />Current next action</div>
-              <h2 className="mt-4 max-w-2xl text-2xl font-bold leading-tight">{form.next_action || "Define the next concrete action for this opportunity."}</h2>
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><Target className="h-3.5 w-3.5" />{t("Current next action")}</div>
+              <h2 className="mt-4 max-w-2xl text-2xl font-bold leading-tight">{form.next_action ? t(form.next_action) : t("Define the next concrete action for this opportunity.")}</h2>
             </div>
-            <div className="mt-7 flex flex-wrap items-center gap-3"><StatusPill status={form.status} /><span className="text-xs font-semibold text-white/[0.45]">Deadline {formatDate(form.deadline || null)}</span></div>
+            <div className="mt-7 flex flex-wrap items-center gap-3"><StatusPill status={form.status} /><span className="text-xs font-semibold text-white/[0.45]">{t("Deadline {date}", { date: formatDate(form.deadline || null, locale) })}</span></div>
           </div>
           <div className="relative flex items-center justify-center gap-7 p-6 sm:p-8">
-            <ScoreRing className="w-36" label="Fit score" value={application.fit_score} />
-            <div className="space-y-4"><HeroSignal label="Analysis" value={application.fit_analysis_id ? "Ready" : "Missing"} /><HeroSignal label="Prep" value={application.interview_prep_id ? "Ready" : "Open"} /></div>
+            <ScoreRing className="w-36" label={t("Fit score")} value={application.fit_score} />
+            <div className="space-y-4"><HeroSignal label={t("Analysis")} value={application.fit_analysis_id ? t("Ready") : t("Missing")} /><HeroSignal label={t("Prep")} value={application.interview_prep_id ? t("Ready") : t("Open")} /></div>
           </div>
         </div>
       </Reveal>
@@ -186,34 +190,34 @@ export function ApplicationDetail({
         <main className="min-w-0 space-y-6">
           <Reveal className="app-surface overflow-hidden" delay={0.04}>
             <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
-              <SectionHeading description="Keep the stage, dates, source, and next action current." title="Tracker fields" />
+              <SectionHeading description={t("Keep the stage, dates, source, and next action current.")} title={t("Tracker fields")} />
               <Button disabled={state === "saving"} onClick={() => void saveApplication()} type="button">
                 {state === "saving" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {state === "saving" ? "Saving" : "Save changes"}
+                {state === "saving" ? t("Saving") : t("Save changes")}
               </Button>
             </div>
 
             <div className="border-b border-border bg-[#f8f9fa] px-5 py-4 sm:px-6">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">Pipeline stage</p>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("Pipeline stage")}</p>
               <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-                {STATUS_OPTIONS.map((status) => <button aria-pressed={form.status === status} className={form.status === status ? "motion-control whitespace-nowrap rounded-md bg-[#101318] px-3 py-2 text-xs font-bold capitalize text-white" : "motion-control whitespace-nowrap rounded-md border border-border bg-white px-3 py-2 text-xs font-bold capitalize text-muted-foreground hover:border-[#FF5A4E] hover:text-foreground"} key={status} onClick={() => setForm((current) => ({ ...current, status }))} type="button">{status}</button>)}
+                {STATUS_OPTIONS.map((status) => <button aria-pressed={form.status === status} className={form.status === status ? "motion-control whitespace-nowrap rounded-md bg-[#101318] px-3 py-2 text-xs font-bold capitalize text-white" : "motion-control whitespace-nowrap rounded-md border border-border bg-white px-3 py-2 text-xs font-bold capitalize text-muted-foreground hover:border-[#FF5A4E] hover:text-foreground"} key={status} onClick={() => setForm((current) => ({ ...current, status }))} type="button">{t(status)}</button>)}
               </div>
             </div>
 
             <div className="grid gap-x-5 gap-y-5 p-5 sm:grid-cols-2 sm:p-6">
-              <Field icon={BookmarkCheck} label="Status"><Select onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as ApplicationStatus }))} value={form.status}>{STATUS_OPTIONS.map((status) => <option key={status} value={status}>{status}</option>)}</Select></Field>
-              <Field icon={CalendarClock} label="Deadline"><Input onChange={(event) => setForm((current) => ({ ...current, deadline: event.target.value }))} type="date" value={form.deadline} /></Field>
-              <Field icon={CheckCircle2} label="Applied date"><Input onChange={(event) => setForm((current) => ({ ...current, applied_date: event.target.value }))} type="date" value={form.applied_date} /></Field>
-              <Field icon={CalendarClock} label="Interview date"><Input onChange={(event) => setForm((current) => ({ ...current, interview_date: event.target.value }))} type="date" value={form.interview_date} /></Field>
-              <Field icon={Link2} label="Job URL"><Input onChange={(event) => setForm((current) => ({ ...current, job_url: event.target.value }))} placeholder="https://company.com/jobs/role" value={form.job_url} /></Field>
-              <Field icon={Target} label="Next action"><Input onChange={(event) => setForm((current) => ({ ...current, next_action: event.target.value }))} placeholder="Follow up after 7 days" value={form.next_action} /></Field>
+              <Field icon={BookmarkCheck} label={t("Status")}><Select onChange={(event) => setForm((current) => ({ ...current, status: event.target.value as ApplicationStatus }))} value={form.status}>{STATUS_OPTIONS.map((status) => <option key={status} value={status}>{t(status)}</option>)}</Select></Field>
+              <Field icon={CalendarClock} label={t("Deadline")}><Input onChange={(event) => setForm((current) => ({ ...current, deadline: event.target.value }))} type="date" value={form.deadline} /></Field>
+              <Field icon={CheckCircle2} label={t("Applied date")}><Input onChange={(event) => setForm((current) => ({ ...current, applied_date: event.target.value }))} type="date" value={form.applied_date} /></Field>
+              <Field icon={CalendarClock} label={t("Interview date")}><Input onChange={(event) => setForm((current) => ({ ...current, interview_date: event.target.value }))} type="date" value={form.interview_date} /></Field>
+              <Field icon={Link2} label={t("Job URL")}><Input onChange={(event) => setForm((current) => ({ ...current, job_url: event.target.value }))} placeholder="https://company.com/jobs/role" value={form.job_url} /></Field>
+              <Field icon={Target} label={t("Next action")}><Input onChange={(event) => setForm((current) => ({ ...current, next_action: event.target.value }))} placeholder={t("Follow up after 7 days")} value={form.next_action} /></Field>
             </div>
 
             <div className="border-t border-border p-5 sm:p-6">
-              <Label className="flex items-center gap-2" htmlFor="application-notes"><MessageSquareText className="h-4 w-4 text-[#D9473F]" />Notes</Label>
-              <Textarea className="mt-2 min-h-44 bg-[#fbfbfc]" id="application-notes" onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} placeholder="Contacts, interview details, follow-up context, or decisions..." value={form.notes} />
+              <Label className="flex items-center gap-2" htmlFor="application-notes"><MessageSquareText className="h-4 w-4 text-[#D9473F]" />{t("Notes")}</Label>
+              <Textarea className="mt-2 min-h-44 bg-[#fbfbfc]" id="application-notes" onChange={(event) => setForm((current) => ({ ...current, notes: event.target.value }))} placeholder={t("Contacts, interview details, follow-up context, or decisions...")} value={form.notes} />
               <AnimatePresence initial={false}>
-                {state === "saved" ? <motion.p animate={{ opacity: 1, y: 0 }} className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#167D87]" exit={{ opacity: 0 }} initial={{ opacity: 0, y: -3 }}><Check className="h-4 w-4" />Changes saved</motion.p> : null}
+                {state === "saved" ? <motion.p animate={{ opacity: 1, y: 0 }} className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#167D87]" exit={{ opacity: 0 }} initial={{ opacity: 0, y: -3 }}><Check className="h-4 w-4" />{t("Changes saved")}</motion.p> : null}
                 {errorMessage ? <motion.p animate={{ opacity: 1, y: 0 }} className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#A63832]" exit={{ opacity: 0 }} initial={{ opacity: 0, y: -3 }}><AlertTriangle className="h-4 w-4" />{errorMessage}</motion.p> : null}
               </AnimatePresence>
             </div>
@@ -222,25 +226,25 @@ export function ApplicationDetail({
 
         <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
           <Reveal className="app-surface overflow-hidden" delay={0.06}>
-            <div className="border-b border-border px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><Gauge className="h-4 w-4" />Linked workflow</div></div>
+            <div className="border-b border-border px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><Gauge className="h-4 w-4" />{t("Linked workflow")}</div></div>
             <dl className="divide-y divide-border text-sm">
-              <SummaryItem label="Fit score" value={formatScore(application.fit_score)} />
-              <SummaryItem label="Fit analysis" value={application.fit_analysis_id ? "Ready" : "Missing"} />
-              <SummaryItem label="Interview prep" value={application.interview_prep_id ? "Generated" : "Not generated"} />
+              <SummaryItem label={t("Fit score")} value={formatScore(application.fit_score)} />
+              <SummaryItem label={t("Fit analysis")} value={application.fit_analysis_id ? t("Ready") : t("Missing")} />
+              <SummaryItem label={t("Interview prep")} value={application.interview_prep_id ? t("Generated") : t("Not generated")} />
             </dl>
             <div className="grid gap-2 border-t border-border p-5">
-              <LinkButton href={`/jobs/${application.job_post_id}/analysis`} icon={Gauge}>Job analysis</LinkButton>
-              <LinkButton href={`/interview-prep/${application.id}`} icon={MessageSquareText}>Interview prep</LinkButton>
-              {application.job_url ? <a className="motion-control flex h-10 items-center justify-between rounded-md border border-border bg-white px-3 text-sm font-bold text-foreground hover:border-[#FF5A4E] hover:text-[#D9473F]" href={application.job_url} rel="noreferrer" target="_blank"><span className="flex items-center gap-2"><Link2 className="h-4 w-4" />Job source</span><ExternalLink className="h-4 w-4" /></a> : null}
+              <LinkButton href={`/jobs/${application.job_post_id}/analysis`} icon={Gauge}>{t("Job analysis")}</LinkButton>
+              <LinkButton href={`/interview-prep/${application.id}`} icon={MessageSquareText}>{t("Interview prep")}</LinkButton>
+              {application.job_url ? <a className="motion-control flex h-10 items-center justify-between rounded-md border border-border bg-white px-3 text-sm font-bold text-foreground hover:border-[#FF5A4E] hover:text-[#D9473F]" href={application.job_url} rel="noreferrer" target="_blank"><span className="flex items-center gap-2"><Link2 className="h-4 w-4" />{t("Job source")}</span><ExternalLink className="h-4 w-4" /></a> : null}
             </div>
           </Reveal>
 
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] p-5 text-white" delay={0.1}>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><FileText className="h-4 w-4" />Export application report</div>
-            <p className="mt-3 text-sm leading-6 text-white/[0.52]">Includes fit evidence, gaps, next action, and interview preparation.</p>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><FileText className="h-4 w-4" />{t("Export application report")}</div>
+            <p className="mt-3 text-sm leading-6 text-white/[0.52]">{t("Includes fit evidence, gaps, next action, and interview preparation.")}</p>
             <div className="mt-5 grid gap-2">
-              <Button onClick={downloadMarkdownReport} type="button"><Download className="h-4 w-4" />Download Markdown</Button>
-              <Button className="border-white/[0.16] bg-white/[0.08] text-white hover:bg-white/[0.14]" onClick={printPdfReport} type="button" variant="secondary"><Printer className="h-4 w-4" />Print PDF</Button>
+              <Button onClick={downloadMarkdownReport} type="button"><Download className="h-4 w-4" />{t("Download Markdown")}</Button>
+              <Button className="border-white/[0.16] bg-white/[0.08] text-white hover:bg-white/[0.14]" onClick={printPdfReport} type="button" variant="secondary"><Printer className="h-4 w-4" />{t("Print PDF")}</Button>
             </div>
           </Reveal>
         </aside>
@@ -276,7 +280,8 @@ function LinkButton({ children, href, icon: Icon }: Readonly<{ children: ReactNo
 }
 
 function StatusPill({ status }: Readonly<{ status: ApplicationStatus }>) {
-  return <span className="inline-flex items-center gap-2 rounded-md border border-white/[0.12] bg-white/[0.08] px-3 py-1.5 text-xs font-bold capitalize text-white"><span className="h-2 w-2 rounded-full bg-[#2BC3CE]" />{status}</span>;
+  const t = useTranslations();
+  return <span className="inline-flex items-center gap-2 rounded-md border border-white/[0.12] bg-white/[0.08] px-3 py-1.5 text-xs font-bold capitalize text-white"><span className="h-2 w-2 rounded-full bg-[#2BC3CE]" />{t(status)}</span>;
 }
 
 function HeroSignal({ label, value }: Readonly<{ label: string; value: string }>) {
@@ -292,9 +297,9 @@ function formatScore(value: number | null) {
   return value === null ? "-" : `${Math.round(value)}%`;
 }
 
-function formatDate(value: string | null) {
+function formatDate(value: string | null, locale: string) {
   if (!value) return "--";
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${value}T00:00:00`));
+  return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${value}T00:00:00`));
 }
 
 function Toast({ message, tone }: Readonly<{ message: string; tone: "success" | "error" }>) {
@@ -316,62 +321,62 @@ function Toast({ message, tone }: Readonly<{ message: string; tone: "success" | 
   );
 }
 
-function buildMarkdownReport(application: ApplicationData, prep: InterviewPrepData) {
+function buildMarkdownReport(application: ApplicationData, prep: InterviewPrepData, locale: string, t: Translator) {
   const lines = [
     `# ${application.company} - ${application.role}`,
     "",
-    "## Application",
-    `- Status: ${application.status}`,
-    `- Fit score: ${formatScore(application.fit_score)}`,
-    `- Deadline: ${application.deadline ?? "-"}`,
-    `- Applied date: ${application.applied_date ?? "-"}`,
-    `- Interview date: ${application.interview_date ?? "-"}`,
-    `- Next action: ${application.next_action ?? "-"}`,
-    `- Job URL: ${application.job_url ?? "-"}`,
+    `## ${t("Application")}`,
+    `- ${t("Status")}: ${t(application.status)}`,
+    `- ${t("Fit score")}: ${formatScore(application.fit_score)}`,
+    `- ${t("Deadline")}: ${application.deadline ? formatDate(application.deadline, locale) : "-"}`,
+    `- ${t("Applied date")}: ${application.applied_date ? formatDate(application.applied_date, locale) : "-"}`,
+    `- ${t("Interview date")}: ${application.interview_date ? formatDate(application.interview_date, locale) : "-"}`,
+    `- ${t("Next action")}: ${application.next_action ? t(application.next_action) : "-"}`,
+    `- ${t("Job URL")}: ${application.job_url ?? "-"}`,
     "",
-    "## Fit Breakdown",
-    ...fitComponentLines(application),
+    `## ${t("Fit Breakdown")}`,
+    ...fitComponentLines(application, t),
     "",
-    "## Missing Skills",
+    `## ${t("Missing Skills")}`,
     ...(application.missing_skills.length
       ? application.missing_skills.map((skill) => `- ${skill}`)
-      : ["- No missing-skill signal found."]),
+      : [`- ${t("No missing-skill signal found.")}`]),
     "",
-    "## Fit Feedback",
-    ...fitFeedbackLines(application),
+    `## ${t("Fit Feedback")}`,
+    ...fitFeedbackLines(application, t),
     "",
-    "## Interview Prep Summary",
-    `- Technical questions: ${prep.content.technical_questions.length}`,
-    `- Behavioral questions: ${prep.content.behavioral_questions.length}`,
-    `- Weak-area drills: ${prep.content.weak_area_drill_questions.length}`,
+    `## ${t("Interview Prep Summary")}`,
+    `- ${t("Technical questions")}: ${prep.content.technical_questions.length}`,
+    `- ${t("Behavioral questions")}: ${prep.content.behavioral_questions.length}`,
+    `- ${t("Weak-area drills")}: ${prep.content.weak_area_drill_questions.length}`,
     "",
-    "### English Self-Introduction",
+    `### ${t("English Self-Introduction")}`,
     prep.content.english_self_introduction.content,
     "",
-    "### Project Explanation",
+    `### ${t("Project Explanation")}`,
     prep.content.project_explanation_script.content,
     "",
-    "### Why This Company",
+    `### ${t("Why This Company")}`,
     prep.content.why_this_company.content,
     "",
-    "### Why This Role",
+    `### ${t("Why This Role")}`,
     prep.content.why_this_role.content,
     "",
-    "### Technical Questions",
+    `### ${t("Technical Questions")}`,
     ...prep.content.technical_questions.map((question) => `- ${question.question}`),
     "",
-    "### Weak-Area Drills",
+    `### ${t("Weak-Area Drills")}`,
     ...prep.content.weak_area_drill_questions.map((question) => `- ${question.question}`),
     "",
-    "## Notes",
+    `## ${t("Notes")}`,
     application.notes ?? "-",
     "",
   ];
   return lines.join("\n");
 }
 
-function buildPrintableReport(application: ApplicationData, prep: InterviewPrepData) {
-  const markdown = buildMarkdownReport(application, prep);
+function buildPrintableReport(application: ApplicationData, prep: InterviewPrepData, locale: string, t: Translator) {
+  const markdown = buildMarkdownReport(application, prep, locale, t);
   const body = markdown
     .split("\n")
     .map((line) => {
@@ -396,7 +401,7 @@ function buildPrintableReport(application: ApplicationData, prep: InterviewPrepD
   return `<!doctype html>
 <html>
   <head>
-    <title>${escapeHtml(application.company)} report</title>
+    <title>${escapeHtml(t("{company} report", { company: application.company }))}</title>
     <style>
       body { color: #111827; font-family: Arial, sans-serif; line-height: 1.5; padding: 32px; }
       h1 { font-size: 28px; margin: 0 0 20px; }
@@ -411,33 +416,33 @@ function buildPrintableReport(application: ApplicationData, prep: InterviewPrepD
 </html>`;
 }
 
-function fitComponentLines(application: ApplicationData) {
+function fitComponentLines(application: ApplicationData, t: Translator) {
   const components = application.fit_components;
   if (!components) {
-    return ["- No fit breakdown available."];
+    return [`- ${t("No fit breakdown available.")}`];
   }
   return [
-    `- Skill match: ${formatScore(components.skill_score)}`,
-    `- Project relevance: ${formatScore(components.project_relevance_score)}`,
-    `- Experience: ${formatScore(components.experience_score)}`,
-    `- Education: ${formatScore(components.education_score)}`,
-    `- Language: ${formatScore(components.language_score)}`,
-    `- Domain: ${formatScore(components.domain_score)}`,
-    `- Profile quality: ${formatScore(components.profile_quality_score)}`,
+    `- ${t("Skill match")}: ${formatScore(components.skill_score)}`,
+    `- ${t("Project relevance")}: ${formatScore(components.project_relevance_score)}`,
+    `- ${t("Experience")}: ${formatScore(components.experience_score)}`,
+    `- ${t("Education")}: ${formatScore(components.education_score)}`,
+    `- ${t("Language")}: ${formatScore(components.language_score)}`,
+    `- ${t("Domain")}: ${formatScore(components.domain_score)}`,
+    `- ${t("Profile quality")}: ${formatScore(components.profile_quality_score)}`,
   ];
 }
 
-function fitFeedbackLines(application: ApplicationData) {
+function fitFeedbackLines(application: ApplicationData, t: Translator) {
   const explanation = application.fit_explanation;
   if (!explanation) {
-    return ["- No fit feedback available."];
+    return [`- ${t("No fit feedback available.")}`];
   }
   return [
-    "- Strong matches:",
+    `- ${t("Strong matches")}:`,
     ...explanation.strong_matches.map((item) => `  - ${item}`),
-    "- Weak areas:",
+    `- ${t("Weak areas")}:`,
     ...explanation.weak_areas.map((item) => `  - ${item}`),
-    `- Recommended action: ${explanation.recommended_action}`,
+    `- ${t("Recommended action")}: ${explanation.recommended_action}`,
   ];
 }
 

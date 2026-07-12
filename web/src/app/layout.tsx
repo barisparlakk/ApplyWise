@@ -1,24 +1,35 @@
 import type { Metadata } from "next";
 import { Providers } from "@/app/providers";
+import { getRequestLocale } from "@/lib/server-i18n";
+import { translate } from "@/lib/i18n";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: "ApplyWise",
-    template: "%s | ApplyWise",
-  },
-  description: "Internship intelligence for computer engineering and data/AI students.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getRequestLocale();
 
-export default function RootLayout({
+  return {
+    title: {
+      default: "ApplyWise",
+      template: "%s | ApplyWise",
+    },
+    description: translate(
+      locale,
+      "Internship intelligence for computer engineering and data/AI students.",
+    ),
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getRequestLocale();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body>
-        <Providers>{children}</Providers>
+        <Providers locale={locale}>{children}</Providers>
       </body>
     </html>
   );

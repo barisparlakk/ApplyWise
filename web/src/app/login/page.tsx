@@ -4,6 +4,7 @@ import { LoginForm } from "@/app/login/login-form";
 import { BrandLockup, BrandMark } from "@/components/brand";
 import { SignalField } from "@/components/signal-field";
 import { emailLoginEnabled, githubLoginEnabled, googleLoginEnabled } from "@/lib/auth";
+import { getTranslations } from "@/lib/server-i18n";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -15,6 +16,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const destination = safeCallbackUrl(params.callbackUrl);
   const callbackUrl = `/start?next=${encodeURIComponent(destination)}`;
+  const t = await getTranslations();
 
   return (
     <main className="grid min-h-screen bg-white lg:grid-cols-[minmax(0,1.2fr)_minmax(420px,0.8fr)]">
@@ -27,17 +29,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="relative z-10 max-w-2xl pb-4">
           <BrandMark animated className="h-16 w-16" />
           <h1 className="mt-7 text-6xl font-bold leading-none xl:text-7xl">ApplyWise</h1>
-          <p className="mt-5 max-w-xl text-xl leading-8 text-white/[0.72]">Turn your evidence into clearer internship decisions.</p>
+          <p className="mt-5 max-w-xl text-xl leading-8 text-white/[0.72]">{t("Turn your evidence into clearer internship decisions.")}</p>
           <div className="mt-10 grid max-w-xl grid-cols-3 border-y border-white/[0.12] py-5">
-            <SignalStat icon={Radar} label="Role fit" value="7 signals" />
-            <SignalStat icon={Activity} label="Next move" value="Prioritized" />
-            <SignalStat icon={CircleCheck} label="Evidence" value="Grounded" />
+            <SignalStat icon={Radar} label={t("Role fit")} value={t("7 signals")} />
+            <SignalStat icon={Activity} label={t("Next move")} value={t("Prioritized")} />
+            <SignalStat icon={CircleCheck} label={t("Evidence")} value={t("Grounded")} />
           </div>
         </div>
 
         <div className="relative z-10 flex items-center justify-between text-xs text-white/[0.42]">
-          <span>Career signal system</span>
-          <span className="flex items-center gap-1.5">Built for early-career engineers <ArrowUpRight className="h-3.5 w-3.5" /></span>
+          <span>{t("Career signal system")}</span>
+          <span className="flex items-center gap-1.5">{t("Built for early-career engineers")} <ArrowUpRight className="h-3.5 w-3.5" /></span>
         </div>
       </section>
 
@@ -45,11 +47,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="page-entrance w-full max-w-[430px]">
           <div className="mb-12 flex items-center justify-between lg:hidden">
             <BrandLockup />
-            <span className="signal-chip">Signal OS</span>
+            <span className="signal-chip">{t("Signal OS")}</span>
           </div>
-          <p className="flex items-center gap-2 text-xs font-bold uppercase text-[#a63832]"><span className="h-1.5 w-1.5 rounded-full bg-[#FF5A4E]" /> Workspace access</p>
-          <h2 className="mt-4 text-3xl font-bold text-foreground">Continue to your workspace</h2>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">Your roles, evidence, applications, and preparation stay connected in one place.</p>
+          <p className="flex items-center gap-2 text-xs font-bold uppercase text-[#a63832]"><span className="h-1.5 w-1.5 rounded-full bg-[#FF5A4E]" /> {t("Workspace access")}</p>
+          <h2 className="mt-4 text-3xl font-bold text-foreground">{t("Continue to your workspace")}</h2>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">{t("Your roles, evidence, applications, and preparation stay connected in one place.")}</p>
 
           <div className="mt-9 border-t border-border pt-7">
             <LoginForm

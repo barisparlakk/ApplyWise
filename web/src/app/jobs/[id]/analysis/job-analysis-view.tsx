@@ -35,6 +35,8 @@ import { PageHeader, SectionHeading } from "@/components/page-header";
 import { ScoreRing } from "@/components/score-ring";
 import { SignalField } from "@/components/signal-field";
 import type { JobPostData } from "@/lib/api";
+import { createTranslator, localeTag, type Translator } from "@/lib/i18n";
+import { getRequestLocale } from "@/lib/server-i18n";
 
 type JobAnalysisViewProps = {
   apiBaseUrl: string;
@@ -52,20 +54,22 @@ const SCORE_COMPONENTS = [
   { key: "profile_quality_score", label: "Profile quality", weight: 5, icon: Sparkles },
 ] as const;
 
-export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysisViewProps) {
+export async function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysisViewProps) {
   const analysis = jobPost.analysis;
   const fitAnalysis = jobPost.fit_analysis;
   const roadmap = jobPost.roadmap;
+  const locale = await getRequestLocale();
+  const t = createTranslator(locale);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6">
       <PageHeader
         action={jobPost.url ? (
           <a className="motion-control inline-flex h-10 items-center gap-2 rounded-md border border-border bg-white px-3.5 text-xs font-bold text-foreground hover:border-[#FF5A4E] hover:text-[#D9473F]" href={jobPost.url} rel="noreferrer" target="_blank">
-            View source <ExternalLink className="h-4 w-4" />
+            {t("View source")} <ExternalLink className="h-4 w-4" />
           </a>
         ) : undefined}
-        description={`${analysis.seniority_level} role in ${analysis.domain}. The score below is computed from your current profile evidence.`}
+        description={t("{seniority} role in {domain}. The score below is computed from your current profile evidence.", { domain: analysis.domain, seniority: analysis.seniority_level })}
         eyebrow={jobPost.company_name}
         icon={Radar}
         title={jobPost.title}
@@ -76,9 +80,9 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
         <div className="relative grid lg:grid-cols-[1fr_390px]">
           <div className="flex min-h-[275px] flex-col justify-between border-b border-white/[0.10] p-6 sm:p-8 lg:border-b-0 lg:border-r">
             <div>
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><TrendingUp className="h-3.5 w-3.5" />Recommended decision</div>
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><TrendingUp className="h-3.5 w-3.5" />{t("Recommended decision")}</div>
               <h2 className="mt-4 max-w-3xl text-2xl font-bold leading-tight sm:text-[1.75rem]">
-                {fitAnalysis?.explanation.recommended_action ?? "Fit analysis is not available for this role yet."}
+                {fitAnalysis?.explanation.recommended_action ?? t("Fit analysis is not available for this role yet.")}
               </h2>
             </div>
             <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-xs font-semibold text-white/[0.55]">
@@ -88,11 +92,11 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
             </div>
           </div>
           <div className="relative flex items-center justify-center gap-7 p-6 sm:p-8">
-            <ScoreRing className="w-40" label="Overall fit" value={fitAnalysis?.total_score ?? null} />
+            <ScoreRing className="w-40" label={t("Overall fit")} value={fitAnalysis?.total_score ?? null} />
             <div className="hidden space-y-4 sm:block">
-              <HeroSignal label="Method" value="Hybrid" />
-              <HeroSignal label="Components" value="7" />
-              <HeroSignal label="Override" value="None" />
+              <HeroSignal label={t("Method")} value={t("Hybrid")} />
+              <HeroSignal label={t("Components")} value="7" />
+              <HeroSignal label={t("Override")} value={t("None")} />
             </div>
           </div>
         </div>
@@ -103,21 +107,22 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
           {fitAnalysis ? (
             <Reveal className="app-surface overflow-hidden" delay={0.04}>
               <div className="border-b border-border p-5 sm:p-6">
-                <SectionHeading description="Each component is calculated independently, then combined using the fixed ApplyWise weighting formula." title="Deterministic fit breakdown" />
+                <SectionHeading description={t("Each component is calculated independently, then combined using the fixed ApplyWise weighting formula.")} title={t("Deterministic fit breakdown")} />
               </div>
               <div className="grid md:grid-cols-2">
                 {SCORE_COMPONENTS.map((component) => (
                   <ScoreBar
                     icon={component.icon}
                     key={component.key}
-                    label={component.label}
+                    label={t(component.label)}
+                    t={t}
                     value={fitAnalysis.components[component.key]}
                     weight={component.weight}
                   />
                 ))}
                 <div className="flex items-center gap-3 bg-[#f8f9fa] p-5 sm:p-6">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[#101318] text-white"><Gauge className="h-4 w-4" /></div>
-                  <div><p className="text-xs font-bold uppercase text-muted-foreground">Weighted result</p><p className="mt-1 text-2xl font-bold text-foreground">{formatScore(fitAnalysis.total_score)}</p></div>
+                  <div><p className="text-xs font-bold uppercase text-muted-foreground">{t("Weighted result")}</p><p className="mt-1 text-2xl font-bold text-foreground">{formatScore(fitAnalysis.total_score)}</p></div>
                 </div>
               </div>
             </Reveal>
@@ -126,10 +131,10 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
           {fitAnalysis ? (
             <div className="grid gap-6 lg:grid-cols-2">
               <Reveal className="border-l-2 border-[#2BC3CE] bg-[#effbfc] p-5 sm:p-6" delay={0.08}>
-                <InsightList icon={CircleCheck} items={fitAnalysis.explanation.strong_matches} title="Strong matches" tone="positive" />
+                <InsightList icon={CircleCheck} items={fitAnalysis.explanation.strong_matches} t={t} title={t("Strong matches")} tone="positive" />
               </Reveal>
               <Reveal className="border-l-2 border-[#FF5A4E] bg-[#fff5f4] p-5 sm:p-6" delay={0.11}>
-                <InsightList icon={CircleX} items={fitAnalysis.explanation.weak_areas} title="Weak areas" tone="negative" />
+                <InsightList icon={CircleX} items={fitAnalysis.explanation.weak_areas} t={t} title={t("Weak areas")} tone="negative" />
               </Reveal>
             </div>
           ) : null}
@@ -138,16 +143,16 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
             <Reveal className="app-surface overflow-hidden" delay={0.12}>
               <div className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
                 <div>
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><Route className="h-4 w-4" />Readiness roadmap</div>
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><Route className="h-4 w-4" />{t("Readiness roadmap")}</div>
                   <h2 className="mt-3 text-xl font-bold text-foreground">{roadmap.title}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">Highest-impact gaps converted into dated preparation work.</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("Highest-impact gaps converted into dated preparation work.")}</p>
                 </div>
-                <DurationLinks jobPostId={jobPost.id} selectedDays={roadmapDays} />
+                <DurationLinks jobPostId={jobPost.id} selectedDays={roadmapDays} t={t} />
               </div>
 
               <div className="grid lg:grid-cols-[300px_1fr]">
                 <section className="border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r">
-                  <h3 className="text-xs font-bold uppercase text-muted-foreground">Gap priority</h3>
+                  <h3 className="text-xs font-bold uppercase text-muted-foreground">{t("Gap priority")}</h3>
                   <div className="mt-4 space-y-5">
                     {roadmap.missing_skills.map((skill) => (
                       <div key={skill.name}>
@@ -163,13 +168,13 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
                 </section>
 
                 <section className="p-5 sm:p-6">
-                  <h3 className="text-xs font-bold uppercase text-muted-foreground">Dated plan</h3>
+                  <h3 className="text-xs font-bold uppercase text-muted-foreground">{t("Dated plan")}</h3>
                   <div className="relative mt-5 space-y-0 before:absolute before:bottom-4 before:left-[15px] before:top-4 before:w-px before:bg-border">
                     {roadmap.plan.map((day) => (
                       <article className="relative grid grid-cols-[32px_1fr] gap-4 pb-6 last:pb-0" key={day.day}>
                         <span className="relative z-10 grid h-8 w-8 place-items-center rounded-full border-4 border-white bg-[#101318] text-[10px] font-bold text-white">{day.day}</span>
                         <div className="min-w-0 pt-1">
-                          <div className="flex flex-wrap items-start justify-between gap-2"><h4 className="text-sm font-bold text-foreground">{day.focus}</h4><span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><CalendarDays className="h-3.5 w-3.5" />{formatDate(day.date)}</span></div>
+                          <div className="flex flex-wrap items-start justify-between gap-2"><h4 className="text-sm font-bold text-foreground">{day.focus}</h4><span className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"><CalendarDays className="h-3.5 w-3.5" />{formatDate(day.date, localeTag(locale))}</span></div>
                           <ul className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">{day.tasks.map((task) => <li className="flex items-start gap-2" key={task}><Check className="mt-1 h-3.5 w-3.5 shrink-0 text-[#167D87]" />{task}</li>)}</ul>
                           <p className="mt-3 border-l-2 border-[#2BC3CE] pl-3 text-sm font-semibold text-foreground">{day.outcome}</p>
                         </div>
@@ -183,15 +188,15 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
 
           <Reveal className="app-surface overflow-hidden" delay={0.14}>
             <div className="border-b border-border p-5 sm:p-6">
-              <SectionHeading description="Structured signals extracted from the original listing." title="Role specification" />
+              <SectionHeading description={t("Structured signals extracted from the original listing.")} title={t("Role specification")} />
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3">
-              <AnalysisGroup icon={Wrench} items={analysis.required_skills} title="Required skills" />
-              <AnalysisGroup icon={Sparkles} items={analysis.nice_to_have_skills} title="Nice to have" />
-              <AnalysisGroup icon={ListChecks} items={analysis.responsibilities} title="Responsibilities" />
-              <AnalysisGroup icon={Eye} items={analysis.hidden_expectations} title="Hidden expectations" />
-              <AnalysisGroup icon={BriefcaseBusiness} items={analysis.business_expectations} title="Business expectations" />
-              <AnalysisGroup icon={MessageCircleMore} items={analysis.communication_expectations} title="Communication" />
+              <AnalysisGroup icon={Wrench} items={analysis.required_skills} t={t} title={t("Required skills")} />
+              <AnalysisGroup icon={Sparkles} items={analysis.nice_to_have_skills} t={t} title={t("Nice to have")} />
+              <AnalysisGroup icon={ListChecks} items={analysis.responsibilities} t={t} title={t("Responsibilities")} />
+              <AnalysisGroup icon={Eye} items={analysis.hidden_expectations} t={t} title={t("Hidden expectations")} />
+              <AnalysisGroup icon={BriefcaseBusiness} items={analysis.business_expectations} t={t} title={t("Business expectations")} />
+              <AnalysisGroup icon={MessageCircleMore} items={analysis.communication_expectations} t={t} title={t("Communication")} />
             </div>
           </Reveal>
         </main>
@@ -199,28 +204,28 @@ export function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysi
         <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
           <Reveal className="app-surface overflow-hidden" delay={0.06}>
             <div className="border-b border-border px-5 py-4">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><ArrowUpRight className="h-4 w-4" />Move this role forward</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><ArrowUpRight className="h-4 w-4" />{t("Move this role forward")}</div>
             </div>
             <div className="p-5">
-              <p className="text-sm leading-6 text-muted-foreground">Save this opportunity to the pipeline or start role-specific preparation now.</p>
+              <p className="text-sm leading-6 text-muted-foreground">{t("Save this opportunity to the pipeline or start role-specific preparation now.")}</p>
               <div className="mt-5"><InterviewPrepAction apiBaseUrl={apiBaseUrl} jobPostId={jobPost.id} /></div>
             </div>
           </Reveal>
 
           <Reveal className="overflow-hidden rounded-lg border border-[#272c33] bg-[#101318] text-white" delay={0.1}>
-            <div className="border-b border-white/[0.10] px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><ScanText className="h-4 w-4" />Role signals</div></div>
+            <div className="border-b border-white/[0.10] px-5 py-4"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#2BC3CE]"><ScanText className="h-4 w-4" />{t("Role signals")}</div></div>
             <dl className="divide-y divide-white/[0.10] text-sm">
-              <SummaryItem icon={Languages} label="English" value={analysis.english_requirement} />
-              <SummaryItem icon={Globe2} label="Source" value={jobPost.source ?? "manual"} />
-              <SummaryItem icon={Target} label="Location" value={jobPost.location ?? "Not specified"} />
-              <SummaryItem icon={Clock3} label="Seniority" value={analysis.seniority_level} />
+              <SummaryItem icon={Languages} label={t("English")} value={analysis.english_requirement} />
+              <SummaryItem icon={Globe2} label={t("Source")} value={t(jobPost.source ?? "manual")} />
+              <SummaryItem icon={Target} label={t("Location")} value={jobPost.location ?? t("Not specified")} />
+              <SummaryItem icon={Clock3} label={t("Seniority")} value={t(analysis.seniority_level)} />
             </dl>
           </Reveal>
 
           <Reveal delay={0.14}>
             <details className="app-surface group overflow-hidden">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 text-sm font-bold text-foreground">
-                Original job post
+                {t("Original job post")}
                 <BookOpenCheck className="h-4 w-4 text-[#D9473F]" />
               </summary>
               <pre className="max-h-[600px] overflow-auto whitespace-pre-wrap border-t border-border bg-[#f8f9fa] p-5 text-xs leading-5 text-muted-foreground">{jobPost.description}</pre>
@@ -236,31 +241,31 @@ function HeroSignal({ label, value }: Readonly<{ label: string; value: string }>
   return <div className="border-l border-white/[0.15] pl-4"><p className="text-base font-bold text-white">{value}</p><p className="mt-0.5 text-[10px] font-bold uppercase text-white/[0.42]">{label}</p></div>;
 }
 
-function DurationLinks({ jobPostId, selectedDays }: Readonly<{ jobPostId: string; selectedDays: number }>) {
+function DurationLinks({ jobPostId, selectedDays, t }: Readonly<{ jobPostId: string; selectedDays: number; t: Translator }>) {
   return (
-    <div aria-label="Roadmap duration" className="flex rounded-md border border-border bg-[#f7f8f9] p-1">
+    <div aria-label={t("Roadmap duration")} className="flex rounded-md border border-border bg-[#f7f8f9] p-1">
       {[3, 7, 14].map((days) => (
-        <Link className={days === selectedDays ? "rounded-sm bg-[#101318] px-3 py-1.5 text-xs font-bold text-white" : "rounded-sm px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"} href={`/jobs/${jobPostId}/analysis?days=${days}`} key={days}>{days}d</Link>
+        <Link className={days === selectedDays ? "rounded-sm bg-[#101318] px-3 py-1.5 text-xs font-bold text-white" : "rounded-sm px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground"} href={`/jobs/${jobPostId}/analysis?days=${days}`} key={days}>{t("{days}d", { days })}</Link>
       ))}
     </div>
   );
 }
 
-function InsightList({ icon: Icon, items, title, tone }: Readonly<{ icon: LucideIcon; items: string[]; title: string; tone: "positive" | "negative" }>) {
+function InsightList({ icon: Icon, items, t, title, tone }: Readonly<{ icon: LucideIcon; items: string[]; t: Translator; title: string; tone: "positive" | "negative" }>) {
   return (
     <div>
       <h2 className="flex items-center gap-2 text-xs font-bold uppercase text-foreground"><Icon className={tone === "positive" ? "h-4 w-4 text-[#167D87]" : "h-4 w-4 text-[#D9473F]"} />{title}</h2>
-      <ul className="mt-4 space-y-2.5 text-sm leading-6 text-muted-foreground">{items.length ? items.map((item) => <li className="flex items-start gap-2" key={item}><span className={tone === "positive" ? "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2BC3CE]" : "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF5A4E]"} />{item}</li>) : <li>No signals available.</li>}</ul>
+      <ul className="mt-4 space-y-2.5 text-sm leading-6 text-muted-foreground">{items.length ? items.map((item) => <li className="flex items-start gap-2" key={item}><span className={tone === "positive" ? "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2BC3CE]" : "mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#FF5A4E]"} />{item}</li>) : <li>{t("No signals available.")}</li>}</ul>
     </div>
   );
 }
 
-function ScoreBar({ icon: Icon, label, value, weight }: Readonly<{ icon: LucideIcon; label: string; value: number; weight: number }>) {
+function ScoreBar({ icon: Icon, label, t, value, weight }: Readonly<{ icon: LucideIcon; label: string; t: Translator; value: number; weight: number }>) {
   const normalizedValue = Math.max(0, Math.min(100, value));
   return (
     <div className="border-b border-border p-5 even:border-l sm:p-6">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2"><Icon className="h-4 w-4 text-[#D9473F]" /><div><p className="text-sm font-bold text-foreground">{label}</p><p className="mt-0.5 text-[10px] font-bold uppercase text-muted-foreground">{weight}% weight</p></div></div>
+        <div className="flex items-center gap-2"><Icon className="h-4 w-4 text-[#D9473F]" /><div><p className="text-sm font-bold text-foreground">{label}</p><p className="mt-0.5 text-[10px] font-bold uppercase text-muted-foreground">{t("{weight}% weight", { weight })}</p></div></div>
         <p className="text-base font-bold text-foreground">{formatScore(value)}</p>
       </div>
       <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#eceef1]"><MotionBar className={scoreColor(value)} value={normalizedValue} /></div>
@@ -268,11 +273,11 @@ function ScoreBar({ icon: Icon, label, value, weight }: Readonly<{ icon: LucideI
   );
 }
 
-function AnalysisGroup({ icon: Icon, items, title }: Readonly<{ icon: LucideIcon; items: string[]; title: string }>) {
+function AnalysisGroup({ icon: Icon, items, t, title }: Readonly<{ icon: LucideIcon; items: string[]; t: Translator; title: string }>) {
   return (
     <section className="border-b border-border p-5 md:border-r sm:p-6 [&:nth-child(2n)]:md:border-r-0 [&:nth-child(3n)]:lg:border-r-0 [&:nth-child(2n)]:lg:border-r">
       <h3 className="flex items-center gap-2 text-xs font-bold uppercase text-foreground"><Icon className="h-4 w-4 text-[#D9473F]" />{title}</h3>
-      <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">{items.length ? items.map((item) => <li className="flex items-start gap-2" key={item}><ArrowRight className="mt-1.5 h-3 w-3 shrink-0 text-[#2BC3CE]" />{item}</li>) : <li>Not specified</li>}</ul>
+      <ul className="mt-4 space-y-2 text-sm leading-6 text-muted-foreground">{items.length ? items.map((item) => <li className="flex items-start gap-2" key={item}><ArrowRight className="mt-1.5 h-3 w-3 shrink-0 text-[#2BC3CE]" />{item}</li>) : <li>{t("Not specified")}</li>}</ul>
     </section>
   );
 }
@@ -297,6 +302,6 @@ function formatScore(value: number) {
   return `${Math.round(value)}%`;
 }
 
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(`${value}T00:00:00`));
+function formatDate(value: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" }).format(new Date(`${value}T00:00:00`));
 }

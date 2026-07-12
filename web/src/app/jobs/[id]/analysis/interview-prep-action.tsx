@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "@/components/locale-provider";
 import type { ApplicationData } from "@/lib/api";
 import { apiError, JSON_HEADERS } from "@/lib/client-api";
 
@@ -22,6 +23,7 @@ export function InterviewPrepAction({
   const router = useRouter();
   const [state, setState] = useState<ActionState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const t = useTranslations();
   async function startPrep() {
     await createTrackerEntry("preparing", true);
   }
@@ -47,14 +49,14 @@ export function InterviewPrepAction({
       });
 
       if (!response.ok) {
-        throw await apiError(response, "Could not create application");
+        throw await apiError(response, t("Could not create application"));
       }
 
       const application = (await response.json()) as ApplicationData;
       router.push(openPrep ? `/interview-prep/${application.id}` : `/applications/${application.id}`);
     } catch (error) {
       setState("error");
-      setErrorMessage(error instanceof Error ? error.message : "Could not start prep.");
+      setErrorMessage(error instanceof Error ? t(error.message) : t("Could not start prep."));
     }
   }
 
@@ -63,7 +65,7 @@ export function InterviewPrepAction({
       <div className="grid gap-2">
         <Button disabled={state === "creating"} onClick={() => void saveApplication()} type="button">
           {state === "creating" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <BookmarkPlus className="h-4 w-4" />}
-          Save to pipeline
+          {t("Save to pipeline")}
         </Button>
         <Button
           disabled={state === "creating"}
@@ -72,7 +74,7 @@ export function InterviewPrepAction({
           variant="secondary"
         >
           <MessagesSquare className="h-4 w-4" />
-          {state === "creating" ? "Creating workspace" : "Start interview prep"}
+          {state === "creating" ? t("Creating workspace") : t("Start interview prep")}
         </Button>
       </div>
       {errorMessage ? <p className="mt-3 flex items-start gap-2 rounded-md border border-[#f0b5b0] bg-[#fff3f2] p-3 text-sm font-semibold text-[#A63832]"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{errorMessage}</p> : null}

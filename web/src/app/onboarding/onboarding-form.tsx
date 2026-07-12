@@ -26,6 +26,7 @@ import { useState } from "react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "@/components/locale-provider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -135,6 +136,7 @@ export function OnboardingForm({
   const [submitState, setSubmitState] = useState<SubmitState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const t = useTranslations();
 
   const populatedSections = resume
     ? Object.values(resume.parsed_data).filter((values) => values.length > 0).length
@@ -169,12 +171,12 @@ export function OnboardingForm({
     }
     const lowerName = file.name.toLowerCase();
     if (!lowerName.endsWith(".pdf") && !lowerName.endsWith(".docx")) {
-      setErrorMessage("Choose a PDF or DOCX file.");
+      setErrorMessage(t("Choose a PDF or DOCX file."));
       setSubmitState("error");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage("Choose a file that is 10 MB or smaller.");
+      setErrorMessage(t("Choose a file that is 10 MB or smaller."));
       setSubmitState("error");
       return;
     }
@@ -191,7 +193,7 @@ export function OnboardingForm({
         }),
       });
       if (!response.ok) {
-        throw await apiError(response, "CV upload failed");
+        throw await apiError(response, t("CV upload failed"));
       }
 
       const uploadedResume = (await response.json()) as ResumeData;
@@ -203,7 +205,7 @@ export function OnboardingForm({
       }));
       setSubmitState("idle");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "CV upload failed.");
+      setErrorMessage(error instanceof Error ? t(error.message) : t("CV upload failed."));
       setSubmitState("error");
     }
   }
@@ -217,13 +219,13 @@ export function OnboardingForm({
   async function completeSetup() {
     const parsed = onboardingSchema.safeParse(form);
     if (!parsed.success) {
-      setErrorMessage(parsed.error.issues[0]?.message ?? "Complete the required fields.");
+      setErrorMessage(t(parsed.error.issues[0]?.message ?? "Complete the required fields."));
       setSubmitState("error");
       return;
     }
     if (!resume) {
       setStep(1);
-      setErrorMessage("Upload a CV before continuing.");
+      setErrorMessage(t("Upload a CV before continuing."));
       setSubmitState("error");
       return;
     }
@@ -237,12 +239,12 @@ export function OnboardingForm({
         body: JSON.stringify(parsed.data),
       });
       if (!response.ok) {
-        throw await apiError(response, "Setup could not be completed");
+        throw await apiError(response, t("Setup could not be completed"));
       }
       router.replace(nextPath);
       router.refresh();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Setup could not be completed.");
+      setErrorMessage(error instanceof Error ? t(error.message) : t("Setup could not be completed."));
       setSubmitState("error");
     }
   }
@@ -258,15 +260,15 @@ export function OnboardingForm({
         <div className="relative z-10">
           <BrandLockup />
           <div className="mt-14 hidden lg:block">
-            <p className="flex items-center gap-2 text-xs font-bold uppercase text-[#FF786D]"><ScanSearch className="h-4 w-4" /> Evidence setup</p>
-            <h1 className="mt-5 text-4xl font-bold leading-tight">Give every decision a stronger signal.</h1>
-            <p className="mt-4 max-w-sm text-sm leading-6 text-white/[0.62]">Start with your current CV. ApplyWise will map what you have before asking where you want to go.</p>
+            <p className="flex items-center gap-2 text-xs font-bold uppercase text-[#FF786D]"><ScanSearch className="h-4 w-4" /> {t("Evidence setup")}</p>
+            <h1 className="mt-5 text-4xl font-bold leading-tight">{t("Give every decision a stronger signal.")}</h1>
+            <p className="mt-4 max-w-sm text-sm leading-6 text-white/[0.62]">{t("Start with your current CV. ApplyWise will map what you have before asking where you want to go.")}</p>
           </div>
         </div>
 
         <ol className="relative z-10 mt-7 grid grid-cols-2 gap-2 lg:block lg:space-y-2">
-          <SetupStep active={step === 1} complete={Boolean(resume)} icon={FileText} label="Evidence scan" number="01" />
-          <SetupStep active={step === 2} complete={false} icon={Target} label="Target direction" number="02" />
+          <SetupStep active={step === 1} complete={Boolean(resume)} icon={FileText} label={t("Evidence scan")} number="01" />
+          <SetupStep active={step === 2} complete={false} icon={Target} label={t("Target direction")} number="02" />
         </ol>
       </aside>
 
@@ -274,10 +276,10 @@ export function OnboardingForm({
         <div className="w-full max-w-[820px]">
           <div className="mb-10 flex items-center justify-between gap-5 border-b border-border pb-5">
             <div>
-              <p className="text-xs font-bold uppercase text-[#a63832]">Step {step} of 2</p>
-              <p className="mt-1 text-sm text-muted-foreground">{userName ? `Welcome, ${userName}.` : "Welcome to ApplyWise."}</p>
+              <p className="text-xs font-bold uppercase text-[#a63832]">{t("Step {step} of 2", { step })}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{userName ? t("Welcome, {name}.", { name: userName }) : t("Welcome to ApplyWise.")}</p>
             </div>
-            <div className="grid w-32 grid-cols-2 gap-1" aria-label={`Step ${step} of 2`}>
+            <div className="grid w-32 grid-cols-2 gap-1" aria-label={t("Step {step} of 2", { step })}>
               <span className="h-1.5 rounded-full bg-[#D9473F]" />
               <motion.span animate={{ backgroundColor: step === 2 ? "#D9473F" : "#dfe3e7" }} className="h-1.5 rounded-full" transition={{ duration: 0.3 }} />
             </div>
@@ -287,8 +289,8 @@ export function OnboardingForm({
             {step === 1 ? (
               <motion.section {...stepMotion} aria-labelledby="cv-step-title" key="resume">
                 <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#fff0ef] text-[#D9473F]"><UploadCloud className="h-5 w-5" /></div>
-                <h2 className="mt-5 text-3xl font-bold text-foreground sm:text-4xl" id="cv-step-title">Start with your current CV</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">Education, experience, skills, and projects become the evidence layer behind every fit score.</p>
+                <h2 className="mt-5 text-3xl font-bold text-foreground sm:text-4xl" id="cv-step-title">{t("Start with your current CV")}</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{t("Education, experience, skills, and projects become the evidence layer behind every fit score.")}</p>
 
                 <label
                   className={cn(
@@ -303,8 +305,8 @@ export function OnboardingForm({
                 >
                   {submitState === "uploading" ? <motion.span animate={{ x: ["-100%", "100%"] }} className="absolute inset-x-0 top-0 h-0.5 bg-[#2BC3CE]" transition={{ duration: 1.1, repeat: Infinity }} /> : null}
                   <span className="grid h-12 w-12 place-items-center rounded-md bg-[#101318] text-white">{submitState === "uploading" ? <LoaderCircle className="h-5 w-5 animate-spin" /> : resume ? <FileCheck2 className="h-5 w-5 text-[#2BC3CE]" /> : <UploadCloud className="h-5 w-5 text-[#FF6B60]" />}</span>
-                  <span className="mt-4 text-base font-bold text-foreground">{submitState === "uploading" ? "Scanning evidence" : resume ? "Replace uploaded CV" : "Drop your CV here"}</span>
-                  <span className="mt-1 text-sm text-muted-foreground">PDF or DOCX, up to 10 MB</span>
+                  <span className="mt-4 text-base font-bold text-foreground">{submitState === "uploading" ? t("Scanning evidence") : resume ? t("Replace uploaded CV") : t("Drop your CV here")}</span>
+                  <span className="mt-1 text-sm text-muted-foreground">{t("PDF or DOCX, up to 10 MB")}</span>
                   <input accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="sr-only" disabled={submitState === "uploading"} id="onboarding-cv" onChange={(event) => void uploadResume(event.target.files?.[0] ?? null)} type="file" />
                 </label>
 
@@ -312,15 +314,15 @@ export function OnboardingForm({
                   <motion.div animate={{ opacity: 1, y: 0 }} className="mt-6 border-y border-border bg-white" initial={reduceMotion ? false : { opacity: 0, y: 8 }}>
                     <div className="flex flex-col gap-2 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex min-w-0 items-center gap-3"><FileCheck2 className="h-4 w-4 shrink-0 text-[#1F9D68]" /><p className="truncate text-sm font-bold text-foreground">{resume.filename}</p></div>
-                      <p className="text-xs font-bold text-muted-foreground">{populatedSections}/4 evidence groups</p>
+                      <p className="text-xs font-bold text-muted-foreground">{t("{count}/4 evidence groups", { count: populatedSections })}</p>
                     </div>
                     <div className="grid sm:grid-cols-2">
                       {sectionMetadata.map(({ icon: Icon, key, label }, index) => {
                         const count = resume.parsed_data[key].length;
                         return (
                           <div className={cn("flex items-center justify-between px-4 py-3.5", index < 2 && "sm:border-b", index % 2 === 0 && "sm:border-r", index < 3 && "border-b")} key={key}>
-                            <span className="flex items-center gap-2 text-sm font-semibold text-foreground"><Icon className="h-4 w-4 text-muted-foreground" />{label}</span>
-                            <span className={cn("text-xs font-bold", count ? "text-[#167D87]" : "text-[#A63832]")}>{count ? `${count} found` : "Review"}</span>
+                            <span className="flex items-center gap-2 text-sm font-semibold text-foreground"><Icon className="h-4 w-4 text-muted-foreground" />{t(label)}</span>
+                            <span className={cn("text-xs font-bold", count ? "text-[#167D87]" : "text-[#A63832]")}>{count ? t("{count} found", { count }) : t("Review")}</span>
                           </div>
                         );
                       })}
@@ -329,23 +331,23 @@ export function OnboardingForm({
                 ) : null}
 
                 <div className="mt-8 flex justify-end">
-                  <Button disabled={!resume || submitState === "uploading"} onClick={() => { setStep(2); setErrorMessage(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} type="button">Continue <ArrowRight className="h-4 w-4" /></Button>
+                  <Button disabled={!resume || submitState === "uploading"} onClick={() => { setStep(2); setErrorMessage(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} type="button">{t("Continue")} <ArrowRight className="h-4 w-4" /></Button>
                 </div>
               </motion.section>
             ) : (
               <motion.section {...stepMotion} aria-labelledby="profile-step-title" key="direction">
                 <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#eaf9fa] text-[#167D87]"><Target className="h-5 w-5" /></div>
-                <h2 className="mt-5 text-3xl font-bold text-foreground sm:text-4xl" id="profile-step-title">Choose your direction</h2>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">Confirm the minimum context ApplyWise needs to compare you with internship roles.</p>
+                <h2 className="mt-5 text-3xl font-bold text-foreground sm:text-4xl" id="profile-step-title">{t("Choose your direction")}</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{t("Confirm the minimum context ApplyWise needs to compare you with internship roles.")}</p>
 
                 <div className="mt-8 divide-y divide-border border-y border-border bg-white px-4 sm:px-5">
                   <div className="grid gap-4 py-5 sm:grid-cols-[180px_1fr]">
-                    <FieldLabel icon={GraduationCap} label="Education" />
-                    <Input id="education" maxLength={120} onChange={(event) => updateField("education", event.target.value)} placeholder="BSc Computer Engineering, third year" value={form.education} />
+                    <FieldLabel icon={GraduationCap} label={t("Education")} />
+                    <Input id="education" maxLength={120} onChange={(event) => updateField("education", event.target.value)} placeholder={t("BSc Computer Engineering, third year")} value={form.education} />
                   </div>
 
                   <fieldset className="grid gap-4 py-5 sm:grid-cols-[180px_1fr]">
-                    <FieldLabel asLegend icon={Target} label="Target roles" />
+                    <FieldLabel asLegend icon={Target} label={t("Target roles")} />
                     <div className="grid gap-2 sm:grid-cols-2">
                       {initialSnapshot.target_role_options.map((role) => {
                         const selected = form.target_roles.includes(role);
@@ -353,7 +355,7 @@ export function OnboardingForm({
                           <label className={cn("motion-control flex min-h-12 cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 text-sm", selected ? "border-[#e28f88] bg-[#fff2f1] text-[#912f2a]" : "border-border bg-[#fafbfc] text-foreground hover:border-[#a8afb8]")} key={role}>
                             <input checked={selected} className="sr-only" onChange={() => updateField("target_roles", selected ? form.target_roles.filter((value) => value !== role) : [...form.target_roles, role])} type="checkbox" />
                             <span className={cn("grid h-5 w-5 shrink-0 place-items-center rounded border", selected ? "border-[#D9473F] bg-[#D9473F] text-white" : "border-[#b7bdc5] bg-white")}>{selected ? <Check className="h-3.5 w-3.5" /> : null}</span>
-                            <span className="font-semibold">{role}</span>
+                            <span className="font-semibold">{t(role)}</span>
                           </label>
                         );
                       })}
@@ -361,27 +363,27 @@ export function OnboardingForm({
                   </fieldset>
 
                   <div className="grid gap-4 py-5 sm:grid-cols-[180px_1fr]">
-                    <FieldLabel icon={BriefcaseBusiness} label="Experience" />
-                    <Select id="experience-level" onChange={(event) => updateField("experience_level", event.target.value)} value={form.experience_level}><option value="">Select a level</option>{experienceLevels.map((level) => <option key={level} value={level}>{level}</option>)}</Select>
+                    <FieldLabel icon={BriefcaseBusiness} label={t("Experience")} />
+                    <Select id="experience-level" onChange={(event) => updateField("experience_level", event.target.value)} value={form.experience_level}><option value="">{t("Select a level")}</option>{experienceLevels.map((level) => <option key={level} value={level}>{t(level)}</option>)}</Select>
                   </div>
 
                   <div className="grid gap-4 py-5 sm:grid-cols-[180px_1fr]">
-                    <FieldLabel icon={Languages} label="English" />
-                    <Select id="english-level" onChange={(event) => updateField("english_level", event.target.value)} value={form.english_level}><option value="">Select a level</option>{englishLevels.map((level) => <option key={level} value={level}>{level}</option>)}</Select>
+                    <FieldLabel icon={Languages} label={t("English")} />
+                    <Select id="english-level" onChange={(event) => updateField("english_level", event.target.value)} value={form.english_level}><option value="">{t("Select a level")}</option>{englishLevels.map((level) => <option key={level} value={level}>{t(level)}</option>)}</Select>
                   </div>
 
                   <div className="grid gap-4 py-5 sm:grid-cols-[180px_1fr]">
-                    <FieldLabel icon={Wrench} label="Skills" />
+                    <FieldLabel icon={Wrench} label={t("Skills")} />
                     <div>
-                      <div className="flex gap-2"><Input id="skill-input" onChange={(event) => setSkillInput(event.target.value)} onKeyDown={handleSkillKeyDown} placeholder="Python, SQL, FastAPI" value={skillInput} /><Button aria-label="Add skills" onClick={addSkills} size="icon" type="button" variant="secondary"><Plus className="h-4 w-4" /></Button></div>
-                      {form.skills.length ? <div className="mt-3 flex flex-wrap gap-2">{form.skills.map((skill) => <button className="data-chip motion-control gap-2 hover:border-[#e28f88] hover:text-[#a63832]" key={skill} onClick={() => updateField("skills", form.skills.filter((value) => value !== skill))} title={`Remove ${skill}`} type="button">{skill}<X className="h-3 w-3" /></button>)}</div> : <p className="mt-2 text-xs text-muted-foreground">Add at least one skill.</p>}
+                      <div className="flex gap-2"><Input id="skill-input" onChange={(event) => setSkillInput(event.target.value)} onKeyDown={handleSkillKeyDown} placeholder="Python, SQL, FastAPI" value={skillInput} /><Button aria-label={t("Add skills")} onClick={addSkills} size="icon" type="button" variant="secondary"><Plus className="h-4 w-4" /></Button></div>
+                      {form.skills.length ? <div className="mt-3 flex flex-wrap gap-2">{form.skills.map((skill) => <button className="data-chip motion-control gap-2 hover:border-[#e28f88] hover:text-[#a63832]" key={skill} onClick={() => updateField("skills", form.skills.filter((value) => value !== skill))} title={t("Remove {skill}", { skill })} type="button">{skill}<X className="h-3 w-3" /></button>)}</div> : <p className="mt-2 text-xs text-muted-foreground">{t("Add at least one skill.")}</p>}
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-8 flex items-center justify-between gap-3">
-                  <Button onClick={() => { setStep(1); setErrorMessage(null); }} type="button" variant="secondary"><ArrowLeft className="h-4 w-4" />Back</Button>
-                  <Button disabled={submitState === "submitting"} onClick={() => void completeSetup()} type="button">{submitState === "submitting" ? <><LoaderCircle className="h-4 w-4 animate-spin" />Creating workspace</> : <>Enter workspace <ArrowRight className="h-4 w-4" /></>}</Button>
+                  <Button onClick={() => { setStep(1); setErrorMessage(null); }} type="button" variant="secondary"><ArrowLeft className="h-4 w-4" />{t("Back")}</Button>
+                  <Button disabled={submitState === "submitting"} onClick={() => void completeSetup()} type="button">{submitState === "submitting" ? <><LoaderCircle className="h-4 w-4 animate-spin" />{t("Creating workspace")}</> : <>{t("Enter workspace")} <ArrowRight className="h-4 w-4" /></>}</Button>
                 </div>
               </motion.section>
             )}

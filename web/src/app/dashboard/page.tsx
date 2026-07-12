@@ -21,7 +21,9 @@ import { ScoreRing } from "@/components/score-ring";
 import { SignalField } from "@/components/signal-field";
 import type { ApplicationData } from "@/lib/api";
 import { getApplications, getCurrentUser } from "@/lib/api";
+import { createTranslator, localeTag, type Translator } from "@/lib/i18n";
 import { getBackendSession } from "@/lib/server-auth";
+import { getRequestLocale } from "@/lib/server-i18n";
 
 const ACTIVE_STATUSES = new Set(["saved", "preparing", "applied", "assessment", "interview"]);
 const CLOSED_STATUSES = new Set(["rejected", "offer", "archived"]);
@@ -37,6 +39,8 @@ export default async function DashboardPage() {
 
   const user = await getCurrentUser(session);
   const applications = await getApplications(session);
+  const locale = await getRequestLocale();
+  const t = createTranslator(locale);
   const activeApplications = applications.filter((application) =>
     ACTIVE_STATUSES.has(application.status),
   );
@@ -54,7 +58,7 @@ export default async function DashboardPage() {
     .sort((left, right) => String(left.deadline).localeCompare(String(right.deadline)))
     .slice(0, 4);
   const topMissingSkills = rankMissingSkills(applications).slice(0, 6);
-  const nextBestActions = buildNextBestActions(applications).slice(0, 5);
+  const nextBestActions = buildNextBestActions(applications, t).slice(0, 5);
   const averageFit = averageFitValue(applications);
   const leadAction = nextBestActions[0];
 
@@ -65,13 +69,13 @@ export default async function DashboardPage() {
           action={(
             <Link className="motion-control inline-flex h-10 items-center gap-2 rounded-md bg-[#101318] px-4 text-sm font-bold text-white hover:bg-[#292d34] min-[960px]:hidden" href="/jobs/new">
               <Radar className="h-4 w-4 text-[#FF6B60]" />
-              Analyze a role
+              {t("Analyze a role")}
             </Link>
           )}
-          description="See what needs attention now, where your evidence is strongest, and which move creates the most leverage."
-          eyebrow="Career command center"
+          description={t("See what needs attention now, where your evidence is strongest, and which move creates the most leverage.")}
+          eyebrow={t("Career command center")}
           icon={Crosshair}
-          title={`Good to see you, ${firstName(user.full_name ?? user.email)}.`}
+          title={t("Good to see you, {name}.", { name: firstName(user.full_name ?? user.email) })}
         />
 
         <Reveal className="relative mt-6 overflow-hidden rounded-lg bg-[#101318] text-white shadow-[0_22px_50px_rgba(16,19,24,0.16)]">
@@ -81,7 +85,7 @@ export default async function DashboardPage() {
               <div>
                 <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Highest-leverage move
+                  {t("Highest-leverage move")}
                 </div>
                 {leadAction ? (
                   <>
@@ -95,26 +99,26 @@ export default async function DashboardPage() {
                 ) : (
                   <>
                     <h2 className="mt-4 max-w-xl text-2xl font-bold leading-tight sm:text-[1.75rem]">
-                      Analyze your first target role to activate your decision queue.
+                      {t("Analyze your first target role to activate your decision queue.")}
                     </h2>
                     <p className="mt-3 max-w-xl text-sm leading-6 text-white/[0.55]">
-                      ApplyWise will compare the role against your CV, projects, skills, and profile evidence.
+                      {t("ApplyWise will compare the role against your CV, projects, skills, and profile evidence.")}
                     </p>
                   </>
                 )}
               </div>
               <Link className="mt-8 inline-flex w-fit items-center gap-2 text-sm font-bold text-white hover:text-[#FF786D]" href={leadAction ? `/applications/${leadAction.application.id}` : "/jobs/new"}>
-                {leadAction ? "Open action" : "Start role analysis"}
+                {leadAction ? t("Open action") : t("Start role analysis")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
             <div className="relative flex items-center justify-center gap-8 p-6 sm:p-8">
-              <ScoreRing className="w-36" label="Avg. fit" value={averageFit} />
+              <ScoreRing className="w-36" label={t("Avg. fit")} value={averageFit} />
               <div className="space-y-4">
-                <SignalMetric label="Active" value={activeApplications.length.toString()} />
-                <SignalMetric label="Deadlines" value={upcomingDeadlines.length.toString()} />
-                <SignalMetric label="Targets" value={applications.length.toString()} />
+                <SignalMetric label={t("Active")} value={activeApplications.length.toString()} />
+                <SignalMetric label={t("Deadlines")} value={upcomingDeadlines.length.toString()} />
+                <SignalMetric label={t("Targets")} value={applications.length.toString()} />
               </div>
             </div>
           </div>
@@ -124,9 +128,9 @@ export default async function DashboardPage() {
           <Reveal className="app-surface overflow-hidden" delay={0.05}>
             <div className="border-b border-border px-5 py-5 sm:px-6">
               <SectionHeading
-                action={<InlineLink href="/applications" label="Open pipeline" />}
-                description="Ordered by urgency, stage, deadline, and current fit."
-                title="Decision queue"
+                action={<InlineLink href="/applications" label={t("Open pipeline")} />}
+                description={t("Ordered by urgency, stage, deadline, and current fit.")}
+                title={t("Decision queue")}
               />
             </div>
             <div className="divide-y divide-border">
@@ -146,21 +150,21 @@ export default async function DashboardPage() {
                         {item.application.company} / {item.application.role}
                       </p>
                     </div>
-                    <StatusChip status={item.application.status} />
+                    <StatusChip status={t(item.application.status)} />
                     <span className="text-right text-sm font-bold text-foreground">{formatScore(item.application.fit_score)}</span>
                   </Link>
                 ))
               ) : (
-                <EmptyState icon={Target} text="Save a role analysis to build your first decision queue." />
+                <EmptyState icon={Target} text={t("Save a role analysis to build your first decision queue.")} />
               )}
             </div>
           </Reveal>
 
           <Reveal className="app-surface p-5 sm:p-6" delay={0.1}>
             <SectionHeading
-              action={<InlineLink href="/applications" label="View all" />}
-              description="Current movement across active stages."
-              title="Pipeline signal"
+              action={<InlineLink href="/applications" label={t("View all")} />}
+              description={t("Current movement across active stages.")}
+              title={t("Pipeline signal")}
             />
             <div className="mt-6 space-y-4">
               {STATUS_ORDER.map((status) => {
@@ -169,7 +173,7 @@ export default async function DashboardPage() {
                 return (
                   <div key={status}>
                     <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="font-semibold capitalize text-[#4d545e]">{status}</span>
+                      <span className="font-semibold capitalize text-[#4d545e]">{t(status)}</span>
                       <span className="font-bold text-foreground">{count}</span>
                     </div>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eceef1]">
@@ -179,16 +183,16 @@ export default async function DashboardPage() {
                 );
               })}
             </div>
-            {!activeApplications.length ? <p className="mt-5 text-sm leading-6 text-muted-foreground">Your active stages will appear here once an application is saved.</p> : null}
+            {!activeApplications.length ? <p className="mt-5 text-sm leading-6 text-muted-foreground">{t("Your active stages will appear here once an application is saved.")}</p> : null}
           </Reveal>
         </div>
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[0.85fr_1.15fr]">
           <Reveal className="app-surface p-5 sm:p-6" delay={0.08}>
             <SectionHeading
-              action={<InlineLink href="/roadmap" label="Open roadmap" />}
-              description="Recurring gaps across the roles you care about."
-              title="Skill leverage"
+              action={<InlineLink href="/roadmap" label={t("Open roadmap")} />}
+              description={t("Recurring gaps across the roles you care about.")}
+              title={t("Skill leverage")}
             />
             <div className="mt-5 space-y-4">
               {topMissingSkills.length ? (
@@ -201,11 +205,11 @@ export default async function DashboardPage() {
                         <MotionBar className={index === 0 ? "bg-[#FF5A4E]" : "bg-[#F0A13A]"} value={Math.min(100, skill.count * 28)} />
                       </div>
                     </div>
-                    <span className="data-chip">{skill.count} roles</span>
+                    <span className="data-chip">{t("{count} roles", { count: skill.count })}</span>
                   </div>
                 ))
               ) : (
-                <EmptyState icon={Flame} text="Analyze more roles to reveal recurring skill gaps." />
+                <EmptyState icon={Flame} text={t("Analyze more roles to reveal recurring skill gaps.")} />
               )}
             </div>
           </Reveal>
@@ -213,9 +217,9 @@ export default async function DashboardPage() {
           <Reveal className="app-surface overflow-hidden" delay={0.13}>
             <div className="border-b border-border px-5 py-5 sm:px-6">
               <SectionHeading
-                action={<InlineLink href="/applications" label="Open pipeline" />}
-                description="Comparable evidence strength across your latest targets."
-                title="Recent fit matrix"
+                action={<InlineLink href="/applications" label={t("Open pipeline")} />}
+                description={t("Comparable evidence strength across your latest targets.")}
+                title={t("Recent fit matrix")}
               />
             </div>
             <div className="divide-y divide-border">
@@ -230,7 +234,7 @@ export default async function DashboardPage() {
                   </div>
                   <span className="text-right text-base font-bold text-foreground">{formatScore(application.fit_score)}</span>
                 </Link>
-              )) : <EmptyState icon={ChartNoAxesColumnIncreasing} text="Your scored targets will appear here after a job analysis." />}
+              )) : <EmptyState icon={ChartNoAxesColumnIncreasing} text={t("Your scored targets will appear here after a job analysis.")} />}
             </div>
           </Reveal>
         </div>
@@ -240,24 +244,24 @@ export default async function DashboardPage() {
             <div className="border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r">
               <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]">
                 <CalendarClock className="h-4 w-4" />
-                Time-sensitive
+                {t("Time-sensitive")}
               </div>
-              <h2 className="mt-3 text-xl font-bold text-foreground">Upcoming deadlines</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">Keep preparation ahead of the closing window.</p>
+              <h2 className="mt-3 text-xl font-bold text-foreground">{t("Upcoming deadlines")}</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("Keep preparation ahead of the closing window.")}</p>
             </div>
             <div className="divide-y divide-border">
               {upcomingDeadlines.length ? upcomingDeadlines.map((application) => (
                 <Link className="group grid gap-2 px-5 py-4 transition hover:bg-[#fff8f7] sm:grid-cols-[1fr_auto] sm:items-center sm:px-6" href={`/applications/${application.id}`} key={application.id}>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-foreground group-hover:text-[#D9473F]">{application.company} / {application.role}</p>
-                    <p className="mt-1 text-xs capitalize text-muted-foreground">{application.status}</p>
+                    <p className="mt-1 text-xs capitalize text-muted-foreground">{t(application.status)}</p>
                   </div>
                   <span className="inline-flex items-center gap-2 text-sm font-bold text-[#A63832]">
                     <Clock3 className="h-4 w-4" />
-                    {formatDate(application.deadline)}
+                    {formatDate(application.deadline, localeTag(locale))}
                   </span>
                 </Link>
-              )) : <EmptyState icon={CalendarClock} text="No upcoming deadlines. Add dates to active applications to prioritize them here." />}
+              )) : <EmptyState icon={CalendarClock} text={t("No upcoming deadlines. Add dates to active applications to prioritize them here.")} />}
             </div>
           </div>
         </Reveal>
@@ -311,9 +315,9 @@ function scoreBarColor(value: number | null) {
   return "bg-[#2BC3CE]";
 }
 
-function formatDate(value: string | null) {
+function formatDate(value: string | null, locale: string) {
   if (!value) return "--";
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -332,12 +336,12 @@ function rankMissingSkills(applications: ApplicationData[]) {
     .sort((left, right) => right.count - left.count || left.name.localeCompare(right.name));
 }
 
-function buildNextBestActions(applications: ApplicationData[]) {
+function buildNextBestActions(applications: ApplicationData[], t: Translator) {
   return applications
     .filter((application) => !CLOSED_STATUSES.has(application.status))
     .map((application) => ({
       application,
-      action: application.next_action ?? inferAction(application),
+      action: application.next_action ? t(application.next_action) : t(inferAction(application)),
       priority: actionPriority(application),
     }))
     .sort((left, right) => right.priority - left.priority);
