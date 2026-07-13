@@ -35,12 +35,13 @@ import { PageHeader, SectionHeading } from "@/components/page-header";
 import { ScoreRing } from "@/components/score-ring";
 import { SignalField } from "@/components/signal-field";
 import { SkillGraphPanel } from "@/components/skill-graph-panel";
-import type { JobPostData, SkillGraphData } from "@/lib/api";
+import type { ApplicationCoachData, JobPostData, SkillGraphData } from "@/lib/api";
 import { createTranslator, localeTag, type Translator } from "@/lib/i18n";
 import { getRequestLocale } from "@/lib/server-i18n";
 
 type JobAnalysisViewProps = {
   apiBaseUrl: string;
+  applicationCoach: ApplicationCoachData;
   jobPost: JobPostData;
   roadmapDays: number;
   skillGraph: SkillGraphData;
@@ -56,12 +57,13 @@ const SCORE_COMPONENTS = [
   { key: "profile_quality_score", label: "Profile quality", weight: 5, icon: Sparkles },
 ] as const;
 
-export async function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays, skillGraph }: JobAnalysisViewProps) {
+export async function JobAnalysisView({ apiBaseUrl, applicationCoach, jobPost, roadmapDays, skillGraph }: JobAnalysisViewProps) {
   const analysis = jobPost.analysis;
   const fitAnalysis = jobPost.fit_analysis;
   const roadmap = jobPost.roadmap;
   const locale = await getRequestLocale();
   const t = createTranslator(locale);
+  const coachAction = formatCoachAction(applicationCoach, t);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6">
@@ -82,10 +84,11 @@ export async function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays, skillG
         <div className="relative grid lg:grid-cols-[1fr_390px]">
           <div className="flex min-h-[275px] flex-col justify-between border-b border-white/[0.10] p-6 sm:p-8 lg:border-b-0 lg:border-r">
             <div>
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><TrendingUp className="h-3.5 w-3.5" />{t("Recommended decision")}</div>
+              <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase text-[#FF786D]"><TrendingUp className="h-3.5 w-3.5" />{t("Application coach")}<span className="text-white/[0.35]">/</span><span className="text-[#2BC3CE]">{coachDecisionLabel(applicationCoach.decision, t)}</span></div>
               <h2 className="mt-4 max-w-3xl text-2xl font-bold leading-tight sm:text-[1.75rem]">
-                {fitAnalysis?.explanation.recommended_action ?? t("Fit analysis is not available for this role yet.")}
+                {coachAction}
               </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/[0.55]">{coachDecisionCopy(applicationCoach, t)}</p>
             </div>
             <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-xs font-semibold text-white/[0.55]">
               <span className="flex items-center gap-2"><Building2 className="h-4 w-4 text-[#2BC3CE]" />{jobPost.company_name}</span>
@@ -94,11 +97,11 @@ export async function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays, skillG
             </div>
           </div>
           <div className="relative flex items-center justify-center gap-7 p-6 sm:p-8">
-            <ScoreRing className="w-40" label={t("Overall fit")} value={fitAnalysis?.total_score ?? null} />
+            <ScoreRing className="w-40" label={t("Overall fit")} value={applicationCoach.current_fit_score} />
             <div className="hidden space-y-4 sm:block">
-              <HeroSignal label={t("Method")} value={t("Hybrid")} />
-              <HeroSignal label={t("Components")} value="7" />
-              <HeroSignal label={t("Override")} value={t("None")} />
+              <HeroSignal label={t("Scenario estimate")} value={`+${formatPointGain(applicationCoach.estimated_point_improvement)}`} />
+              <HeroSignal label={t("Projected fit")} value={formatScore(applicationCoach.projected_fit_score)} />
+              <HeroSignal label={t("Method")} value={t("Deterministic")} />
             </div>
           </div>
         </div>
@@ -139,6 +142,13 @@ export async function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays, skillG
                 <InsightList icon={CircleX} items={fitAnalysis.explanation.weak_areas} t={t} title={t("Weak areas")} tone="negative" />
               </Reveal>
             </div>
+          ) : null}
+
+          {fitAnalysis ? (
+            <Reveal className="border-l-2 border-[#101318] bg-[#f7f8f9] p-5 sm:p-6" delay={0.1}>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase text-foreground"><Sparkles className="h-4 w-4 text-[#D9473F]" />{t("Qualitative AI context")}</div>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{fitAnalysis.explanation.recommended_action}</p>
+            </Reveal>
           ) : null}
 
           <Reveal delay={0.1}>
@@ -306,6 +316,49 @@ function scoreColor(value: number) {
 
 function formatScore(value: number) {
   return `${Math.round(value)}%`;
+}
+
+function formatPointGain(value: number) {
+  return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+}
+
+function coachDecisionLabel(decision: ApplicationCoachData["decision"], t: Translator) {
+  if (decision === "apply_now") return t("Apply now");
+  if (decision === "apply_after_targeted_fix") return t("Apply after targeted fix");
+  return t("Build evidence first");
+}
+
+function coachDecisionCopy(coach: ApplicationCoachData, t: Translator) {
+  const score = Math.round(coach.current_fit_score);
+  if (coach.decision === "apply_now") {
+    return t("Current fit is {score}%. Apply now while completing this improvement in parallel.", { score });
+  }
+  if (coach.decision === "apply_after_targeted_fix") {
+    return t("Current fit is {score}%. Complete this highest-leverage fix, then apply.", { score });
+  }
+  return t("Current fit is {score}%. Build stronger evidence before prioritizing this application.", { score });
+}
+
+function formatCoachAction(coach: ApplicationCoachData, t: Translator) {
+  const subject = coach.action_subject;
+  switch (coach.action_code) {
+    case "prove_missing_skill":
+      return t("Build and verify {subject} evidence in one project, then add it to your CV.", { subject });
+    case "strengthen_project":
+      return t("Add a measurable {subject} result and implementation evidence to your strongest project.", { subject });
+    case "quantify_experience":
+      return t("Rewrite one relevant project or internship bullet with scope, action, and a measurable result.");
+    case "clarify_education":
+      return t("Add degree and coursework evidence that is relevant to {subject}.", { subject });
+    case "document_language":
+      return t("Document your verified English level and rehearse a role-specific introduction.");
+    case "align_domain":
+      return t("Make the {subject} connection explicit in your strongest project summary.", { subject });
+    case "complete_profile":
+      return t("Complete the missing profile evidence and link your strongest CV, project, and repository signals.");
+    case "maintain_evidence":
+      return t("Keep your role evidence current and tailor it before submitting.");
+  }
 }
 
 function formatDate(value: string, locale: string) {

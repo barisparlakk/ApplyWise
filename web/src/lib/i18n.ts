@@ -800,6 +800,36 @@ const turkishMessages: Readonly<Record<string, string>> = {
   "Role target": "Pozisyon hedefi",
   Known: "Bilinen",
   Target: "Hedef",
+  "Application coach": "Başvuru koçu",
+  "Apply now": "Şimdi başvur",
+  "Apply after targeted fix": "Hedefli düzeltmeden sonra başvur",
+  "Build evidence first": "Önce kanıt oluştur",
+  "Scenario estimate": "Senaryo tahmini",
+  "Projected fit": "Öngörülen uyum",
+  Deterministic: "Deterministik",
+  "Qualitative AI context": "Nitel yapay zeka bağlamı",
+  "Current fit is {score}%. Apply now while completing this improvement in parallel.":
+    "Mevcut uyum %{score}. Bu iyileştirmeyi paralel tamamlarken şimdi başvur.",
+  "Current fit is {score}%. Complete this highest-leverage fix, then apply.":
+    "Mevcut uyum %{score}. En yüksek etkili bu düzeltmeyi tamamla, ardından başvur.",
+  "Current fit is {score}%. Build stronger evidence before prioritizing this application.":
+    "Mevcut uyum %{score}. Bu başvuruyu önceliklendirmeden önce daha güçlü kanıt oluştur.",
+  "Build and verify {subject} evidence in one project, then add it to your CV.":
+    "Bir projede {subject} kanıtı oluşturup doğrula, ardından CV'ne ekle.",
+  "Add a measurable {subject} result and implementation evidence to your strongest project.":
+    "En güçlü projene ölçülebilir bir {subject} sonucu ve uygulama kanıtı ekle.",
+  "Rewrite one relevant project or internship bullet with scope, action, and a measurable result.":
+    "İlgili bir proje veya staj maddesini kapsam, eylem ve ölçülebilir sonuçla yeniden yaz.",
+  "Add degree and coursework evidence that is relevant to {subject}.":
+    "{subject} ile ilgili bölüm ve ders kanıtlarını ekle.",
+  "Document your verified English level and rehearse a role-specific introduction.":
+    "Doğrulanmış İngilizce seviyeni belirt ve pozisyona özel tanıtımını prova et.",
+  "Make the {subject} connection explicit in your strongest project summary.":
+    "En güçlü proje özetinde {subject} bağlantısını açıkça göster.",
+  "Complete the missing profile evidence and link your strongest CV, project, and repository signals.":
+    "Eksik profil kanıtlarını tamamla; en güçlü CV, proje ve repo sinyallerini bağla.",
+  "Keep your role evidence current and tailor it before submitting.":
+    "Pozisyon kanıtlarını güncel tut ve göndermeden önce hedefe göre düzenle.",
   "Delete account": "Hesabı sil",
   "Permanently delete this account?": "Bu hesap kalıcı olarak silinsin mi?",
   "This removes your profile, CVs, repository analyses, jobs, applications, roadmaps, and interview preparation. This action cannot be undone.":

@@ -147,6 +147,40 @@ export type FitAnalysisData = {
   breakdown: Record<string, unknown>;
 };
 
+export type ApplicationCoachDecision =
+  | "apply_now"
+  | "apply_after_targeted_fix"
+  | "build_evidence_first";
+
+export type ApplicationCoachActionCode =
+  | "prove_missing_skill"
+  | "strengthen_project"
+  | "quantify_experience"
+  | "clarify_education"
+  | "document_language"
+  | "align_domain"
+  | "complete_profile"
+  | "maintain_evidence";
+
+export type ApplicationCoachData = {
+  job_post_id: string;
+  decision: ApplicationCoachDecision;
+  should_apply_now: boolean;
+  current_fit_score: number;
+  projected_fit_score: number;
+  focus_component: keyof FitAnalysisComponents;
+  focus_component_label: string;
+  current_component_score: number;
+  component_weight: number;
+  scenario_component_uplift: number;
+  estimated_point_improvement: number;
+  action_code: ApplicationCoachActionCode;
+  action_subject: string;
+  highest_leverage_fix: string;
+  decision_reason: string;
+  estimate_basis: "deterministic_one_fix_scenario";
+};
+
 export type MissingSkillData = {
   rank: number;
   name: string;
@@ -512,6 +546,30 @@ export async function getSkillGraph(
   }
 
   return (await response.json()) as SkillGraphData;
+}
+
+export async function getApplicationCoach(
+  session: BackendSession,
+  jobPostId: string,
+): Promise<ApplicationCoachData> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/coach/jobs/${jobPostId}`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected application coach request: ${response.status}`);
+  }
+
+  return (await response.json()) as ApplicationCoachData;
 }
 
 export async function getApplications(session: BackendSession): Promise<ApplicationData[]> {

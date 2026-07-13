@@ -8,6 +8,7 @@ import { ProfileBuilder } from "@/app/profile/profile-builder";
 import { ResumeManager } from "@/app/resume/resume-manager";
 import type {
   ApplicationData,
+  ApplicationCoachData,
   CompanyProfileData,
   GitHubRepositoryData,
   InterviewPrepData,
@@ -217,6 +218,25 @@ const skillGraph: SkillGraphData = {
   ],
 };
 
+const applicationCoach: ApplicationCoachData = {
+  job_post_id: "job-1",
+  decision: "apply_after_targeted_fix",
+  should_apply_now: false,
+  current_fit_score: 78.5,
+  projected_fit_score: 84.5,
+  focus_component: "skill_score",
+  focus_component_label: "Skill match",
+  current_component_score: 82,
+  component_weight: 0.3,
+  scenario_component_uplift: 18,
+  estimated_point_improvement: 5.4,
+  action_code: "prove_missing_skill",
+  action_subject: "Machine Learning evaluation",
+  highest_leverage_fix: "Build and verify Machine Learning evaluation evidence.",
+  decision_reason: "Complete the highest-leverage fix, then apply.",
+  estimate_basis: "deterministic_one_fix_scenario",
+};
+
 const application: ApplicationData = {
   id: "application-1",
   job_post_id: "job-1",
@@ -366,6 +386,7 @@ export function ComponentSmokeCases() {
       <JobPostForm apiBaseUrl={apiBaseUrl} />
       <JobAnalysisView
         apiBaseUrl={apiBaseUrl}
+        applicationCoach={applicationCoach}
         jobPost={jobPost}
         roadmapDays={7}
         skillGraph={skillGraph}

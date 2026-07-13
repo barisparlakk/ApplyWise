@@ -15,6 +15,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from applywise.database import get_session
 from applywise.middleware import RequestBoundaryMiddleware
 from applywise.redis_client import get_redis_client
+from applywise.routes.application_coach import router as application_coach_router
 from applywise.routes.applications import router as applications_router
 from applywise.routes.auth import router as auth_router
 from applywise.routes.company_profiles import router as company_profiles_router
@@ -70,6 +71,7 @@ app.add_middleware(
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts())
 app.include_router(applications_router)
+app.include_router(application_coach_router)
 app.include_router(auth_router)
 app.include_router(company_profiles_router)
 app.include_router(github_router)
