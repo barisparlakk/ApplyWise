@@ -25,6 +25,7 @@ from applywise.routes.onboarding import router as onboarding_router
 from applywise.routes.profile import router as profile_router
 from applywise.routes.resume import router as resume_router
 from applywise.routes.roadmap import router as roadmap_router
+from applywise.routes.skill_graph import router as skill_graph_router
 from applywise.settings import (
     allowed_hosts,
     is_production,
@@ -77,6 +78,7 @@ app.include_router(jobs_router)
 app.include_router(onboarding_router)
 app.include_router(profile_router)
 app.include_router(roadmap_router)
+app.include_router(skill_graph_router)
 app.include_router(resume_router)
 
 

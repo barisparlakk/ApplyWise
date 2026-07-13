@@ -15,6 +15,7 @@ import type {
   ProfileSnapshot,
   ResumeData,
   ResumeVersionData,
+  SkillGraphData,
 } from "@/lib/api";
 
 const apiBaseUrl = "http://localhost:8000";
@@ -197,6 +198,25 @@ const jobPost: JobPostData = {
   },
 };
 
+const skillGraph: SkillGraphData = {
+  job_post_id: "job-1",
+  target_role: "AI/ML Intern",
+  readiness_percent: 33.33,
+  known_skills: ["Python", "SQL"],
+  target_skills: ["Python", "Machine Learning", "Docker"],
+  recommended_sequence: ["Machine Learning", "Linux", "Docker"],
+  paths: [
+    {
+      target_skill: "Machine Learning",
+      ready: false,
+      nodes: [
+        { name: "Python", status: "known" },
+        { name: "Machine Learning", status: "target" },
+      ],
+    },
+  ],
+};
+
 const application: ApplicationData = {
   id: "application-1",
   job_post_id: "job-1",
@@ -348,6 +368,7 @@ export function ComponentSmokeCases() {
         apiBaseUrl={apiBaseUrl}
         jobPost={jobPost}
         roadmapDays={7}
+        skillGraph={skillGraph}
       />
       <ApplicationDetail
         apiBaseUrl={apiBaseUrl}

@@ -190,7 +190,7 @@ def test_export_current_user_data_excludes_credentials_and_vectors() -> None:
         )
         session.commit()
 
-        response = export_current_user_data(current_user=user)
+        response = export_current_user_data(current_user=user, session=session)
         payload = json.loads(response.body)
 
     assert response.headers["cache-control"] == "no-store"

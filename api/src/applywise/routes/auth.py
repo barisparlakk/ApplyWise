@@ -8,12 +8,13 @@ from fastapi import APIRouter, Depends, Response, status
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy import inspect as sqlalchemy_inspect
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse
 
 from applywise.auth import get_current_user
 from applywise.database import get_session
-from applywise.models import User
+from applywise.models import JobPost, JobSkillMapping, User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 current_user_dependency = Depends(get_current_user)
@@ -36,7 +37,10 @@ def read_current_user(current_user: User = current_user_dependency) -> CurrentUs
 
 
 @router.get("/me/export", response_class=JSONResponse)
-def export_current_user_data(current_user: User = current_user_dependency) -> JSONResponse:
+def export_current_user_data(
+    current_user: User = current_user_dependency,
+    session: Session = session_dependency,
+) -> JSONResponse:
     payload = {
         "format_version": 1,
         "exported_at": datetime.now(UTC),
@@ -51,6 +55,14 @@ def export_current_user_data(current_user: User = current_user_dependency) -> JS
             export_record(record) for record in current_user.github_repositories
         ],
         "job_posts": [export_record(record) for record in current_user.job_posts],
+        "job_skill_mappings": [
+            export_record(record)
+            for record in session.scalars(
+                select(JobSkillMapping)
+                .join(JobPost)
+                .where(JobPost.user_id == current_user.id)
+            )
+        ],
         "company_profiles": [
             export_record(record) for record in current_user.company_profiles
         ],

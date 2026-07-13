@@ -174,6 +174,27 @@ export type RoadmapData = {
   plan: RoadmapDayData[];
 };
 
+export type SkillPathNodeData = {
+  name: string;
+  status: "known" | "missing" | "target";
+};
+
+export type SkillReadinessPathData = {
+  target_skill: string;
+  ready: boolean;
+  nodes: SkillPathNodeData[];
+};
+
+export type SkillGraphData = {
+  job_post_id: string;
+  target_role: string;
+  readiness_percent: number;
+  known_skills: string[];
+  target_skills: string[];
+  recommended_sequence: string[];
+  paths: SkillReadinessPathData[];
+};
+
 export type JobPostData = {
   id: string;
   company_name: string;
@@ -467,6 +488,30 @@ export async function getRoadmaps(
   }
 
   return (await response.json()) as RoadmapData[];
+}
+
+export async function getSkillGraph(
+  session: BackendSession,
+  jobPostId: string,
+): Promise<SkillGraphData> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/skill-graph/jobs/${jobPostId}`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected skill graph request: ${response.status}`);
+  }
+
+  return (await response.json()) as SkillGraphData;
 }
 
 export async function getApplications(session: BackendSession): Promise<ApplicationData[]> {

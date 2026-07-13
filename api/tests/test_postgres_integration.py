@@ -62,7 +62,7 @@ def test_migrations_pgvector_job_analysis_and_weighted_fit() -> None:
         )
         try:
             assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-                "20260713_0010"
+                "20260713_0011"
             )
             assert connection.scalar(
                 text("SELECT extname FROM pg_extension WHERE extname = 'vector'")

@@ -8,6 +8,7 @@ from typing import Any
 
 from sqlalchemy import (
     JSON,
+    CheckConstraint,
     Date,
     DateTime,
     Float,
@@ -367,6 +368,35 @@ class Skill(TimestampedUuidMixin, Base):
     category: Mapped[str | None] = mapped_column(String(120))
 
 
+class SkillPrerequisite(TimestampedUuidMixin, Base):
+    __tablename__ = "skill_prerequisites"
+    __table_args__ = (
+        UniqueConstraint(
+            "skill_id",
+            "prerequisite_skill_id",
+            name="uq_skill_prerequisites_edge",
+        ),
+        CheckConstraint(
+            "skill_id <> prerequisite_skill_id",
+            name="ck_skill_prerequisites_not_self",
+        ),
+    )
+
+    skill_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("skills.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    prerequisite_skill_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("skills.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+
+    skill: Mapped[Skill] = relationship(foreign_keys=[skill_id])
+    prerequisite_skill: Mapped[Skill] = relationship(foreign_keys=[prerequisite_skill_id])
+
+
 class JobPost(TimestampedUuidMixin, Base):
     __tablename__ = "job_posts"
     __table_args__ = (
@@ -420,6 +450,10 @@ class JobPost(TimestampedUuidMixin, Base):
         back_populates="job_post",
         cascade="all, delete-orphan",
     )
+    skill_mappings: Mapped[list[JobSkillMapping]] = relationship(
+        back_populates="job_post",
+        cascade="all, delete-orphan",
+    )
 
 
 class CompanyProfile(TimestampedUuidMixin, Base):
@@ -453,6 +487,29 @@ class CompanyProfile(TimestampedUuidMixin, Base):
 
     user: Mapped[User] = relationship(back_populates="company_profiles")
     job_post: Mapped[JobPost] = relationship(back_populates="company_profiles")
+
+
+class JobSkillMapping(TimestampedUuidMixin, Base):
+    __tablename__ = "job_skill_mappings"
+    __table_args__ = (
+        UniqueConstraint("job_post_id", "skill_id", name="uq_job_skill_mappings_job_skill"),
+    )
+
+    job_post_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("job_posts.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    skill_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("skills.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    required: Mapped[bool] = mapped_column(default=True, nullable=False)
+    target_level: Mapped[int] = mapped_column(Integer, default=3, nullable=False)
+
+    job_post: Mapped[JobPost] = relationship(back_populates="skill_mappings")
+    skill: Mapped[Skill] = relationship()
 
 
 class Application(TimestampedUuidMixin, Base):

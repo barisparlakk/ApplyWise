@@ -18,8 +18,9 @@ import { RoadmapRegenerateButton } from "@/app/roadmap/roadmap-regenerate-button
 import { MotionBar, Reveal } from "@/components/motion";
 import { PageHeader } from "@/components/page-header";
 import { SignalField } from "@/components/signal-field";
-import type { RoadmapData } from "@/lib/api";
-import { getRoadmaps } from "@/lib/api";
+import { SkillGraphPanel } from "@/components/skill-graph-panel";
+import type { RoadmapData, SkillGraphData } from "@/lib/api";
+import { getRoadmaps, getSkillGraph } from "@/lib/api";
 import { createTranslator, localeTag, type Translator } from "@/lib/i18n";
 import { getBackendSession } from "@/lib/server-auth";
 import { getRequestLocale } from "@/lib/server-i18n";
@@ -38,6 +39,10 @@ export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
   }
 
   const roadmaps = await getRoadmaps(session, durationDays);
+  const jobPostIds = [...new Set(roadmaps.flatMap((roadmap) => roadmap.job_post_id ? [roadmap.job_post_id] : []))];
+  const skillGraphs = new Map(
+    await Promise.all(jobPostIds.map(async (jobPostId) => [jobPostId, await getSkillGraph(session, jobPostId)] as const)),
+  );
   const locale = await getRequestLocale();
   const t = createTranslator(locale);
   const taskCount = roadmaps.reduce((total, roadmap) => total + roadmap.plan.reduce((dayTotal, day) => dayTotal + day.tasks.length, 0), 0);
@@ -73,7 +78,7 @@ export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
 
         <div className="space-y-6">
           {roadmaps.length ? roadmaps.map((roadmap, index) => (
-            <Reveal delay={Math.min(0.04 * index, 0.16)} key={roadmap.id}><RoadmapPanel apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"} locale={localeTag(locale)} roadmap={roadmap} t={t} /></Reveal>
+            <Reveal delay={Math.min(0.04 * index, 0.16)} key={roadmap.id}><RoadmapPanel apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"} locale={localeTag(locale)} roadmap={roadmap} skillGraph={roadmap.job_post_id ? skillGraphs.get(roadmap.job_post_id) : undefined} t={t} /></Reveal>
           )) : <EmptyRoadmap t={t} />}
         </div>
       </div>
@@ -81,7 +86,7 @@ export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
   );
 }
 
-function RoadmapPanel({ apiBaseUrl, locale, roadmap, t }: Readonly<{ apiBaseUrl: string; locale: string; roadmap: RoadmapData; t: Translator }>) {
+function RoadmapPanel({ apiBaseUrl, locale, roadmap, skillGraph, t }: Readonly<{ apiBaseUrl: string; locale: string; roadmap: RoadmapData; skillGraph?: SkillGraphData; t: Translator }>) {
   return (
     <article className="app-surface overflow-hidden">
       <header className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
@@ -126,6 +131,7 @@ function RoadmapPanel({ apiBaseUrl, locale, roadmap, t }: Readonly<{ apiBaseUrl:
           </div>
         </section>
       </div>
+      {skillGraph ? <SkillGraphPanel embedded graph={skillGraph} /> : null}
     </article>
   );
 }

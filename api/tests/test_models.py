@@ -79,7 +79,7 @@ def test_create_and_query_one_of_each_model() -> None:
             chunk_index=0,
             content="Model training pipeline chunk",
         )
-        repositories.skills.create(name="Python", category="programming")
+        python_skill = repositories.skills.create(name="Python", category="programming")
         job_post = repositories.job_posts.create(
             user_id=user.id,
             company_name="Wise Labs",
@@ -113,6 +113,20 @@ def test_create_and_query_one_of_each_model() -> None:
                 }
             ],
             smart_questions=["How is intern success measured?"],
+        )
+        machine_learning_skill = repositories.skills.create(
+            name="Machine Learning",
+            category="ai",
+        )
+        repositories.skill_prerequisites.create(
+            prerequisite_skill_id=python_skill.id,
+            skill_id=machine_learning_skill.id,
+        )
+        repositories.job_skill_mappings.create(
+            job_post_id=job_post.id,
+            skill_id=python_skill.id,
+            required=True,
+            target_level=3,
         )
         application = repositories.applications.create(
             user_id=user.id,
@@ -173,7 +187,9 @@ def test_create_and_query_one_of_each_model() -> None:
             "Clear project structure"
         ]
         assert len(saved_user.github_repositories[0].chunks) == 1
-        assert len(repositories.skills.list()) == 1
+        assert len(repositories.skills.list()) == 2
+        assert len(repositories.skill_prerequisites.list()) == 1
+        assert len(repositories.job_skill_mappings.list()) == 1
         assert len(saved_user.job_posts) == 1
         assert len(saved_user.company_profiles) == 1
         assert len(saved_user.applications) == 1

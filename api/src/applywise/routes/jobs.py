@@ -20,6 +20,7 @@ from applywise.job_analyzer import JobAnalysisError, JobPostAnalysis, analyze_jo
 from applywise.models import FitAnalysis, JobPost, User
 from applywise.rate_limit import ai_action_limit_dependency
 from applywise.roadmap import RoadmapPlan, build_and_store_roadmap, roadmap_to_plan
+from applywise.skill_graph import sync_job_skill_mappings
 from applywise.validation import optional_http_url
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -187,6 +188,7 @@ def analyze_job(
     )
     session.add(job_post)
     session.flush()
+    sync_job_skill_mappings(session, job_post)
     fit_analysis = compute_and_store_fit_analysis(session, user=current_user, job_post=job_post)
     roadmap = build_and_store_roadmap(
         session,

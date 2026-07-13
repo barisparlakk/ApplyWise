@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { JobAnalysisView } from "@/app/jobs/[id]/analysis/job-analysis-view";
 import { AppShell } from "@/components/app-shell";
-import { getJobPost } from "@/lib/api";
+import { getJobPost, getSkillGraph } from "@/lib/api";
 import { getBackendSession } from "@/lib/server-auth";
 
 type JobAnalysisPageProps = {
@@ -24,7 +24,10 @@ export default async function JobAnalysisPage({ params, searchParams }: JobAnaly
     redirect(`/login?callbackUrl=/jobs/${id}/analysis`);
   }
 
-  const jobPost = await getJobPost(session, id, roadmapDays);
+  const [jobPost, skillGraph] = await Promise.all([
+    getJobPost(session, id, roadmapDays),
+    getSkillGraph(session, id),
+  ]);
 
   return (
     <AppShell>
@@ -33,6 +36,7 @@ export default async function JobAnalysisPage({ params, searchParams }: JobAnaly
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           jobPost={jobPost}
           roadmapDays={roadmapDays}
+          skillGraph={skillGraph}
         />
       </section>
     </AppShell>

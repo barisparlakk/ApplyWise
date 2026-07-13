@@ -34,7 +34,8 @@ import { MotionBar, Reveal } from "@/components/motion";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { ScoreRing } from "@/components/score-ring";
 import { SignalField } from "@/components/signal-field";
-import type { JobPostData } from "@/lib/api";
+import { SkillGraphPanel } from "@/components/skill-graph-panel";
+import type { JobPostData, SkillGraphData } from "@/lib/api";
 import { createTranslator, localeTag, type Translator } from "@/lib/i18n";
 import { getRequestLocale } from "@/lib/server-i18n";
 
@@ -42,6 +43,7 @@ type JobAnalysisViewProps = {
   apiBaseUrl: string;
   jobPost: JobPostData;
   roadmapDays: number;
+  skillGraph: SkillGraphData;
 };
 
 const SCORE_COMPONENTS = [
@@ -54,7 +56,7 @@ const SCORE_COMPONENTS = [
   { key: "profile_quality_score", label: "Profile quality", weight: 5, icon: Sparkles },
 ] as const;
 
-export async function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobAnalysisViewProps) {
+export async function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays, skillGraph }: JobAnalysisViewProps) {
   const analysis = jobPost.analysis;
   const fitAnalysis = jobPost.fit_analysis;
   const roadmap = jobPost.roadmap;
@@ -138,6 +140,10 @@ export async function JobAnalysisView({ apiBaseUrl, jobPost, roadmapDays }: JobA
               </Reveal>
             </div>
           ) : null}
+
+          <Reveal delay={0.1}>
+            <SkillGraphPanel graph={skillGraph} />
+          </Reveal>
 
           {roadmap ? (
             <Reveal className="app-surface overflow-hidden" delay={0.12}>

@@ -18,6 +18,7 @@ from applywise.models import (
     GitHubRepositoryChunk,
     InterviewPrep,
     JobPost,
+    JobSkillMapping,
     LearningRoadmap,
     Profile,
     Project,
@@ -25,6 +26,7 @@ from applywise.models import (
     ResumeChunk,
     ResumeVersion,
     Skill,
+    SkillPrerequisite,
     User,
 )
 
@@ -74,7 +76,9 @@ class Repositories:
             GitHubRepositoryChunk,
         )
         self.skills = Repository[Skill](session, Skill)
+        self.skill_prerequisites = Repository[SkillPrerequisite](session, SkillPrerequisite)
         self.job_posts = Repository[JobPost](session, JobPost)
+        self.job_skill_mappings = Repository[JobSkillMapping](session, JobSkillMapping)
         self.company_profiles = Repository[CompanyProfile](session, CompanyProfile)
         self.applications = Repository[Application](session, Application)
         self.fit_analyses = Repository[FitAnalysis](session, FitAnalysis)

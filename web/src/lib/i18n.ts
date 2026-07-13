@@ -783,6 +783,23 @@ const turkishMessages: Readonly<Record<string, string>> = {
   "Add a project before generating emphasis guidance.":
     "Öne çıkarma önerileri için önce bir proje ekle.",
   "No company preparation generated": "Şirket hazırlığı henüz oluşturulmadı",
+  "Skill readiness graph": "Beceri hazırlık grafiği",
+  "Shortest path to role readiness": "Pozisyona hazırlığın en kısa yolu",
+  "Prerequisite paths connect your verified skills to this role's required capabilities.":
+    "Ön koşul yolları, doğrulanmış becerilerini bu pozisyonun gerekli yetkinliklerine bağlar.",
+  "Graph readiness": "Grafik hazırlığı",
+  "Path open": "Yol açık",
+  "No mapped skill requirements are available for this role.":
+    "Bu pozisyon için eşlenmiş beceri gereksinimi bulunmuyor.",
+  "Recommended sequence": "Önerilen sıra",
+  "Every mapped target skill already has direct evidence.":
+    "Eşlenen tüm hedef beceriler için doğrudan kanıtın var.",
+  Legend: "Gösterge",
+  "Verified evidence": "Doğrulanmış kanıt",
+  "Prerequisite gap": "Ön koşul eksiği",
+  "Role target": "Pozisyon hedefi",
+  Known: "Bilinen",
+  Target: "Hedef",
   "Delete account": "Hesabı sil",
   "Permanently delete this account?": "Bu hesap kalıcı olarak silinsin mi?",
   "This removes your profile, CVs, repository analyses, jobs, applications, roadmaps, and interview preparation. This action cannot be undone.":
