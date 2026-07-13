@@ -134,7 +134,7 @@ This is a beta topology, not an unlimited production platform: Render can sleep 
 - Enabled OAuth provider origins and callback URLs match the production origin exactly.
 - The support inbox is monitored, and the privacy notice and terms have owner/legal approval.
 - The external LLM provider has billing limits, data-retention settings, and an API key restricted to this service.
-- `AI_ACTIONS_PER_HOUR` matches the launch budget; Redis-backed quotas fail closed if usage controls are unavailable.
+- `AI_ACTIONS_PER_HOUR` and `AI_GLOBAL_ACTIONS_PER_DAY` match the launch budget; Redis-backed quotas fail closed if usage controls are unavailable.
 - `/api/health` is monitored externally, and container logs are shipped or retained by the hosting platform.
 - `make backup` is scheduled and encrypted copies are stored off-host.
 - A rollback keeps the previous image or commit available, with a database backup taken before migrations.

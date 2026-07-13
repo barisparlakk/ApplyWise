@@ -111,7 +111,7 @@ const turkishMessages: Readonly<Record<string, string>> = {
   terms: "kullanım koşullarını",
   "and acknowledge the": "kabul eder ve",
   "privacy notice": "gizlilik bildirimini onaylarsınız",
-  "Last updated July 10, 2026": "Son güncelleme: 10 Temmuz 2026",
+  "Last updated July 13, 2026": "Son güncelleme: 13 Temmuz 2026",
   "Questions can be sent to": "Sorularınızı şu adrese gönderebilirsiniz:",
   "Information we store": "Sakladığımız bilgiler",
   "ApplyWise stores the identity details supplied by your sign-in provider, profile and education details, CV text and extracted sections, selected GitHub repository metadata, job descriptions, application tracking data, fit analyses, learning plans, and interview preparation content.":
@@ -126,13 +126,15 @@ const turkishMessages: Readonly<Record<string, string>> = {
   "Retention and deletion": "Saklama ve silme",
   "Your live account data remains available until you delete the account from Settings. Account deletion removes the associated product records. Encrypted infrastructure backups may retain deleted records until the operator's normal backup rotation expires.":
     "Etkin hesap verileriniz, Ayarlar bölümünden hesabınızı silene kadar kullanılabilir kalır. Hesabın silinmesi ilişkili ürün kayıtlarını kaldırır. Şifrelenmiş altyapı yedekleri, normal yedekleme döngüsü tamamlanana kadar silinen kayıtları tutabilir.",
+  "You can export a machine-readable copy of your ApplyWise workspace from Settings before deleting the account.":
+    "Hesabı silmeden önce Ayarlar bölümünden ApplyWise çalışma alanınızın makine tarafından okunabilir bir kopyasını dışa aktarabilirsiniz.",
   "Do not upload secrets, confidential employer information, or personal data belonging to someone else.":
     "Gizli anahtarları, işverenlere ait gizli bilgileri veya başka kişilere ait kişisel verileri yüklemeyin.",
   "Security and service providers": "Güvenlik ve hizmet sağlayıcılar",
   "ApplyWise uses access controls, encrypted transport, private service networking, bounded uploads, and short-lived backend credentials. No online service can promise absolute security.":
     "ApplyWise; erişim kontrolleri, şifrelenmiş veri aktarımı, özel servis ağı, sınırlandırılmış yüklemeler ve kısa ömürlü backend kimlik bilgileri kullanır. Hiçbir çevrimiçi hizmet mutlak güvenlik garantisi veremez.",
-  "The service relies on hosting, database, authentication, GitHub, and optional AI providers only as needed to operate the product.":
-    "Hizmet; ürünü çalıştırmak için yalnızca gerektiği ölçüde barındırma, veritabanı, kimlik doğrulama, GitHub ve isteğe bağlı yapay zeka sağlayıcılarından yararlanır.",
+  "The free beta uses Render for hosting and temporary queue storage, Neon for PostgreSQL, Google or GitHub for sign-in, GitHub for repository metadata, and Cloudflare Workers AI for configured AI and embedding operations.":
+    "Ücretsiz beta; barındırma ve geçici kuyruk depolaması için Render'ı, PostgreSQL için Neon'u, giriş için Google veya GitHub'ı, repo meta verileri için GitHub'ı ve yapılandırılmış yapay zeka ile embedding işlemleri için Cloudflare Workers AI'ı kullanır.",
   "This notice explains what ApplyWise handles when you use the career intelligence workspace and the controls available to you.":
     "Bu bildirim, kariyer zekası çalışma alanını kullandığınızda ApplyWise'ın hangi verileri işlediğini ve kullanabileceğiniz kontrolleri açıklar.",
   "Privacy notice": "Gizlilik bildirimi",
@@ -733,6 +735,9 @@ const turkishMessages: Readonly<Record<string, string>> = {
     "Profilini, CV'lerini, repo analizlerini, pozisyonları, başvuruları, yol haritalarını ve mülakat hazırlığını kalıcı olarak siler.",
   "Sign out": "Çıkış yap",
   "Account deletion failed": "Hesap silinemedi",
+  "Export data": "Verileri dışa aktar",
+  "Preparing export": "Dışa aktarma hazırlanıyor",
+  "Data export failed": "Veriler dışa aktarılamadı",
   "Delete account": "Hesabı sil",
   "Permanently delete this account?": "Bu hesap kalıcı olarak silinsin mi?",
   "This removes your profile, CVs, repository analyses, jobs, applications, roadmaps, and interview preparation. This action cannot be undone.":

@@ -11,7 +11,8 @@ from typing import Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import or_, select
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from applywise.database import get_session
@@ -30,6 +31,7 @@ session_dependency = Depends(get_session)
 class AuthClaims:
     subject: str
     email: str
+    email_verified: bool
     name: str | None
     github_access_token: str | None = None
 
@@ -134,16 +136,24 @@ def decode_backend_jwt(token: str) -> AuthClaims:
 
     subject = payload.get("sub")
     email = payload.get("email")
+    email_verified = payload.get("email_verified")
     name = payload.get("name")
-    if not isinstance(subject, str) or not isinstance(email, str):
+    if (
+        not isinstance(subject, str)
+        or not subject.strip()
+        or not isinstance(email, str)
+        or not email.strip()
+        or email_verified is not True
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authentication claims.",
+            detail="A verified email identity is required.",
         )
 
     return AuthClaims(
         subject=subject,
         email=email.lower(),
+        email_verified=True,
         name=name if isinstance(name, str) else None,
         github_access_token=payload.get("github_access_token")
         if isinstance(payload.get("github_access_token"), str)
@@ -155,6 +165,7 @@ def create_backend_jwt(
     *,
     subject: str,
     email: str,
+    email_verified: bool = True,
     name: str | None = None,
     github_access_token: str | None = None,
     expires_at: int | None = None,
@@ -163,6 +174,7 @@ def create_backend_jwt(
     payload: dict[str, Any] = {
         "sub": subject,
         "email": email,
+        "email_verified": email_verified,
         "name": name,
         "iat": now,
         "exp": expires_at or now + 60 * 60,
@@ -197,23 +209,50 @@ def get_current_auth(
         )
 
     claims = decode_backend_jwt(credentials.credentials)
-    user = session.scalars(
-        select(User).where(or_(User.auth_subject == claims.subject, User.email == claims.email))
-    ).first()
+    user = session.scalar(select(User).where(User.auth_subject == claims.subject))
 
     if user is None:
-        user = User(
-            email=claims.email,
-            full_name=claims.name,
-            auth_subject=claims.subject,
-        )
-        session.add(user)
+        email_owner = session.scalar(select(User).where(User.email == claims.email))
+        if email_owner is not None:
+            if email_owner.auth_subject is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="This email is already linked to another sign-in identity.",
+                )
+            user = email_owner
+            user.auth_subject = claims.subject
+            if claims.name:
+                user.full_name = claims.name
+        else:
+            user = User(
+                email=claims.email,
+                full_name=claims.name,
+                auth_subject=claims.subject,
+            )
+            session.add(user)
     else:
+        email_owner = session.scalar(
+            select(User).where(User.email == claims.email, User.id != user.id)
+        )
+        if email_owner is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This email is already linked to another sign-in identity.",
+            )
         user.email = claims.email
-        user.auth_subject = claims.subject
         if claims.name:
             user.full_name = claims.name
 
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        existing = session.scalar(select(User).where(User.auth_subject == claims.subject))
+        if existing is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This sign-in identity could not be linked safely.",
+            ) from exc
+        user = existing
     session.refresh(user)
     return AuthContext(user=user, claims=claims)

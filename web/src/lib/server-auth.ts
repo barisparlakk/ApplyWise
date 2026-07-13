@@ -19,7 +19,11 @@ function usesSecureSessionCookie() {
 }
 
 function createBackendToken(token: JWT | null): string | null {
-  if (!token || typeof token.email !== "string") {
+  if (
+    !token ||
+    typeof token.email !== "string" ||
+    token.backendEmailVerified !== true
+  ) {
     return null;
   }
 
@@ -31,6 +35,7 @@ function createBackendToken(token: JWT | null): string | null {
   return createBackendJwt({
     subject,
     email: token.email,
+    emailVerified: token.backendEmailVerified === true,
     name: typeof token.name === "string" ? token.name : null,
     githubAccessToken:
       typeof token.githubAccessToken === "string" ? token.githubAccessToken : null,

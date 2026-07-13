@@ -10,6 +10,7 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
+    backendEmailVerified?: boolean;
     backendSubject?: string;
     githubAccessToken?: string;
   }

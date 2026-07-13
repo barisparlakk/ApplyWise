@@ -14,6 +14,7 @@ type BackendRouteContext = {
 
 const FORWARDED_REQUEST_HEADERS = ["accept", "content-type"];
 const FORWARDED_RESPONSE_HEADERS = [
+  "cache-control",
   "content-disposition",
   "content-type",
   "retry-after",
@@ -21,6 +22,9 @@ const FORWARDED_RESPONSE_HEADERS = [
   "x-ratelimit-remaining",
   "x-ratelimit-reset",
   "x-request-id",
+  "x-ai-daily-limit",
+  "x-ai-daily-remaining",
+  "x-ai-daily-reset",
 ];
 
 class RequestBodyTooLargeError extends Error {}

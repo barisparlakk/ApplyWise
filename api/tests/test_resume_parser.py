@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from docx import Document
 
+import applywise.resume_parser as resume_parser
 from applywise.resume_parser import (
     ParsedResume,
     ResumeExtractionError,
@@ -91,3 +92,23 @@ def test_parser_handles_aliases_inline_headings_and_table_style_rows() -> None:
 def test_parser_rejects_unsupported_file_type() -> None:
     with pytest.raises(ResumeExtractionError):
         parse_cv_file("resume.txt", b"Education\nComputer Engineering")
+
+
+def test_docx_parser_rejects_oversized_expanded_archive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(resume_parser, "MAX_DOCX_UNCOMPRESSED_BYTES", 100)
+    docx_content = build_docx_fixture("Education\n" + ("Computer Engineering " * 20))
+
+    with pytest.raises(ResumeExtractionError, match="expands beyond"):
+        parse_cv_file("oversized.docx", docx_content)
+
+
+def test_docx_parser_rejects_unbounded_extracted_text(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    docx_content = build_docx_fixture("Education\nComputer Engineering")
+    monkeypatch.setattr(resume_parser, "MAX_EXTRACTED_TEXT_CHARS", 10)
+
+    with pytest.raises(ResumeExtractionError, match="text exceeds"):
+        parse_cv_file("long-text.docx", docx_content)

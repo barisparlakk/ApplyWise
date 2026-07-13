@@ -22,6 +22,7 @@ const sections = [
     title: "Retention and deletion",
     paragraphs: [
       "Your live account data remains available until you delete the account from Settings. Account deletion removes the associated product records. Encrypted infrastructure backups may retain deleted records until the operator's normal backup rotation expires.",
+      "You can export a machine-readable copy of your ApplyWise workspace from Settings before deleting the account.",
       "Do not upload secrets, confidential employer information, or personal data belonging to someone else.",
     ],
   },
@@ -29,7 +30,7 @@ const sections = [
     title: "Security and service providers",
     paragraphs: [
       "ApplyWise uses access controls, encrypted transport, private service networking, bounded uploads, and short-lived backend credentials. No online service can promise absolute security.",
-      "The service relies on hosting, database, authentication, GitHub, and optional AI providers only as needed to operate the product.",
+      "The free beta uses Render for hosting and temporary queue storage, Neon for PostgreSQL, Google or GitHub for sign-in, GitHub for repository metadata, and Cloudflare Workers AI for configured AI and embedding operations.",
     ],
   },
 ];

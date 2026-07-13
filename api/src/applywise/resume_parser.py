@@ -4,6 +4,7 @@ import json
 import os
 import re
 import unicodedata
+import zipfile
 from io import BytesIO
 from typing import Protocol
 from urllib.error import HTTPError, URLError
@@ -16,6 +17,11 @@ from pypdf import PdfReader
 
 from applywise.cloudflare_ai import CloudflareAIError, CloudflareWorkersAIClient
 from applywise.environment import boolean_environment
+
+MAX_PDF_PAGES = 20
+MAX_DOCX_FILES = 500
+MAX_DOCX_UNCOMPRESSED_BYTES = 25 * 1024 * 1024
+MAX_EXTRACTED_TEXT_CHARS = 100_000
 
 
 class ParsedResume(BaseModel):
@@ -241,6 +247,8 @@ def parse_cv_file(filename: str, content: bytes) -> str:
             return parse_pdf(content)
         if lower_filename.endswith(".docx"):
             return parse_docx(content)
+    except ResumeExtractionError:
+        raise
     except Exception as exc:
         raise ResumeExtractionError("Resume file could not be parsed.") from exc
     raise ResumeExtractionError("Unsupported resume file type.")
@@ -250,25 +258,36 @@ def parse_pdf(content: bytes) -> str:
     texts: list[str] = []
     try:
         with pdfplumber.open(BytesIO(content)) as pdf:
+            if len(pdf.pages) > MAX_PDF_PAGES:
+                raise ResumeExtractionError(
+                    f"Resume PDF must have {MAX_PDF_PAGES} pages or fewer."
+                )
             for page in pdf.pages:
                 page_text = page.extract_text()
                 if page_text:
                     texts.append(page_text)
+    except ResumeExtractionError:
+        raise
     except Exception:
         texts = []
 
     if texts:
-        return "\n".join(texts).strip()
+        return validate_extracted_text("\n".join(texts).strip())
 
     reader = PdfReader(BytesIO(content))
+    if len(reader.pages) > MAX_PDF_PAGES:
+        raise ResumeExtractionError(
+            f"Resume PDF must have {MAX_PDF_PAGES} pages or fewer."
+        )
     for page in reader.pages:
         page_text = page.extract_text()
         if page_text:
             texts.append(page_text)
-    return "\n".join(texts).strip()
+    return validate_extracted_text("\n".join(texts).strip())
 
 
 def parse_docx(content: bytes) -> str:
+    validate_docx_archive(content)
     document = Document(BytesIO(content))
     lines: list[str] = []
     for paragraph in document.paragraphs:
@@ -282,7 +301,30 @@ def parse_docx(content: bytes) -> str:
             if cells:
                 lines.append(" | ".join(cells))
 
-    return "\n".join(lines)
+    return validate_extracted_text("\n".join(lines))
+
+
+def validate_docx_archive(content: bytes) -> None:
+    try:
+        with zipfile.ZipFile(BytesIO(content)) as archive:
+            files = archive.infolist()
+    except zipfile.BadZipFile as exc:
+        raise ResumeExtractionError("Resume DOCX archive is invalid.") from exc
+    if len(files) > MAX_DOCX_FILES:
+        raise ResumeExtractionError(
+            f"Resume DOCX must contain {MAX_DOCX_FILES} files or fewer."
+        )
+    if any(file_info.flag_bits & 0x1 for file_info in files):
+        raise ResumeExtractionError("Encrypted DOCX files are not supported.")
+    uncompressed_size = sum(file_info.file_size for file_info in files)
+    if uncompressed_size > MAX_DOCX_UNCOMPRESSED_BYTES:
+        raise ResumeExtractionError("Resume DOCX expands beyond the processing limit.")
+
+
+def validate_extracted_text(text: str) -> str:
+    if len(text) > MAX_EXTRACTED_TEXT_CHARS:
+        raise ResumeExtractionError("Extracted resume text exceeds the processing limit.")
+    return text
 
 
 def extract_structured_resume(

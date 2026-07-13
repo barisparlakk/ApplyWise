@@ -47,6 +47,38 @@ if (githubClientId && githubClientSecret) {
     GitHubProvider({
       clientId: githubClientId,
       clientSecret: githubClientSecret,
+      userinfo: {
+        async request({ client, tokens }) {
+          const accessToken = tokens.access_token;
+          if (typeof accessToken !== "string") {
+            throw new Error("GitHub did not return an access token.");
+          }
+          const profile = await client.userinfo(accessToken);
+          const response = await fetch("https://api.github.com/user/emails", {
+            headers: {
+              Accept: "application/vnd.github+json",
+              Authorization: `Bearer ${accessToken}`,
+              "X-GitHub-Api-Version": "2022-11-28",
+            },
+          });
+          if (!response.ok) {
+            return { ...profile, email: undefined, email_verified: false };
+          }
+          const emails = (await response.json()) as Array<{
+            email?: unknown;
+            primary?: unknown;
+            verified?: unknown;
+          }>;
+          const verifiedEmail =
+            emails.find((entry) => entry.primary === true && entry.verified === true) ??
+            emails.find((entry) => entry.verified === true);
+          return {
+            ...profile,
+            email: typeof verifiedEmail?.email === "string" ? verifiedEmail.email : undefined,
+            email_verified: Boolean(verifiedEmail),
+          };
+        },
+      },
     }),
   );
 }
@@ -70,7 +102,19 @@ export const authOptions: NextAuthOptions = {
   },
   providers,
   callbacks: {
-    async jwt({ token, user, account }) {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "email") {
+        return Boolean(user.email);
+      }
+      return Boolean(
+        user.email &&
+          typeof profile === "object" &&
+          profile !== null &&
+          "email_verified" in profile &&
+          profile.email_verified === true,
+      );
+    },
+    async jwt({ token, user, account, profile }) {
       if (user) {
         token.email = user.email;
         token.name = user.name;
@@ -79,6 +123,12 @@ export const authOptions: NextAuthOptions = {
           account?.provider === "github" || account?.provider === "google"
             ? `${account.provider}:${user.id}`
             : user.id;
+        token.backendEmailVerified =
+          account?.provider === "email" ||
+          (typeof profile === "object" &&
+            profile !== null &&
+            "email_verified" in profile &&
+            profile.email_verified === true);
       }
       if (account?.provider === "github" && typeof account.access_token === "string") {
         token.githubAccessToken = account.access_token;

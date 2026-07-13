@@ -13,7 +13,9 @@ from applywise.models import User
 from applywise.redis_client import get_redis_client
 
 DEFAULT_AI_ACTIONS_PER_HOUR = 30
+DEFAULT_AI_GLOBAL_ACTIONS_PER_DAY = 100
 AI_RATE_LIMIT_WINDOW_SECONDS = 60 * 60
+AI_GLOBAL_RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60
 current_user_dependency = Depends(get_current_user)
 current_auth_dependency = Depends(get_current_auth)
 
@@ -43,6 +45,9 @@ class RateLimitResult:
     limit: int
     remaining: int
     reset_seconds: int
+    global_limit: int
+    global_remaining: int
+    global_reset_seconds: int
 
 
 def ai_action_limit() -> int:
@@ -54,17 +59,31 @@ def ai_action_limit() -> int:
     return value if value > 0 else DEFAULT_AI_ACTIONS_PER_HOUR
 
 
+def global_ai_action_limit() -> int:
+    raw_value = os.environ.get(
+        "AI_GLOBAL_ACTIONS_PER_DAY",
+        str(DEFAULT_AI_GLOBAL_ACTIONS_PER_DAY),
+    )
+    try:
+        value = int(raw_value)
+    except ValueError:
+        return DEFAULT_AI_GLOBAL_ACTIONS_PER_DAY
+    return value if value > 0 else DEFAULT_AI_GLOBAL_ACTIONS_PER_DAY
+
+
 def consume_ai_action(
     user_id: uuid.UUID,
     *,
     store: RateLimitStore | None = None,
 ) -> RateLimitResult:
     limit = ai_action_limit()
+    daily_limit = global_ai_action_limit()
     rate_limit_store = store or RedisRateLimitStore()
-    key = f"applywise:rate-limit:ai:{user_id}"
+    user_key = f"applywise:rate-limit:ai:hour:{user_id}"
+    global_key = "applywise:rate-limit:ai:day:global"
 
     try:
-        count, ttl = rate_limit_store.increment(key, AI_RATE_LIMIT_WINDOW_SECONDS)
+        count, ttl = rate_limit_store.increment(user_key, AI_RATE_LIMIT_WINDOW_SECONDS)
     except RedisError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -84,10 +103,37 @@ def consume_ai_action(
             },
         )
 
+    try:
+        global_count, global_ttl = rate_limit_store.increment(
+            global_key,
+            AI_GLOBAL_RATE_LIMIT_WINDOW_SECONDS,
+        )
+    except RedisError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Usage controls are temporarily unavailable. Try again shortly.",
+        ) from exc
+
+    global_reset_seconds = max(global_ttl, 1)
+    if global_count > daily_limit:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="The free beta's daily AI capacity has been reached. Try again tomorrow.",
+            headers={
+                "Retry-After": str(global_reset_seconds),
+                "X-AI-Daily-Limit": str(daily_limit),
+                "X-AI-Daily-Remaining": "0",
+                "X-AI-Daily-Reset": str(global_reset_seconds),
+            },
+        )
+
     return RateLimitResult(
         limit=limit,
         remaining=max(limit - count, 0),
         reset_seconds=reset_seconds,
+        global_limit=daily_limit,
+        global_remaining=max(daily_limit - global_count, 0),
+        global_reset_seconds=global_reset_seconds,
     )
 
 
@@ -99,6 +145,9 @@ def enforce_ai_action_limit(
     response.headers["X-RateLimit-Limit"] = str(result.limit)
     response.headers["X-RateLimit-Remaining"] = str(result.remaining)
     response.headers["X-RateLimit-Reset"] = str(result.reset_seconds)
+    response.headers["X-AI-Daily-Limit"] = str(result.global_limit)
+    response.headers["X-AI-Daily-Remaining"] = str(result.global_remaining)
+    response.headers["X-AI-Daily-Reset"] = str(result.global_reset_seconds)
 
 
 def enforce_ai_action_limit_for_auth(
@@ -109,6 +158,9 @@ def enforce_ai_action_limit_for_auth(
     response.headers["X-RateLimit-Limit"] = str(result.limit)
     response.headers["X-RateLimit-Remaining"] = str(result.remaining)
     response.headers["X-RateLimit-Reset"] = str(result.reset_seconds)
+    response.headers["X-AI-Daily-Limit"] = str(result.global_limit)
+    response.headers["X-AI-Daily-Remaining"] = str(result.global_remaining)
+    response.headers["X-AI-Daily-Reset"] = str(result.global_reset_seconds)
 
 
 ai_action_limit_dependency = Depends(enforce_ai_action_limit)

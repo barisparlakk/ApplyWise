@@ -7,6 +7,7 @@ const DEFAULT_AUTH_JWT_SECRET = "dev-applywise-auth-secret-change-me";
 type BackendJwtInput = {
   subject: string;
   email: string;
+  emailVerified: boolean;
   name?: string | null;
   githubAccessToken?: string | null;
 };
@@ -24,6 +25,7 @@ export function createBackendJwt(input: BackendJwtInput): string {
   const payload = {
     sub: input.subject,
     email: input.email.toLowerCase(),
+    email_verified: input.emailVerified,
     name: input.name ?? null,
     iat: now,
     exp: now + 60 * 60,

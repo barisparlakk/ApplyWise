@@ -97,6 +97,7 @@ def test_analyze_repository_route_stores_analysis_and_summary_chunks(monkeypatch
             claims=AuthClaims(
                 subject="github:123",
                 email="github@example.com",
+                email_verified=True,
                 name="GitHub User",
                 github_access_token="github-token",
             ),

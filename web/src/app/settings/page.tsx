@@ -14,6 +14,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { DeleteAccountButton } from "@/app/settings/delete-account-button";
+import { ExportDataButton } from "@/app/settings/export-data-button";
 import { SignOutButton } from "@/app/settings/sign-out-button";
 import { AppShell } from "@/components/app-shell";
 import { Reveal } from "@/components/motion";
@@ -77,7 +78,7 @@ export default async function SettingsPage() {
 
         <Reveal className="grid border-y border-border bg-white lg:grid-cols-[240px_1fr]" delay={0.1}>
           <div className="border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#167D87]"><LockKeyhole className="h-4 w-4" />{t("Data and privacy")}</div><p className="mt-3 text-sm leading-6 text-muted-foreground">{t("Your evidence remains tied to your account.")}</p></div>
-          <div className="p-5 sm:p-6"><p className="text-sm leading-7 text-muted-foreground">{t("Review the")} <Link className="font-bold text-[#D9473F] hover:text-foreground" href="/privacy">{t("privacy notice link")}</Link> {t("and")} <Link className="font-bold text-[#D9473F] hover:text-foreground" href="/terms">{t("terms of use link")}</Link> {t("for details on storage, processing, and deletion.")}</p></div>
+          <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><p className="max-w-2xl text-sm leading-7 text-muted-foreground">{t("Review the")} <Link className="font-bold text-[#D9473F] hover:text-foreground" href="/privacy">{t("privacy notice link")}</Link> {t("and")} <Link className="font-bold text-[#D9473F] hover:text-foreground" href="/terms">{t("terms of use link")}</Link> {t("for details on storage, processing, and deletion.")}</p><ExportDataButton /></div>
         </Reveal>
 
         <Reveal className="border-l-2 border-[#FF5A4E] bg-[#fff5f4] p-5 sm:p-6" delay={0.14}>

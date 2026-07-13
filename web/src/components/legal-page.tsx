@@ -28,7 +28,7 @@ export async function LegalPage({
       <article className="mx-auto w-full max-w-3xl">
         <Link className="inline-flex text-foreground" href="/"><BrandLockup /></Link>
         <p className="mt-10 text-xs font-semibold uppercase text-muted-foreground">
-          {t("Last updated July 10, 2026")}
+          {t("Last updated July 13, 2026")}
         </p>
         <h1 className="mt-3 text-4xl font-bold text-foreground sm:text-5xl">{title}</h1>
         <p className="mt-5 text-base leading-8 text-muted-foreground">{introduction}</p>

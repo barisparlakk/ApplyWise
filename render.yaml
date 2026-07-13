@@ -49,6 +49,8 @@ services:
         value: "120000"
       - key: AI_ACTIONS_PER_HOUR
         value: "30"
+      - key: AI_GLOBAL_ACTIONS_PER_DAY
+        value: "100"
       - key: BACKGROUND_JOBS_ENABLED
         value: "true"
       - key: WORKER_PROCESSES
