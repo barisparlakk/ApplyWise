@@ -43,7 +43,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    for table_name, index_name in EMBEDDING_INDEXES.items():
+    for _table_name, index_name in EMBEDDING_INDEXES.items():
         op.execute(sa.text(f"DROP INDEX IF EXISTS {index_name}"))
 
     for table_name in reversed(EMBEDDING_TABLES):

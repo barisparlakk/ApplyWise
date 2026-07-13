@@ -5,9 +5,12 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
+from sqlalchemy.dialects.postgresql.base import ischema_names
 
 from applywise.database import normalize_database_url
-from applywise.models import Base
+from applywise.models import Base, Vector
+
+ischema_names.setdefault("vector", Vector)
 
 config = context.config
 

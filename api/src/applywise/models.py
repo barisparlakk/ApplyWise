@@ -17,6 +17,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -74,8 +75,17 @@ class Base(DeclarativeBase):
 
 class TimestampedUuidMixin:
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    created_at: Mapped[datetime] = mapped_column(default=utc_now, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(default=utc_now, onupdate=utc_now, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utc_now,
+        nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utc_now,
+        onupdate=utc_now,
+        nullable=False,
+    )
 
 
 class ApplicationStatus(enum.StrEnum):
@@ -98,8 +108,9 @@ application_status_enum = SAEnum(
 
 class User(TimestampedUuidMixin, Base):
     __tablename__ = "users"
+    __table_args__ = (Index("ix_users_email", "email"),)
 
-    email: Mapped[str] = mapped_column(String(320), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     full_name: Mapped[str | None] = mapped_column(String(255))
     auth_subject: Mapped[str | None] = mapped_column(String(255), unique=True)
 
@@ -151,11 +162,11 @@ class User(TimestampedUuidMixin, Base):
 
 class Profile(TimestampedUuidMixin, Base):
     __tablename__ = "profiles"
+    __table_args__ = (Index("ix_profiles_user_id", "user_id"),)
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
-        index=True,
         nullable=False,
     )
     headline: Mapped[str | None] = mapped_column(String(255))
@@ -175,6 +186,15 @@ class Profile(TimestampedUuidMixin, Base):
 
 class Resume(TimestampedUuidMixin, Base):
     __tablename__ = "resumes"
+    __table_args__ = (
+        Index(
+            "ix_resumes_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+            postgresql_where=text("embedding IS NOT NULL"),
+        ),
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -198,6 +218,13 @@ class ResumeChunk(TimestampedUuidMixin, Base):
     __tablename__ = "resume_chunks"
     __table_args__ = (
         UniqueConstraint("resume_id", "chunk_index", name="uq_resume_chunks_resume_index"),
+        Index(
+            "ix_resume_chunks_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+            postgresql_where=text("embedding IS NOT NULL"),
+        ),
     )
 
     resume_id: Mapped[uuid.UUID] = mapped_column(
@@ -275,6 +302,13 @@ class GitHubRepositoryChunk(TimestampedUuidMixin, Base):
             "chunk_index",
             name="uq_github_repository_chunks_repository_index",
         ),
+        Index(
+            "ix_github_repository_chunks_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+            postgresql_where=text("embedding IS NOT NULL"),
+        ),
     )
 
     repository_id: Mapped[uuid.UUID] = mapped_column(
@@ -292,13 +326,23 @@ class GitHubRepositoryChunk(TimestampedUuidMixin, Base):
 
 class Skill(TimestampedUuidMixin, Base):
     __tablename__ = "skills"
+    __table_args__ = (Index("ix_skills_name", "name"),)
 
-    name: Mapped[str] = mapped_column(String(120), unique=True, index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     category: Mapped[str | None] = mapped_column(String(120))
 
 
 class JobPost(TimestampedUuidMixin, Base):
     __tablename__ = "job_posts"
+    __table_args__ = (
+        Index(
+            "ix_job_posts_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+            postgresql_where=text("embedding IS NOT NULL"),
+        ),
+    )
 
     user_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"),
