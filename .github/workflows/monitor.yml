@@ -18,5 +18,5 @@ jobs:
     env:
       PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://applywise-barisparlak.onrender.com' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: ./infra/smoke-production.sh "$PRODUCTION_URL"
