@@ -1,0 +1,57 @@
+name: Encrypted database backup
+
+on:
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect backup configuration
+        id: configuration
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          if [[ -n "$BACKUP_DATABASE_URL" && -n "$BACKUP_ENCRYPTION_KEY" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Set BACKUP_DATABASE_URL and BACKUP_ENCRYPTION_KEY to enable backups."
+          fi
+
+      - name: Install PostgreSQL client
+        if: steps.configuration.outputs.enabled == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Create encrypted backup
+        if: steps.configuration.outputs.enabled == 'true'
+        env:
+          BACKUP_DIR: backups
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: ./infra/backup-postgres.sh
+
+      - name: Upload encrypted backup
+        if: steps.configuration.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: applywise-postgres-${{ github.run_id }}
+          path: |
+            backups/*.dump.enc
+            backups/*.sha256
+          if-no-files-found: error
+          retention-days: 7

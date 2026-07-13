@@ -128,6 +128,20 @@ The free target runs a single low-concurrency Dramatiq worker inside the web con
 
 This is a beta topology, not an unlimited production platform: Render can sleep the service after inactivity, free Key Value data is not durable, and free database, AI, and service quotas apply. See the current [Render free-service limits](https://render.com/docs/free) and [Cloudflare Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) before inviting users.
 
+The repository includes two free GitHub Actions operations workflows:
+
+- `monitor.yml` runs the public health, security-header, login, and privacy smoke checks every six hours. Set the repository variable `PRODUCTION_URL` when the deployed origin differs from the default Render URL.
+- `backup.yml` creates a daily AES-256 encrypted PostgreSQL custom-format backup and retains the encrypted artifact for seven days. Add repository secrets named `BACKUP_DATABASE_URL` and `BACKUP_ENCRYPTION_KEY`; without both, the workflow reports a warning and skips safely.
+
+Keep the backup encryption key outside GitHub as part of the recovery record. Verify a downloaded backup without modifying a database:
+
+```bash
+BACKUP_ENCRYPTION_KEY='your-recovery-key' \
+  make backup-verify BACKUP_FILE=backups/applywise-YYYYMMDDTHHMMSSZ.dump.enc
+```
+
+Restoration is intentionally not a Make target. After testing against a disposable database, run the guarded script with `RESTORE_CONFIRM=restore-applywise`, `DATABASE_URL`, and `BACKUP_ENCRYPTION_KEY` set.
+
 ## Public Launch Checklist
 
 - DNS points to the selected host and HTTPS is active before OAuth is enabled.
@@ -136,7 +150,7 @@ This is a beta topology, not an unlimited production platform: Render can sleep 
 - The external LLM provider has billing limits, data-retention settings, and an API key restricted to this service.
 - `AI_ACTIONS_PER_HOUR` and `AI_GLOBAL_ACTIONS_PER_DAY` match the launch budget; Redis-backed quotas fail closed if usage controls are unavailable.
 - `/api/health` is monitored externally, and container logs are shipped or retained by the hosting platform.
-- `make backup` is scheduled and encrypted copies are stored off-host.
+- The encrypted backup workflow has completed successfully, and one downloaded artifact has passed `make backup-verify`.
 - A rollback keeps the previous image or commit available, with a database backup taken before migrations.
 
 ## Demo Login

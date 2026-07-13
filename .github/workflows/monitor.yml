@@ -1,0 +1,22 @@
+name: Production smoke monitor
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-smoke-monitor
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      PRODUCTION_URL: ${{ vars.PRODUCTION_URL || 'https://applywise-barisparlak.onrender.com' }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./infra/smoke-production.sh "$PRODUCTION_URL"

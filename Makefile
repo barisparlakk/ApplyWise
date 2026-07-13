@@ -2,7 +2,7 @@ COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo docker compose
 DEV_COMPOSE = $(COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml
 PROD_COMPOSE = $(COMPOSE) --env-file .env.production -f docker-compose.yml
 
-.PHONY: dev test lint migrate seed deploy-check release-check deploy deploy-status deploy-logs deploy-down backup
+.PHONY: dev test lint migrate seed deploy-check release-check deploy deploy-status deploy-logs deploy-down backup backup-remote backup-verify smoke-production
 
 dev:
 	$(DEV_COMPOSE) up --build
@@ -50,3 +50,14 @@ backup:
 	test -f .env.production
 	mkdir -p backups
 	$(PROD_COMPOSE) exec -T postgres sh -c 'pg_dump -U "$$POSTGRES_USER" "$$POSTGRES_DB"' > "backups/applywise-$$(date +%Y%m%d-%H%M%S).sql"
+
+backup-remote:
+	./infra/backup-postgres.sh
+
+backup-verify:
+	test -n "$(BACKUP_FILE)"
+	./infra/restore-postgres.sh verify "$(BACKUP_FILE)"
+
+smoke-production:
+	test -n "$(PRODUCTION_URL)"
+	./infra/smoke-production.sh "$(PRODUCTION_URL)"
