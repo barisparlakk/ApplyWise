@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
+
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
 from applywise.embeddings import DeterministicEmbeddingProvider
+from applywise.interview_prep import build_interview_prep_plan, load_interview_context
 from applywise.models import (
     Base,
     InterviewPrep,
@@ -23,6 +26,52 @@ from applywise.routes.interview_prep import (
 )
 
 embedding_provider = DeterministicEmbeddingProvider()
+
+
+class FakeInterviewPrepProvider:
+    def generate_interview_prep_json(self, payload: dict[str, object]) -> str:
+        evidence = payload["evidence"]
+        assert isinstance(evidence, list)
+        first_evidence = evidence[0]
+        assert isinstance(first_evidence, dict)
+        evidence_label = str(first_evidence["label"])
+        job = payload["job"]
+        assert isinstance(job, dict)
+        company = str(job["company"])
+        role = str(job["role"])
+        question = {
+            "question": f"How would your evidence help {company}?",
+            "guidance": "Use the supplied project evidence and explain one tradeoff.",
+            "grounded_evidence": [evidence_label, "Invented evidence"],
+            "related_skills": ["FastAPI"],
+        }
+        script = {
+            "content": f"Grounded preparation for {role}.",
+            "grounded_evidence": [evidence_label],
+        }
+        star = {
+            "prompt": "Describe a relevant delivery challenge.",
+            "situation": "Use the supplied project context.",
+            "task": "Explain the objective.",
+            "action": "Explain the technical decision and validation.",
+            "result": "State only an evidenced result.",
+            "grounded_evidence": [evidence_label],
+        }
+        return json.dumps(
+            {
+                "focus_areas": ["Company-specific API design"],
+                "content": {
+                    "technical_questions": [question],
+                    "behavioral_questions": [question],
+                    "english_self_introduction": script,
+                    "project_explanation_script": script,
+                    "why_this_company": script,
+                    "why_this_role": script,
+                    "star_answer_templates": [star],
+                    "weak_area_drill_questions": [question],
+                },
+            }
+        )
 
 
 def test_interview_prep_generates_grounded_sections_and_regenerates_one_section() -> None:
@@ -114,6 +163,13 @@ def test_interview_prep_generates_grounded_sections_and_regenerates_one_section(
         session.commit()
 
         application = create_application_from_job(job_post.id, current_user=user, session=session)
+        context = load_interview_context(session, user=user, job_post=job_post)
+        structured_plan = build_interview_prep_plan(
+            user=user,
+            job_post=job_post,
+            context=context,
+            provider=FakeInterviewPrepProvider(),
+        )
         generated_prep = generate_interview_prep(
             application.id,
             current_user=user,
@@ -143,3 +199,10 @@ def test_interview_prep_generates_grounded_sections_and_regenerates_one_section(
     assert regenerated.id == prep.id
     assert regenerated.content.technical_questions
     assert prep_count == 1
+    assert structured_plan.focus_areas == ["Company-specific API design"]
+    assert structured_plan.content.technical_questions[0].question.startswith(
+        "How would your evidence help ApplyWise Labs"
+    )
+    assert "Invented evidence" not in (
+        structured_plan.content.technical_questions[0].grounded_evidence
+    )

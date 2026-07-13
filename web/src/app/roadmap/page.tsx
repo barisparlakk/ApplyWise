@@ -14,6 +14,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { RoadmapRegenerateButton } from "@/app/roadmap/roadmap-regenerate-button";
 import { MotionBar, Reveal } from "@/components/motion";
 import { PageHeader } from "@/components/page-header";
 import { SignalField } from "@/components/signal-field";
@@ -72,7 +73,7 @@ export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
 
         <div className="space-y-6">
           {roadmaps.length ? roadmaps.map((roadmap, index) => (
-            <Reveal delay={Math.min(0.04 * index, 0.16)} key={roadmap.id}><RoadmapPanel locale={localeTag(locale)} roadmap={roadmap} t={t} /></Reveal>
+            <Reveal delay={Math.min(0.04 * index, 0.16)} key={roadmap.id}><RoadmapPanel apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"} locale={localeTag(locale)} roadmap={roadmap} t={t} /></Reveal>
           )) : <EmptyRoadmap t={t} />}
         </div>
       </div>
@@ -80,7 +81,7 @@ export default async function RoadmapPage({ searchParams }: RoadmapPageProps) {
   );
 }
 
-function RoadmapPanel({ locale, roadmap, t }: Readonly<{ locale: string; roadmap: RoadmapData; t: Translator }>) {
+function RoadmapPanel({ apiBaseUrl, locale, roadmap, t }: Readonly<{ apiBaseUrl: string; locale: string; roadmap: RoadmapData; t: Translator }>) {
   return (
     <article className="app-surface overflow-hidden">
       <header className="flex flex-col gap-4 border-b border-border p-5 sm:flex-row sm:items-start sm:justify-between sm:p-6">
@@ -89,7 +90,7 @@ function RoadmapPanel({ locale, roadmap, t }: Readonly<{ locale: string; roadmap
           <h2 className="mt-3 text-xl font-bold text-foreground">{roadmap.title}</h2>
           <p className="mt-1 flex items-center gap-2 text-xs font-semibold text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />{t("{days}-day readiness sprint", { days: roadmap.duration_days })}</p>
         </div>
-        {roadmap.job_post_id ? <Link className="motion-control inline-flex h-9 items-center gap-2 rounded-md border border-border bg-white px-3 text-xs font-bold text-foreground hover:border-[#FF5A4E] hover:text-[#D9473F]" href={`/jobs/${roadmap.job_post_id}/analysis?days=${roadmap.duration_days}`}>{t("Open fit analysis")} <ArrowRight className="h-4 w-4" /></Link> : null}
+        {roadmap.job_post_id ? <div className="flex items-center gap-2"><RoadmapRegenerateButton apiBaseUrl={apiBaseUrl} durationDays={roadmap.duration_days} jobPostId={roadmap.job_post_id} /><Link className="motion-control inline-flex h-9 items-center gap-2 rounded-md border border-border bg-white px-3 text-xs font-bold text-foreground hover:border-[#FF5A4E] hover:text-[#D9473F]" href={`/jobs/${roadmap.job_post_id}/analysis?days=${roadmap.duration_days}`}>{t("Open fit analysis")} <ArrowRight className="h-4 w-4" /></Link></div> : null}
       </header>
 
       <div className="grid lg:grid-cols-[320px_1fr]">

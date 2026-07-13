@@ -66,6 +66,7 @@ class CloudflareWorkersAIClient:
         user_content: str,
         json_schema: dict[str, Any],
         max_tokens: int = 1800,
+        temperature: float = 0,
     ) -> str:
         payload = {
             "messages": [
@@ -73,7 +74,7 @@ class CloudflareWorkersAIClient:
                 {"role": "user", "content": user_content},
             ],
             "max_tokens": max_tokens,
-            "temperature": 0,
+            "temperature": temperature,
             "response_format": {
                 "type": "json_schema",
                 "json_schema": json_schema,

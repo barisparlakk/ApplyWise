@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import json
+import os
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from applywise.cloudflare_ai import CloudflareAIError, CloudflareWorkersAIClient
 from applywise.embeddings import get_embedding_provider, safe_embed
+from applywise.environment import boolean_environment
 from applywise.fit_score import compute_and_store_fit_analysis, latest_fit_analysis
 from applywise.models import (
     Application,
@@ -100,6 +104,41 @@ class InterviewPrepPlan(BaseModel):
     content: InterviewPrepContent
 
 
+class InterviewPrepProvider(Protocol):
+    def generate_interview_prep_json(self, payload: dict[str, Any]) -> str: ...
+
+
+class InterviewPrepGenerationError(RuntimeError):
+    pass
+
+
+class CloudflareInterviewPrepProvider:
+    def __init__(self, client: CloudflareWorkersAIClient) -> None:
+        self.client = client
+
+    def generate_interview_prep_json(self, payload: dict[str, Any]) -> str:
+        try:
+            return self.client.generate_json(
+                system_prompt=(
+                    "Create a complete, role-specific interview preparation pack using the "
+                    "requested JSON schema. Ground every candidate claim in the supplied evidence. "
+                    "Each grounded_evidence value must exactly match one supplied evidence label. "
+                    "Reference actual job requirements, fit gaps, and project facts; do not invent "
+                    "experience, metrics, company facts, or technologies. Make questions specific "
+                    "and scripts natural to speak aloud. Use English for the English introduction "
+                    "and the main language of the job post for other sections."
+                ),
+                user_content=json.dumps(payload, separators=(",", ":"), ensure_ascii=False),
+                json_schema=InterviewPrepPlan.model_json_schema(),
+                max_tokens=6000,
+                temperature=0.25,
+            )
+        except CloudflareAIError as exc:
+            raise InterviewPrepGenerationError(
+                "Cloudflare interview preparation failed."
+            ) from exc
+
+
 @dataclass(frozen=True)
 class EvidenceSnippet:
     source: str
@@ -141,7 +180,12 @@ def generate_or_update_interview_prep(
         return existing
 
     context = load_interview_context(session, user=user, job_post=job_post)
-    generated = build_interview_prep_plan(user=user, job_post=job_post, context=context)
+    generated = build_interview_prep_plan(
+        user=user,
+        job_post=job_post,
+        context=context,
+        sections=selected_sections,
+    )
 
     if existing is None:
         content = generated.content
@@ -255,6 +299,59 @@ def build_interview_prep_plan(
     user: User,
     job_post: JobPost,
     context: InterviewContext,
+    sections: list[InterviewPrepSection] | None = None,
+    provider: InterviewPrepProvider | None = None,
+) -> InterviewPrepPlan:
+    local_plan = build_local_interview_prep_plan(user=user, job_post=job_post, context=context)
+    explicit_provider = provider is not None
+    try:
+        selected_provider = provider or get_interview_prep_provider()
+    except InterviewPrepGenerationError:
+        if explicit_provider or not boolean_environment("AI_ALLOW_LOCAL_FALLBACK", True):
+            raise
+        return local_plan
+
+    if selected_provider is None:
+        return local_plan
+
+    evidence = top_evidence(
+        context.evidence,
+        job_post,
+        missing_skills_from_context(context),
+        limit=8,
+    )
+    payload = build_interview_generation_payload(
+        user=user,
+        job_post=job_post,
+        context=context,
+        evidence=evidence,
+        sections=sections,
+    )
+    last_error: Exception | None = None
+    for _attempt in range(2):
+        try:
+            generated = InterviewPrepPlan.model_validate_json(
+                selected_provider.generate_interview_prep_json(payload)
+            )
+            validate_generated_interview_prep(generated)
+            return sanitize_generated_grounding(generated, evidence, local_plan)
+        except (InterviewPrepGenerationError, ValidationError, ValueError) as exc:
+            last_error = exc
+            if isinstance(exc, InterviewPrepGenerationError):
+                break
+
+    if explicit_provider or not boolean_environment("AI_ALLOW_LOCAL_FALLBACK", True):
+        raise InterviewPrepGenerationError(
+            "Interview preparation provider returned invalid output."
+        ) from last_error
+    return local_plan
+
+
+def build_local_interview_prep_plan(
+    *,
+    user: User,
+    job_post: JobPost,
+    context: InterviewContext,
 ) -> InterviewPrepPlan:
     signals = (context.fit_analysis.breakdown or {}).get("signals", {})
     missing_skills = [str(item) for item in signals.get("missing_required_skills", [])]
@@ -301,6 +398,141 @@ def build_interview_prep_plan(
         ],
     )
     return InterviewPrepPlan(focus_areas=focus_areas, content=content)
+
+
+def get_interview_prep_provider() -> InterviewPrepProvider | None:
+    provider = os.environ.get("LLM_PROVIDER", "local").strip().lower()
+    if provider in {"", "local", "heuristic"}:
+        return None
+    if provider == "cloudflare":
+        try:
+            return CloudflareInterviewPrepProvider(
+                CloudflareWorkersAIClient.from_environment()
+            )
+        except CloudflareAIError as exc:
+            raise InterviewPrepGenerationError(
+                "Cloudflare AI is not fully configured."
+            ) from exc
+    raise InterviewPrepGenerationError(f"Unsupported interview prep provider: {provider}.")
+
+
+def missing_skills_from_context(context: InterviewContext) -> list[str]:
+    signals = (context.fit_analysis.breakdown or {}).get("signals", {})
+    if not isinstance(signals, dict):
+        return []
+    return [
+        str(value)
+        for value in signals.get("missing_required_skills", [])
+        if isinstance(value, str)
+    ]
+
+
+def build_interview_generation_payload(
+    *,
+    user: User,
+    job_post: JobPost,
+    context: InterviewContext,
+    evidence: list[EvidenceSnippet],
+    sections: list[InterviewPrepSection] | None,
+) -> dict[str, Any]:
+    breakdown = context.fit_analysis.breakdown or {}
+    return {
+        "candidate_name": user.full_name or "Candidate",
+        "job": {
+            "company": job_post.company_name,
+            "role": job_post.title,
+            "domain": job_post.domain,
+            "required_skills": job_post.required_skills,
+            "nice_to_have_skills": job_post.nice_to_have_skills,
+            "responsibilities": job_post.responsibilities,
+            "hidden_expectations": job_post.hidden_expectations,
+            "business_expectations": job_post.business_expectations,
+            "communication_expectations": job_post.communication_expectations,
+            "description_excerpt": job_post.description[:5000],
+        },
+        "fit": {
+            "total": context.fit_analysis.total_score,
+            "components": breakdown.get("components", {}),
+            "signals": breakdown.get("signals", {}),
+        },
+        "evidence": [
+            {"label": snippet.label, "text": snippet.text[:1200]} for snippet in evidence
+        ],
+        "requested_sections": list(sections or SECTION_KEYS),
+        "variant_instruction": (
+            "Generate a fresh angle for the requested sections while keeping all claims grounded."
+            if sections
+            else "Generate the first complete preparation pack."
+        ),
+    }
+
+
+def validate_generated_interview_prep(plan: InterviewPrepPlan) -> None:
+    content = plan.content
+    if not plan.focus_areas:
+        raise ValueError("Interview prep needs focus areas.")
+    if not content.technical_questions or not content.behavioral_questions:
+        raise ValueError("Interview prep needs technical and behavioral questions.")
+    if not content.star_answer_templates or not content.weak_area_drill_questions:
+        raise ValueError("Interview prep needs STAR templates and weak-area drills.")
+
+
+def sanitize_generated_grounding(
+    generated: InterviewPrepPlan,
+    evidence: list[EvidenceSnippet],
+    fallback: InterviewPrepPlan,
+) -> InterviewPrepPlan:
+    allowed = {snippet.label.casefold(): snippet.label for snippet in evidence}
+    fallback_labels = [snippet.label for snippet in evidence[:2]]
+
+    def clean(values: list[str]) -> list[str]:
+        cleaned = unique_text(
+            [allowed[value.casefold()] for value in values if value.casefold() in allowed]
+        )
+        return cleaned or fallback_labels[:1]
+
+    def clean_question(question: PrepQuestion) -> PrepQuestion:
+        return question.model_copy(
+            update={"grounded_evidence": clean(question.grounded_evidence)}
+        )
+
+    def clean_script(script: PrepScript) -> PrepScript:
+        return script.model_copy(update={"grounded_evidence": clean(script.grounded_evidence)})
+
+    def clean_star(template: StarTemplate) -> StarTemplate:
+        return template.model_copy(
+            update={"grounded_evidence": clean(template.grounded_evidence)}
+        )
+
+    content = generated.content.model_copy(
+        update={
+            "technical_questions": [
+                clean_question(question) for question in generated.content.technical_questions
+            ],
+            "behavioral_questions": [
+                clean_question(question) for question in generated.content.behavioral_questions
+            ],
+            "english_self_introduction": clean_script(
+                generated.content.english_self_introduction
+            ),
+            "project_explanation_script": clean_script(
+                generated.content.project_explanation_script
+            ),
+            "why_this_company": clean_script(generated.content.why_this_company),
+            "why_this_role": clean_script(generated.content.why_this_role),
+            "star_answer_templates": [
+                clean_star(template) for template in generated.content.star_answer_templates
+            ],
+            "weak_area_drill_questions": [
+                clean_question(question)
+                for question in generated.content.weak_area_drill_questions
+            ],
+        }
+    )
+    return InterviewPrepPlan(
+        focus_areas=unique_text(generated.focus_areas)[:8] or fallback.focus_areas,
+        content=content,
+    )
 
 
 def collect_evidence(

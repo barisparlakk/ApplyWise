@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import json
+import os
 import uuid
 from datetime import UTC, date, datetime, timedelta
-from typing import Any
+from typing import Any, Protocol
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from applywise.cloudflare_ai import CloudflareAIError, CloudflareWorkersAIClient
+from applywise.environment import boolean_environment
 from applywise.models import Application, FitAnalysis, JobPost, LearningRoadmap, User
 
 SUPPORTED_ROADMAP_DAYS = (3, 7, 14)
@@ -50,6 +54,136 @@ class RoadmapPlan(BaseModel):
     plan: list[RoadmapDay]
 
 
+class GeneratedRoadmapDay(BaseModel):
+    day: int = Field(ge=1, le=14)
+    focus: str = Field(min_length=1, max_length=240)
+    tasks: list[str] = Field(min_length=2, max_length=4)
+    outcome: str = Field(min_length=1, max_length=500)
+
+    @field_validator("focus", "outcome")
+    @classmethod
+    def normalize_text(cls, value: str) -> str:
+        return " ".join(value.split())
+
+    @field_validator("tasks")
+    @classmethod
+    def normalize_tasks(cls, values: list[str]) -> list[str]:
+        tasks: list[str] = []
+        for raw_value in values:
+            value = " ".join(raw_value.split())
+            if value and value.casefold() not in {task.casefold() for task in tasks}:
+                tasks.append(value[:600])
+        if len(tasks) < 2:
+            raise ValueError("Each roadmap day needs at least two concrete tasks.")
+        return tasks[:4]
+
+
+class GeneratedRoadmap(BaseModel):
+    plan: list[GeneratedRoadmapDay] = Field(min_length=3, max_length=14)
+
+
+class RoadmapProvider(Protocol):
+    def generate_roadmap_json(
+        self,
+        *,
+        user: User,
+        job_post: JobPost,
+        fit_analysis: FitAnalysis,
+        missing_skills: list[MissingSkill],
+        duration_days: int,
+    ) -> str: ...
+
+
+class RoadmapGenerationError(RuntimeError):
+    pass
+
+
+class LocalRoadmapProvider:
+    def generate_roadmap_json(
+        self,
+        *,
+        user: User,
+        job_post: JobPost,
+        fit_analysis: FitAnalysis,
+        missing_skills: list[MissingSkill],
+        duration_days: int,
+    ) -> str:
+        del user, fit_analysis
+        plan = build_dated_plan(
+            missing_skills=missing_skills,
+            job_post=job_post,
+            duration_days=duration_days,
+            start_date=datetime.now(UTC).date(),
+        )
+        return GeneratedRoadmap(
+            plan=[
+                GeneratedRoadmapDay(
+                    day=day.day,
+                    focus=day.focus,
+                    tasks=day.tasks,
+                    outcome=day.outcome,
+                )
+                for day in plan
+            ]
+        ).model_dump_json()
+
+
+class CloudflareRoadmapProvider:
+    def __init__(self, client: CloudflareWorkersAIClient) -> None:
+        self.client = client
+
+    def generate_roadmap_json(
+        self,
+        *,
+        user: User,
+        job_post: JobPost,
+        fit_analysis: FitAnalysis,
+        missing_skills: list[MissingSkill],
+        duration_days: int,
+    ) -> str:
+        profile = user.profile
+        context = {
+            "candidate": {
+                "education": profile.education_level if profile else None,
+                "experience_level": profile.experience_level if profile else None,
+                "current_skills": profile.skills if profile else [],
+                "target_roles": profile.target_roles if profile else [],
+            },
+            "job": {
+                "company": job_post.company_name,
+                "role": job_post.title,
+                "domain": job_post.domain,
+                "required_skills": job_post.required_skills,
+                "nice_to_have_skills": job_post.nice_to_have_skills,
+                "responsibilities": job_post.responsibilities,
+                "description_excerpt": job_post.description[:5000],
+            },
+            "fit": {
+                "total": fit_analysis.total_score,
+                "components": (fit_analysis.breakdown or {}).get("components", {}),
+            },
+            "ranked_gaps": [skill.model_dump() for skill in missing_skills],
+            "duration_days": duration_days,
+        }
+        try:
+            return self.client.generate_json(
+                system_prompt=(
+                    "Create a concrete day-by-day internship readiness plan using the requested "
+                    "JSON schema. Use exactly the requested number of sequential days. Tie every "
+                    "day to the candidate's ranked gaps and the job's real responsibilities. "
+                    "Tasks must be finishable, observable, and different across days. Include "
+                    "practice, evidence creation, and interview rehearsal. Use the main language "
+                    "of the job post. Do not recommend paid courses or invent candidate facts."
+                ),
+                user_content=json.dumps(context, separators=(",", ":"), ensure_ascii=False),
+                json_schema=GeneratedRoadmap.model_json_schema(),
+                max_tokens=3200,
+                temperature=0.2,
+            )
+        except CloudflareAIError as exc:
+            raise RoadmapGenerationError("Cloudflare roadmap generation failed.") from exc
+
+
 def normalize_roadmap_days(value: int) -> int:
     if value not in SUPPORTED_ROADMAP_DAYS:
         raise ValueError("Roadmap length must be 3, 7, or 14 days.")
@@ -63,21 +197,32 @@ def build_and_store_roadmap(
     fit_analysis: FitAnalysis,
     job_post: JobPost,
     duration_days: int = 3,
+    provider: RoadmapProvider | None = None,
+    regenerate: bool = False,
 ) -> LearningRoadmap:
     days = normalize_roadmap_days(duration_days)
     application = find_application(session, user=user, job_post=job_post)
-    missing_skills = rank_missing_skills(fit_analysis, job_post)
-    plan_days = build_dated_plan(
-        missing_skills=missing_skills,
-        job_post=job_post,
-        duration_days=days,
-        start_date=datetime.now(UTC).date(),
-    )
     roadmap = find_existing_roadmap(
         session,
         user=user,
         fit_analysis=fit_analysis,
         duration_days=days,
+    )
+    if roadmap is not None and not regenerate:
+        if application is not None and roadmap.application_id != application.id:
+            roadmap.application_id = application.id
+            session.flush()
+        return roadmap
+
+    missing_skills = rank_missing_skills(fit_analysis, job_post)
+    plan_days = generate_roadmap_days(
+        user=user,
+        fit_analysis=fit_analysis,
+        missing_skills=missing_skills,
+        job_post=job_post,
+        duration_days=days,
+        start_date=datetime.now(UTC).date(),
+        provider=provider,
     )
     values = {
         "job_post_id": job_post.id,
@@ -112,6 +257,76 @@ def build_and_store_roadmap(
 
     session.flush()
     return roadmap
+
+
+def generate_roadmap_days(
+    *,
+    user: User,
+    fit_analysis: FitAnalysis,
+    missing_skills: list[MissingSkill],
+    job_post: JobPost,
+    duration_days: int,
+    start_date: date,
+    provider: RoadmapProvider | None = None,
+) -> list[RoadmapDay]:
+    try:
+        roadmap_provider = provider or get_roadmap_provider()
+    except RoadmapGenerationError:
+        if provider is not None or not boolean_environment("AI_ALLOW_LOCAL_FALLBACK", True):
+            raise
+        roadmap_provider = LocalRoadmapProvider()
+
+    last_error: Exception | None = None
+    for _attempt in range(2):
+        try:
+            generated = GeneratedRoadmap.model_validate_json(
+                roadmap_provider.generate_roadmap_json(
+                    user=user,
+                    job_post=job_post,
+                    fit_analysis=fit_analysis,
+                    missing_skills=missing_skills,
+                    duration_days=duration_days,
+                )
+            )
+            if len(generated.plan) != duration_days:
+                raise ValueError("Roadmap provider returned the wrong number of days.")
+            if [day.day for day in generated.plan] != list(range(1, duration_days + 1)):
+                raise ValueError("Roadmap provider returned non-sequential days.")
+            return [
+                RoadmapDay(
+                    day=day.day,
+                    date=start_date + timedelta(days=day.day - 1),
+                    focus=day.focus,
+                    tasks=day.tasks,
+                    outcome=day.outcome,
+                )
+                for day in generated.plan
+            ]
+        except (RoadmapGenerationError, ValidationError, ValueError) as exc:
+            last_error = exc
+            if isinstance(exc, RoadmapGenerationError):
+                break
+
+    if provider is not None or not boolean_environment("AI_ALLOW_LOCAL_FALLBACK", True):
+        raise RoadmapGenerationError("Roadmap provider returned invalid output.") from last_error
+    return build_dated_plan(
+        missing_skills=missing_skills,
+        job_post=job_post,
+        duration_days=duration_days,
+        start_date=start_date,
+    )
+
+
+def get_roadmap_provider() -> RoadmapProvider:
+    provider = os.environ.get("LLM_PROVIDER", "local").strip().lower()
+    if provider in {"", "local", "heuristic"}:
+        return LocalRoadmapProvider()
+    if provider == "cloudflare":
+        try:
+            return CloudflareRoadmapProvider(CloudflareWorkersAIClient.from_environment())
+        except CloudflareAIError as exc:
+            raise RoadmapGenerationError("Cloudflare AI is not fully configured.") from exc
+    raise RoadmapGenerationError(f"Unsupported roadmap provider: {provider}.")
 
 
 def roadmap_to_plan(roadmap: LearningRoadmap, job_post: JobPost | None = None) -> RoadmapPlan:
