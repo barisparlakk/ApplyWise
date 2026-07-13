@@ -8,7 +8,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from applywise.auth import AuthContext, get_current_auth, get_current_user
+from applywise.cloudflare_ai import CloudflareAIError
 from applywise.database import get_session
+from applywise.embedding_tasks import (
+    background_jobs_enabled,
+    enqueue_repository_embedding,
+    update_repository_embeddings,
+)
 from applywise.embeddings import chunk_text, get_embedding_provider, safe_embed_many
 from applywise.github_analyzer import (
     GitHubAnalysisError,
@@ -143,6 +149,17 @@ def analyze_repository(
     repository = upsert_analyzed_repository(session, current_auth.user, result)
     session.commit()
     session.refresh(repository)
+    if background_jobs_enabled() and not enqueue_repository_embedding(repository.id):
+        try:
+            update_repository_embeddings(
+                session,
+                repository.id,
+                provider=embedding_provider,
+            )
+            session.commit()
+            session.refresh(repository)
+        except CloudflareAIError:
+            session.rollback()
     return repository_to_response(repository)
 
 
@@ -199,7 +216,11 @@ def rebuild_summary_chunks(
     session.flush()
 
     chunks = chunk_text(summary_text)
-    embeddings = safe_embed_many(embedding_provider, chunks)
+    embeddings = (
+        [None] * len(chunks)
+        if background_jobs_enabled()
+        else safe_embed_many(embedding_provider, chunks)
+    )
     for index, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=True)):
         session.add(
             GitHubRepositoryChunk(

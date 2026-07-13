@@ -49,6 +49,12 @@ services:
         value: "120000"
       - key: AI_ACTIONS_PER_HOUR
         value: "30"
+      - key: BACKGROUND_JOBS_ENABLED
+        value: "true"
+      - key: WORKER_PROCESSES
+        value: "1"
+      - key: WORKER_THREADS
+        value: "2"
       - key: LLM_PROVIDER
         value: cloudflare
       - key: EMBEDDING_PROVIDER

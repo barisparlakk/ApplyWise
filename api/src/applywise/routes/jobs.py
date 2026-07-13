@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from applywise.auth import get_current_user
 from applywise.database import get_session
+from applywise.embedding_tasks import enqueue_job_embedding
 from applywise.embeddings import get_embedding_provider, safe_embed
 from applywise.fit_score import (
     FitExplanation,
@@ -198,6 +199,8 @@ def analyze_job(
     session.refresh(job_post)
     session.refresh(fit_analysis)
     session.refresh(roadmap)
+    if job_embedding is None:
+        enqueue_job_embedding(job_post.id)
     return job_post_to_response(job_post, fit_analysis, roadmap_to_plan(roadmap, job_post))
 
 

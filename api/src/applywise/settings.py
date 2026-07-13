@@ -79,6 +79,9 @@ def validate_runtime_environment() -> None:
 
     positive_integer_environment("MAX_REQUEST_BODY_BYTES", DEFAULT_MAX_REQUEST_BODY_BYTES)
     positive_integer_environment("AI_ACTIONS_PER_HOUR", 30)
+    if boolean_environment("BACKGROUND_JOBS_ENABLED"):
+        positive_integer_environment("WORKER_PROCESSES", 1)
+        positive_integer_environment("WORKER_THREADS", 2)
 
     llm_provider = os.environ.get("LLM_PROVIDER", "local").strip().lower()
     if boolean_environment("REQUIRE_EXTERNAL_LLM") and llm_provider in {

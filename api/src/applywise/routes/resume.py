@@ -11,7 +11,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from applywise.auth import get_current_user
+from applywise.cloudflare_ai import CloudflareAIError
 from applywise.database import get_session
+from applywise.embedding_tasks import (
+    background_jobs_enabled,
+    enqueue_resume_embedding,
+    update_resume_embeddings,
+)
 from applywise.embeddings import (
     chunk_text,
     get_embedding_provider,
@@ -109,9 +115,13 @@ def decode_upload(payload: ResumeUploadPayload) -> bytes:
     return content
 
 
-def build_chunks(resume: Resume) -> list[ResumeChunk]:
+def build_chunks(resume: Resume, *, defer_embeddings: bool = False) -> list[ResumeChunk]:
     chunks = chunk_text(resume.content_text)
-    embeddings = safe_embed_many(embedding_provider, chunks)
+    embeddings = (
+        [None] * len(chunks)
+        if defer_embeddings
+        else safe_embed_many(embedding_provider, chunks)
+    )
     return [
         ResumeChunk(
             resume_id=resume.id,
@@ -174,7 +184,10 @@ def upload_resume(
             detail="Resume sections could not be extracted.",
         ) from exc
 
-    resume_embedding = safe_embed(embedding_provider, content_text)
+    defer_embeddings = background_jobs_enabled()
+    resume_embedding = (
+        None if defer_embeddings else safe_embed(embedding_provider, content_text)
+    )
     resume = Resume(
         user_id=current_user.id,
         filename=payload.filename,
@@ -188,11 +201,18 @@ def upload_resume(
     session.add(resume)
     session.flush()
 
-    for chunk in build_chunks(resume):
+    for chunk in build_chunks(resume, defer_embeddings=defer_embeddings):
         session.add(chunk)
 
     session.commit()
     session.refresh(resume)
+    if defer_embeddings and not enqueue_resume_embedding(resume.id):
+        try:
+            update_resume_embeddings(session, resume.id, provider=embedding_provider)
+            session.commit()
+            session.refresh(resume)
+        except CloudflareAIError:
+            session.rollback()
     return resume_to_response(resume)
 
 

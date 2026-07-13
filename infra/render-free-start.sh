@@ -3,10 +3,11 @@ set -Eeuo pipefail
 
 api_pid=""
 web_pid=""
+worker_pid=""
 
 cleanup() {
   trap - EXIT
-  for pid in "$web_pid" "$api_pid"; do
+  for pid in "$web_pid" "$worker_pid" "$api_pid"; do
     if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
       kill -TERM "$pid" 2>/dev/null || true
     fi
@@ -38,12 +39,22 @@ uvicorn applywise.main:app \
   --workers "${WEB_CONCURRENCY:-1}" &
 api_pid=$!
 
+if [[ "${BACKGROUND_JOBS_ENABLED:-false}" == "true" ]]; then
+  python -m applywise.worker &
+  worker_pid=$!
+fi
+
 cd /app/web
 node server.js &
 web_pid=$!
 
+process_ids=("$api_pid" "$web_pid")
+if [[ -n "$worker_pid" ]]; then
+  process_ids+=("$worker_pid")
+fi
+
 set +e
-wait -n "$api_pid" "$web_pid"
+wait -n "${process_ids[@]}"
 exit_code=$?
 set -e
 
