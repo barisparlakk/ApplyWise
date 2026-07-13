@@ -27,6 +27,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { Reveal } from "@/components/motion";
+import { CompanyPreparationPanel } from "@/app/applications/[id]/company-preparation-panel";
 import { useLocale, useTranslations } from "@/components/locale-provider";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { ScoreRing } from "@/components/score-ring";
@@ -39,6 +40,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type {
   ApplicationData,
   ApplicationStatus,
+  CompanyProfileData,
   InterviewPrepData,
   ResumeVersionData,
 } from "@/lib/api";
@@ -61,6 +63,7 @@ type ApplicationDetailProps = {
   initialApplication: ApplicationData;
   initialInterviewPrep: InterviewPrepData;
   initialResumeVersions: ResumeVersionData[];
+  initialCompanyProfile: CompanyProfileData | null;
 };
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -74,6 +77,7 @@ export function ApplicationDetail({
   initialApplication,
   initialInterviewPrep,
   initialResumeVersions,
+  initialCompanyProfile,
 }: ApplicationDetailProps) {
   const [application, setApplication] = useState(initialApplication);
   const [interviewPrep] = useState(initialInterviewPrep);
@@ -238,6 +242,12 @@ export function ApplicationDetail({
               </AnimatePresence>
             </div>
           </Reveal>
+
+          <CompanyPreparationPanel
+            apiBaseUrl={apiBaseUrl}
+            initialProfile={initialCompanyProfile}
+            jobPostId={application.job_post_id}
+          />
         </main>
 
         <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">

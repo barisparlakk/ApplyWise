@@ -8,6 +8,7 @@ import { ProfileBuilder } from "@/app/profile/profile-builder";
 import { ResumeManager } from "@/app/resume/resume-manager";
 import type {
   ApplicationData,
+  CompanyProfileData,
   GitHubRepositoryData,
   InterviewPrepData,
   JobPostData,
@@ -220,6 +221,29 @@ const application: ApplicationData = {
   updated_at: "2026-07-06T10:00:00Z",
 };
 
+const companyProfile: CompanyProfileData = {
+  id: "company-profile-1",
+  job_post_id: "job-1",
+  company_name: "Northstar AI",
+  role: "AI/ML Intern",
+  evidence_basis: "job_post_and_candidate_evidence",
+  what_company_does: "The supplied job post describes model evaluation tooling.",
+  likely_interview_angles: ["Model evaluation tradeoffs", "Python service design"],
+  projects_to_emphasize: [
+    {
+      name: "Fit Score API",
+      reason: "It provides relevant API and evaluation evidence.",
+      talking_points: ["Explain deterministic scoring", "Show validation tests"],
+    },
+  ],
+  smart_questions: [
+    "How is intern success measured?",
+    "Which evaluation workflow would the intern own first?",
+    "How does the team review model-quality decisions?",
+  ],
+  updated_at: "2026-07-13T08:00:00Z",
+};
+
 const interviewPrep: InterviewPrepData = {
   id: "prep-1",
   application: {
@@ -328,6 +352,7 @@ export function ComponentSmokeCases() {
       <ApplicationDetail
         apiBaseUrl={apiBaseUrl}
         initialApplication={application}
+        initialCompanyProfile={companyProfile}
         initialInterviewPrep={interviewPrep}
         initialResumeVersions={[resumeVersion]}
       />

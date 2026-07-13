@@ -2,7 +2,12 @@ import { redirect } from "next/navigation";
 
 import { ApplicationDetail } from "@/app/applications/[id]/application-detail";
 import { AppShell } from "@/components/app-shell";
-import { getApplication, getInterviewPrep, getResumeVersions } from "@/lib/api";
+import {
+  getApplication,
+  getCompanyProfile,
+  getInterviewPrep,
+  getResumeVersions,
+} from "@/lib/api";
 import { getBackendSession } from "@/lib/server-auth";
 
 type ApplicationDetailPageProps = {
@@ -19,10 +24,11 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
     redirect(`/login?callbackUrl=/applications/${id}`);
   }
 
-  const [application, interviewPrep, resumeVersions] = await Promise.all([
-    getApplication(session, id),
+  const application = await getApplication(session, id);
+  const [interviewPrep, resumeVersions, companyProfile] = await Promise.all([
     getInterviewPrep(session, id),
     getResumeVersions(session),
+    getCompanyProfile(session, application.job_post_id),
   ]);
 
   return (
@@ -33,6 +39,7 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
           initialApplication={application}
           initialInterviewPrep={interviewPrep}
           initialResumeVersions={resumeVersions}
+          initialCompanyProfile={companyProfile}
         />
       </section>
     </AppShell>

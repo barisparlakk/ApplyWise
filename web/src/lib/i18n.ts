@@ -769,6 +769,20 @@ const turkishMessages: Readonly<Record<string, string>> = {
   "No CV version selected": "CV sürümü seçilmedi",
   "Not selected": "Seçilmedi",
   "AI Intern": "Yapay Zeka Stajyeri",
+  "Preparation derived from this job post and your verified project evidence.":
+    "Bu iş ilanından ve doğrulanmış proje kanıtlarından üretilen hazırlık.",
+  "Company-specific preparation": "Şirkete özel hazırlık",
+  "Company preparation could not be generated.": "Şirket hazırlığı oluşturulamadı.",
+  "Generate preparation": "Hazırlık oluştur",
+  Generating: "Oluşturuluyor",
+  Regenerate: "Yeniden oluştur",
+  "Job-post evidence only": "Yalnızca iş ilanı kanıtı",
+  "Likely interview angles": "Olası mülakat konuları",
+  "Projects to emphasize": "Öne çıkarılacak projeler",
+  "Smart questions to ask": "Sorulacak akıllı sorular",
+  "Add a project before generating emphasis guidance.":
+    "Öne çıkarma önerileri için önce bir proje ekle.",
+  "No company preparation generated": "Şirket hazırlığı henüz oluşturulmadı",
   "Delete account": "Hesabı sil",
   "Permanently delete this account?": "Bu hesap kalıcı olarak silinsin mi?",
   "This removes your profile, CVs, repository analyses, jobs, applications, roadmaps, and interview preparation. This action cannot be undone.":

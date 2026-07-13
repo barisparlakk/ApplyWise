@@ -51,6 +51,9 @@ def export_current_user_data(current_user: User = current_user_dependency) -> JS
             export_record(record) for record in current_user.github_repositories
         ],
         "job_posts": [export_record(record) for record in current_user.job_posts],
+        "company_profiles": [
+            export_record(record) for record in current_user.company_profiles
+        ],
         "applications": [export_record(record) for record in current_user.applications],
         "fit_analyses": [export_record(record) for record in current_user.fit_analyses],
         "interview_preps": [export_record(record) for record in current_user.interview_preps],

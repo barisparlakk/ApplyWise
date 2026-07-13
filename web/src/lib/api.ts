@@ -282,6 +282,25 @@ export type InterviewPrepData = {
   content: InterviewPrepContent;
 };
 
+export type CompanyProjectEmphasis = {
+  name: string;
+  reason: string;
+  talking_points: string[];
+};
+
+export type CompanyProfileData = {
+  id: string;
+  job_post_id: string;
+  company_name: string;
+  role: string;
+  evidence_basis: "job_post_and_candidate_evidence";
+  what_company_does: string;
+  likely_interview_angles: string[];
+  projects_to_emphasize: CompanyProjectEmphasis[];
+  smart_questions: string[];
+  updated_at: string;
+};
+
 export type InterviewPrepSection =
   | "technical_questions"
   | "behavioral_questions"
@@ -493,6 +512,30 @@ export async function getApplication(
   }
 
   return (await response.json()) as ApplicationData;
+}
+
+export async function getCompanyProfile(
+  session: BackendSession,
+  jobPostId: string,
+): Promise<CompanyProfileData | null> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/company-profiles/job/${jobPostId}`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected company profile request: ${response.status}`);
+  }
+
+  return (await response.json()) as CompanyProfileData | null;
 }
 
 export async function getInterviewPrep(

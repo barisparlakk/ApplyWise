@@ -17,6 +17,7 @@ from applywise.middleware import RequestBoundaryMiddleware
 from applywise.redis_client import get_redis_client
 from applywise.routes.applications import router as applications_router
 from applywise.routes.auth import router as auth_router
+from applywise.routes.company_profiles import router as company_profiles_router
 from applywise.routes.github import router as github_router
 from applywise.routes.interview_prep import router as interview_prep_router
 from applywise.routes.jobs import router as jobs_router
@@ -69,6 +70,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts())
 app.include_router(applications_router)
 app.include_router(auth_router)
+app.include_router(company_profiles_router)
 app.include_router(github_router)
 app.include_router(interview_prep_router)
 app.include_router(jobs_router)

@@ -138,6 +138,10 @@ class User(TimestampedUuidMixin, Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    company_profiles: Mapped[list[CompanyProfile]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
     applications: Mapped[list[Application]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
@@ -412,6 +416,43 @@ class JobPost(TimestampedUuidMixin, Base):
         back_populates="job_post",
         cascade="all, delete-orphan",
     )
+    company_profiles: Mapped[list[CompanyProfile]] = relationship(
+        back_populates="job_post",
+        cascade="all, delete-orphan",
+    )
+
+
+class CompanyProfile(TimestampedUuidMixin, Base):
+    __tablename__ = "company_profiles"
+    __table_args__ = (
+        UniqueConstraint("user_id", "job_post_id", name="uq_company_profiles_user_job_post"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    job_post_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("job_posts.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    what_company_does: Mapped[str] = mapped_column(Text, nullable=False)
+    likely_interview_angles: Mapped[list[str]] = mapped_column(
+        JSON,
+        default=list,
+        nullable=False,
+    )
+    projects_to_emphasize: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSON,
+        default=list,
+        nullable=False,
+    )
+    smart_questions: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+
+    user: Mapped[User] = relationship(back_populates="company_profiles")
+    job_post: Mapped[JobPost] = relationship(back_populates="company_profiles")
 
 
 class Application(TimestampedUuidMixin, Base):

@@ -100,6 +100,20 @@ def test_create_and_query_one_of_each_model() -> None:
             communication_expectations=["Document tradeoffs"],
             analysis_data={"role_title": "AI Engineering Intern"},
         )
+        repositories.company_profiles.create(
+            user_id=user.id,
+            job_post_id=job_post.id,
+            what_company_does="Builds internship intelligence workflows.",
+            likely_interview_angles=["RAG evaluation"],
+            projects_to_emphasize=[
+                {
+                    "name": "Fraud detection",
+                    "reason": "Relevant Python evidence",
+                    "talking_points": ["Explain validation"],
+                }
+            ],
+            smart_questions=["How is intern success measured?"],
+        )
         application = repositories.applications.create(
             user_id=user.id,
             job_post_id=job_post.id,
@@ -161,6 +175,7 @@ def test_create_and_query_one_of_each_model() -> None:
         assert len(saved_user.github_repositories[0].chunks) == 1
         assert len(repositories.skills.list()) == 1
         assert len(saved_user.job_posts) == 1
+        assert len(saved_user.company_profiles) == 1
         assert len(saved_user.applications) == 1
         assert saved_user.applications[0].status == ApplicationStatus.PREPARING
         assert saved_user.applications[0].resume_version is not None

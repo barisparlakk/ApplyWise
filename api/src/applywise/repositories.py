@@ -11,6 +11,7 @@ from applywise.models import (
     Application,
     ApplicationNote,
     Base,
+    CompanyProfile,
     CoverLetter,
     FitAnalysis,
     GitHubRepository,
@@ -74,6 +75,7 @@ class Repositories:
         )
         self.skills = Repository[Skill](session, Skill)
         self.job_posts = Repository[JobPost](session, JobPost)
+        self.company_profiles = Repository[CompanyProfile](session, CompanyProfile)
         self.applications = Repository[Application](session, Application)
         self.fit_analyses = Repository[FitAnalysis](session, FitAnalysis)
         self.interview_preps = Repository[InterviewPrep](session, InterviewPrep)
