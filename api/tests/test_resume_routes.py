@@ -62,6 +62,10 @@ def test_resume_upload_parse_chunk_embed_and_correct() -> None:
         latest_response = read_resume(current_user=user, session=session)
         resume_count = session.scalar(select(func.count()).select_from(Resume))
         chunk_count = session.scalar(select(func.count()).select_from(ResumeChunk))
+        saved_resume = session.get(Resume, response.id)
+        saved_chunks = session.scalars(
+            select(ResumeChunk).where(ResumeChunk.resume_id == response.id)
+        ).all()
 
     assert response.filename == "sample_cv.docx"
     assert "Python" in response.parsed_data.skills
@@ -71,3 +75,9 @@ def test_resume_upload_parse_chunk_embed_and_correct() -> None:
     assert latest_response.parsed_data.skills == ["Python", "SQL"]
     assert resume_count == 1
     assert chunk_count == response.chunk_count
+    assert saved_resume is not None
+    assert saved_resume.embedding_model == "deterministic-sha256-v1-1536"
+    assert all(
+        chunk.embedding_model == "deterministic-sha256-v1-1536"
+        for chunk in saved_chunks
+    )

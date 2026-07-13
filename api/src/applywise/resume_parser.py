@@ -14,6 +14,9 @@ from docx import Document
 from pydantic import BaseModel, Field, ValidationError
 from pypdf import PdfReader
 
+from applywise.cloudflare_ai import CloudflareAIError, CloudflareWorkersAIClient
+from applywise.environment import boolean_environment
+
 
 class ParsedResume(BaseModel):
     education: list[str] = Field(default_factory=list)
@@ -158,10 +161,38 @@ class OpenAICompatibleStructuredResumeProvider:
         return content
 
 
+class CloudflareStructuredResumeProvider:
+    def __init__(self, client: CloudflareWorkersAIClient) -> None:
+        self.client = client
+
+    def extract_resume_json(self, text: str) -> str:
+        try:
+            return self.client.generate_json(
+                system_prompt=(
+                    "Extract the candidate's resume into the requested JSON schema. "
+                    "Preserve concrete facts and the source language. Do not invent details. "
+                    "Return concise string arrays for education, experience, skills, and projects."
+                ),
+                user_content=text[:50000],
+                json_schema=ParsedResume.model_json_schema(),
+                max_tokens=1800,
+            )
+        except CloudflareAIError as exc:
+            raise ResumeExtractionError("Cloudflare resume extraction failed.") from exc
+
+
 def get_structured_resume_provider() -> StructuredResumeProvider:
     provider = os.environ.get("LLM_PROVIDER", "local").strip().lower()
     if provider in {"", "local", "heuristic"}:
         return LocalStructuredResumeProvider()
+
+    if provider == "cloudflare":
+        try:
+            return CloudflareStructuredResumeProvider(
+                CloudflareWorkersAIClient.from_environment()
+            )
+        except CloudflareAIError as exc:
+            raise ResumeExtractionError("Cloudflare AI is not fully configured.") from exc
 
     if provider in {"openai", "openai-compatible"}:
         api_url = os.environ.get("LLM_API_URL", "").strip()
@@ -273,6 +304,10 @@ def extract_structured_resume(
             )
         except (ValidationError, ValueError) as exc:
             last_error = exc
+        except ResumeExtractionError:
+            if provider is None and boolean_environment("AI_ALLOW_LOCAL_FALLBACK", True):
+                return ParsedResume.model_validate(extract_sections_heuristically(text))
+            raise
 
     raise ResumeExtractionError("Resume parser returned invalid structured output.") from last_error
 

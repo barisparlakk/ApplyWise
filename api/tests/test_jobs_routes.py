@@ -72,6 +72,7 @@ def test_analyze_job_route_persists_structured_analysis_and_embedding(
     assert saved_job is not None
     assert saved_job.embedding is not None
     assert len(saved_job.embedding) == 1536
+    assert saved_job.embedding_model == "deterministic-sha256-v1-1536"
     assert job_count == 1
     assert fit_count == 1
     assert roadmap_count == 1

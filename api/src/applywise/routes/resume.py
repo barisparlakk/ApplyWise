@@ -12,7 +12,12 @@ from sqlalchemy.orm import Session
 
 from applywise.auth import get_current_user
 from applywise.database import get_session
-from applywise.embeddings import DeterministicEmbeddingProvider, chunk_text
+from applywise.embeddings import (
+    chunk_text,
+    get_embedding_provider,
+    safe_embed,
+    safe_embed_many,
+)
 from applywise.models import Resume, ResumeChunk, User
 from applywise.rate_limit import ai_action_limit_dependency
 from applywise.resume_parser import (
@@ -26,7 +31,7 @@ from applywise.validation import bounded_text_values
 router = APIRouter(prefix="/resume", tags=["resume"])
 current_user_dependency = Depends(get_current_user)
 session_dependency = Depends(get_session)
-embedding_provider = DeterministicEmbeddingProvider()
+embedding_provider = get_embedding_provider()
 MAX_RESUME_BYTES = 10 * 1024 * 1024
 MAX_RESUME_BASE64_LENGTH = ((MAX_RESUME_BYTES + 2) // 3) * 4
 
@@ -106,14 +111,16 @@ def decode_upload(payload: ResumeUploadPayload) -> bytes:
 
 def build_chunks(resume: Resume) -> list[ResumeChunk]:
     chunks = chunk_text(resume.content_text)
+    embeddings = safe_embed_many(embedding_provider, chunks)
     return [
         ResumeChunk(
             resume_id=resume.id,
             chunk_index=index,
             content=chunk,
-            embedding=embedding_provider.embed(chunk),
+            embedding=embedding,
+            embedding_model=embedding_provider.model_name if embedding is not None else None,
         )
-        for index, chunk in enumerate(chunks)
+        for index, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=True))
     ]
 
 
@@ -167,12 +174,16 @@ def upload_resume(
             detail="Resume sections could not be extracted.",
         ) from exc
 
+    resume_embedding = safe_embed(embedding_provider, content_text)
     resume = Resume(
         user_id=current_user.id,
         filename=payload.filename,
         content_text=content_text,
         parsed_data=parsed_resume.model_dump(),
-        embedding=embedding_provider.embed(content_text),
+        embedding=resume_embedding,
+        embedding_model=(
+            embedding_provider.model_name if resume_embedding is not None else None
+        ),
     )
     session.add(resume)
     session.flush()

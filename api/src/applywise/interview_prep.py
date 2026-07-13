@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from applywise.embeddings import DeterministicEmbeddingProvider
+from applywise.embeddings import get_embedding_provider, safe_embed
 from applywise.fit_score import compute_and_store_fit_analysis, latest_fit_analysis
 from applywise.models import (
     Application,
@@ -45,7 +45,7 @@ SECTION_KEYS: tuple[InterviewPrepSection, ...] = (
     "weak_area_drill_questions",
 )
 
-embedding_provider = DeterministicEmbeddingProvider()
+embedding_provider = get_embedding_provider()
 
 
 class PrepQuestion(BaseModel):
@@ -105,6 +105,7 @@ class EvidenceSnippet:
     source: str
     text: str
     embedding: list[float] | None = None
+    embedding_model: str | None = None
 
     @property
     def label(self) -> str:
@@ -330,11 +331,15 @@ def collect_evidence(
             )
         )
         if profile_text:
+            profile_embedding = safe_embed(embedding_provider, profile_text)
             evidence.append(
                 EvidenceSnippet(
                     source="Profile",
                     text=profile_text,
-                    embedding=embedding_provider.embed(profile_text),
+                    embedding=profile_embedding,
+                    embedding_model=(
+                        embedding_provider.model_name if profile_embedding is not None else None
+                    ),
                 )
             )
 
@@ -364,6 +369,7 @@ def collect_evidence(
                     source=f"Resume {resume.filename}",
                     text=parsed_text,
                     embedding=resume.embedding,
+                    embedding_model=resume.embedding_model,
                 )
             )
 
@@ -374,6 +380,7 @@ def collect_evidence(
                     source="Resume chunk",
                     text=chunk.content,
                     embedding=chunk.embedding,
+                    embedding_model=chunk.embedding_model,
                 )
             )
 
@@ -401,6 +408,7 @@ def collect_evidence(
                     source="Repository chunk",
                     text=chunk.content,
                     embedding=chunk.embedding,
+                    embedding_model=chunk.embedding_model,
                 )
             )
 
@@ -408,11 +416,15 @@ def collect_evidence(
         f"Fit score {context_score(fit_analysis)} for {job_post.title}; "
         f"required skills: {', '.join(job_post.required_skills or [])}."
     )
+    score_embedding = safe_embed(embedding_provider, score_summary)
     evidence.append(
         EvidenceSnippet(
             source="Fit analysis",
             text=score_summary,
-            embedding=embedding_provider.embed(score_summary),
+            embedding=score_embedding,
+            embedding_model=(
+                embedding_provider.model_name if score_embedding is not None else None
+            ),
         )
     )
     return evidence
@@ -435,12 +447,12 @@ def top_evidence(
             job_post.description[:1200],
         ]
     )
-    query_embedding = embedding_provider.embed(query)
+    query_embedding = safe_embed(embedding_provider, query)
     scored = [
         (
             cosine_similarity(
                 query_embedding,
-                snippet.embedding or embedding_provider.embed(snippet.text),
+                evidence_embedding(snippet),
             ),
             snippet,
         )
@@ -448,6 +460,15 @@ def top_evidence(
     ]
     scored.sort(key=lambda item: item[0], reverse=True)
     return [snippet for _, snippet in scored[:limit]]
+
+
+def evidence_embedding(snippet: EvidenceSnippet) -> list[float] | None:
+    if (
+        snippet.embedding is not None
+        and snippet.embedding_model == embedding_provider.model_name
+    ):
+        return snippet.embedding
+    return safe_embed(embedding_provider, snippet.text)
 
 
 def select_project_anchor(

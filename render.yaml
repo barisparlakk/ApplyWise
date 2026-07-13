@@ -50,9 +50,25 @@ services:
       - key: AI_ACTIONS_PER_HOUR
         value: "30"
       - key: LLM_PROVIDER
-        value: local
+        value: cloudflare
+      - key: EMBEDDING_PROVIDER
+        value: cloudflare
       - key: REQUIRE_EXTERNAL_LLM
-        value: "false"
+        value: "true"
+      - key: REQUIRE_EXTERNAL_EMBEDDINGS
+        value: "true"
+      - key: AI_ALLOW_LOCAL_FALLBACK
+        value: "true"
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
+      - key: CLOUDFLARE_API_TOKEN
+        sync: false
+      - key: CLOUDFLARE_LLM_MODEL
+        value: "@cf/meta/llama-3.1-8b-instruct-fast"
+      - key: CLOUDFLARE_EMBEDDING_MODEL
+        value: "@cf/google/embeddinggemma-300m"
+      - key: CLOUDFLARE_AI_TIMEOUT_SECONDS
+        value: "30"
       - key: WEB_CONCURRENCY
         value: "1"
 

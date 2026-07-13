@@ -14,6 +14,9 @@ from urllib.request import Request, urlopen
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from applywise.cloudflare_ai import CloudflareAIError, CloudflareWorkersAIClient
+from applywise.environment import boolean_environment
+
 TARGET_ROLES = (
     "Data Science Intern",
     "AI/ML Intern",
@@ -391,6 +394,45 @@ class OpenAICompatibleGitHubAnalysisProvider:
         return content
 
 
+class CloudflareGitHubAnalysisProvider:
+    def __init__(self, client: CloudflareWorkersAIClient) -> None:
+        self.client = client
+
+    def write_qualitative_feedback_json(
+        self,
+        repository: FetchedGitHubRepository,
+        signals: GitHubDeterministicSignals,
+        deterministic_analysis: GitHubRepositoryAnalysis,
+    ) -> str:
+        context = {
+            "repository": {
+                "full_name": repository.full_name,
+                "description": repository.description,
+                "stars": repository.stars,
+                "languages": repository.languages,
+                "last_commit_at": repository.last_commit_at.isoformat()
+                if repository.last_commit_at
+                else None,
+            },
+            "signals": signals.model_dump(mode="json"),
+            "analysis": deterministic_analysis.model_dump(mode="json"),
+            "readme_excerpt": repository.readme_text[:4000],
+            "file_tree_sample": repository.file_paths[:250],
+        }
+        try:
+            return self.client.generate_json(
+                system_prompt=(
+                    "Write evidence-based GitHub portfolio feedback using the requested JSON "
+                    "schema. Do not contradict deterministic signals or invent repository facts."
+                ),
+                user_content=json.dumps(context, separators=(",", ":")),
+                json_schema=GitHubQualitativeFeedback.model_json_schema(),
+                max_tokens=1600,
+            )
+        except CloudflareAIError as exc:
+            raise GitHubAnalysisError("Cloudflare repository analysis failed.") from exc
+
+
 def parse_github_repository_url(value: str) -> GitHubRepositoryRef:
     raw_value = value.strip()
     shorthand = re.fullmatch(r"([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)(?:\.git)?", raw_value)
@@ -558,6 +600,18 @@ def extract_qualitative_feedback(
             return ensure_feedback_defaults(feedback)
         except (ValidationError, ValueError) as exc:
             last_error = exc
+        except GitHubAnalysisError:
+            if provider is None and boolean_environment("AI_ALLOW_LOCAL_FALLBACK", True):
+                return ensure_feedback_defaults(
+                    GitHubQualitativeFeedback.model_validate_json(
+                        LocalGitHubAnalysisProvider().write_qualitative_feedback_json(
+                            repository,
+                            signals,
+                            deterministic_analysis,
+                        )
+                    )
+                )
+            raise
 
     raise GitHubAnalysisError(
         "Repository analysis returned invalid structured output."
@@ -568,6 +622,14 @@ def get_github_analysis_provider() -> GitHubAnalysisProvider:
     provider = os.environ.get("LLM_PROVIDER", "local").strip().lower()
     if provider in {"", "local", "heuristic"}:
         return LocalGitHubAnalysisProvider()
+
+    if provider == "cloudflare":
+        try:
+            return CloudflareGitHubAnalysisProvider(
+                CloudflareWorkersAIClient.from_environment()
+            )
+        except CloudflareAIError as exc:
+            raise GitHubAnalysisError("Cloudflare AI is not fully configured.") from exc
 
     if provider in {"openai", "openai-compatible"}:
         api_url = os.environ.get("LLM_API_URL", "").strip()

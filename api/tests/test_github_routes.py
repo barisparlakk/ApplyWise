@@ -109,6 +109,7 @@ def test_analyze_repository_route_stores_analysis_and_summary_chunks(monkeypatch
         repositories = list_repositories(current_user=user, session=session)
         repo_count = session.scalar(select(func.count()).select_from(GitHubRepository))
         chunk_count = session.scalar(select(func.count()).select_from(GitHubRepositoryChunk))
+        saved_chunks = session.scalars(select(GitHubRepositoryChunk)).all()
 
     assert response.full_name == "applywise/demo"
     assert response.deterministic_signals.has_tests is True
@@ -120,3 +121,4 @@ def test_analyze_repository_route_stores_analysis_and_summary_chunks(monkeypatch
     ]
     assert repo_count == 1
     assert chunk_count == 1
+    assert saved_chunks[0].embedding_model == "deterministic-sha256-v1-1536"

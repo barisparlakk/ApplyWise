@@ -68,3 +68,49 @@ def test_production_can_require_an_external_llm(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setenv("LLM_API_KEY", "test-provider-key")
     monkeypatch.setenv("LLM_MODEL", "test-model")
     validate_runtime_environment()
+
+
+def test_production_accepts_cloudflare_ai_for_llm_and_embeddings(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://deploy_user:secure-production-password@postgres:5432/applywise",
+    )
+    monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("AUTH_JWT_SECRET", "a" * 48)
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "applywise-api")
+    monkeypatch.setenv("AUTH_JWT_ISSUER", "applywise-web")
+    monkeypatch.setenv("CORS_ORIGINS", "https://app.applywise.example")
+    monkeypatch.setenv("ALLOWED_HOSTS", "api,localhost,127.0.0.1")
+    monkeypatch.setenv("REQUIRE_EXTERNAL_LLM", "true")
+    monkeypatch.setenv("REQUIRE_EXTERNAL_EMBEDDINGS", "true")
+    monkeypatch.setenv("LLM_PROVIDER", "cloudflare")
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "cloudflare")
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "account-id")
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "real-token")
+
+    validate_runtime_environment()
+
+
+def test_production_rejects_incomplete_cloudflare_ai_configuration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://deploy_user:secure-production-password@postgres:5432/applywise",
+    )
+    monkeypatch.setenv("REDIS_URL", "redis://redis:6379/0")
+    monkeypatch.setenv("AUTH_JWT_SECRET", "a" * 48)
+    monkeypatch.setenv("AUTH_JWT_AUDIENCE", "applywise-api")
+    monkeypatch.setenv("AUTH_JWT_ISSUER", "applywise-web")
+    monkeypatch.setenv("CORS_ORIGINS", "https://app.applywise.example")
+    monkeypatch.setenv("ALLOWED_HOSTS", "api,localhost,127.0.0.1")
+    monkeypatch.setenv("LLM_PROVIDER", "cloudflare")
+    monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("CLOUDFLARE_API_TOKEN", raising=False)
+
+    with pytest.raises(RuntimeError, match="Cloudflare Workers AI"):
+        validate_runtime_environment()

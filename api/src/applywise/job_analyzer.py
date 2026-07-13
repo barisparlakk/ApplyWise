@@ -9,6 +9,9 @@ from urllib.request import Request, urlopen
 
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from applywise.cloudflare_ai import CloudflareAIError, CloudflareWorkersAIClient
+from applywise.environment import boolean_environment
+
 TECH_SKILLS = (
     "Python",
     "SQL",
@@ -167,6 +170,26 @@ class OpenAICompatibleStructuredJobProvider:
         return content
 
 
+class CloudflareStructuredJobProvider:
+    def __init__(self, client: CloudflareWorkersAIClient) -> None:
+        self.client = client
+
+    def analyze_job_json(self, text: str) -> str:
+        try:
+            return self.client.generate_json(
+                system_prompt=(
+                    "Analyze the internship job post using the requested JSON schema. "
+                    "Separate required and optional skills, preserve stated facts, infer hidden "
+                    "expectations conservatively, and do not invent company details."
+                ),
+                user_content=text[:50000],
+                json_schema=JobPostAnalysis.model_json_schema(),
+                max_tokens=2200,
+            )
+        except CloudflareAIError as exc:
+            raise JobAnalysisError("Cloudflare job analysis failed.") from exc
+
+
 def analyze_job_post(
     text: str,
     provider: StructuredJobProvider | None = None,
@@ -179,6 +202,10 @@ def analyze_job_post(
             return JobPostAnalysis.model_validate_json(extractor.analyze_job_json(text))
         except (ValidationError, ValueError) as exc:
             last_error = exc
+        except JobAnalysisError:
+            if provider is None and boolean_environment("AI_ALLOW_LOCAL_FALLBACK", True):
+                return JobPostAnalysis.model_validate(extract_job_heuristically(text))
+            raise
 
     raise JobAnalysisError("Job analyzer returned invalid structured output.") from last_error
 
@@ -187,6 +214,14 @@ def get_structured_job_provider() -> StructuredJobProvider:
     provider = os.environ.get("LLM_PROVIDER", "local").strip().lower()
     if provider in {"", "local", "heuristic"}:
         return LocalStructuredJobProvider()
+
+    if provider == "cloudflare":
+        try:
+            return CloudflareStructuredJobProvider(
+                CloudflareWorkersAIClient.from_environment()
+            )
+        except CloudflareAIError as exc:
+            raise JobAnalysisError("Cloudflare AI is not fully configured.") from exc
 
     if provider in {"openai", "openai-compatible"}:
         api_url = os.environ.get("LLM_API_URL", "").strip()

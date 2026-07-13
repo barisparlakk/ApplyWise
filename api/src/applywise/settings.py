@@ -4,6 +4,7 @@ import os
 
 from applywise.auth import DEFAULT_AUTH_JWT_SECRET
 from applywise.database import DEFAULT_DATABASE_URL
+from applywise.environment import boolean_environment
 
 DEFAULT_MAX_REQUEST_BODY_BYTES = 16 * 1024 * 1024
 
@@ -36,18 +37,6 @@ def positive_integer_environment(name: str, default: int) -> int:
     if value <= 0:
         raise RuntimeError(f"{name} must be a positive integer.")
     return value
-
-
-def boolean_environment(name: str, default: bool = False) -> bool:
-    raw_value = os.environ.get(name)
-    if raw_value is None:
-        return default
-    normalized = raw_value.strip().lower()
-    if normalized in {"1", "true", "yes", "on"}:
-        return True
-    if normalized in {"0", "false", "no", "off"}:
-        return False
-    raise RuntimeError(f"{name} must be true or false.")
 
 
 def validate_runtime_environment() -> None:
@@ -98,7 +87,9 @@ def validate_runtime_environment() -> None:
         "heuristic",
     }:
         raise RuntimeError("A configured external LLM provider is required for production.")
-    if llm_provider not in {"", "local", "heuristic"}:
+    if llm_provider == "cloudflare":
+        validate_cloudflare_ai_configuration()
+    elif llm_provider not in {"", "local", "heuristic"}:
         llm_required = ("LLM_API_URL", "LLM_API_KEY", "LLM_MODEL")
         llm_missing = [name for name in llm_required if not os.environ.get(name, "").strip()]
         if llm_missing:
@@ -109,3 +100,30 @@ def validate_runtime_environment() -> None:
             raise RuntimeError("LLM_API_URL must use HTTPS in production.")
         if os.environ["LLM_API_KEY"].startswith("replace-"):
             raise RuntimeError("LLM_API_KEY must be a real provider credential.")
+
+    embedding_provider = os.environ.get(
+        "EMBEDDING_PROVIDER",
+        "deterministic",
+    ).strip().lower()
+    if boolean_environment("REQUIRE_EXTERNAL_EMBEDDINGS") and embedding_provider in {
+        "",
+        "local",
+        "deterministic",
+        "heuristic",
+    }:
+        raise RuntimeError("A configured external embedding provider is required for production.")
+    if embedding_provider == "cloudflare":
+        validate_cloudflare_ai_configuration()
+    elif embedding_provider not in {"", "local", "deterministic", "heuristic"}:
+        raise RuntimeError(f"Unsupported EMBEDDING_PROVIDER: {embedding_provider}.")
+
+
+def validate_cloudflare_ai_configuration() -> None:
+    required = ("CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN")
+    missing = [name for name in required if not os.environ.get(name, "").strip()]
+    if missing:
+        raise RuntimeError(
+            "Missing Cloudflare Workers AI configuration: " + ", ".join(missing)
+        )
+    if os.environ["CLOUDFLARE_API_TOKEN"].startswith("replace-"):
+        raise RuntimeError("CLOUDFLARE_API_TOKEN must be a real provider credential.")

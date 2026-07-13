@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from applywise.auth import get_current_user
 from applywise.database import get_session
-from applywise.embeddings import DeterministicEmbeddingProvider
+from applywise.embeddings import get_embedding_provider, safe_embed
 from applywise.fit_score import (
     FitExplanation,
     compute_and_store_fit_analysis,
@@ -24,7 +24,7 @@ from applywise.validation import optional_http_url
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 current_user_dependency = Depends(get_current_user)
 session_dependency = Depends(get_session)
-embedding_provider = DeterministicEmbeddingProvider()
+embedding_provider = get_embedding_provider()
 
 
 class AnalyzeJobPayload(BaseModel):
@@ -161,6 +161,7 @@ def analyze_job(
             detail="Job post could not be analyzed.",
         ) from exc
 
+    job_embedding = safe_embed(embedding_provider, payload.content)
     job_post = JobPost(
         user_id=current_user.id,
         company_name=infer_company_name(payload.content),
@@ -180,7 +181,8 @@ def analyze_job(
         business_expectations=analysis.business_expectations,
         communication_expectations=analysis.communication_expectations,
         analysis_data=analysis.model_dump(),
-        embedding=embedding_provider.embed(payload.content),
+        embedding=job_embedding,
+        embedding_model=(embedding_provider.model_name if job_embedding is not None else None),
     )
     session.add(job_post)
     session.flush()

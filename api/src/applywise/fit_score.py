@@ -13,7 +13,8 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from applywise.embeddings import DeterministicEmbeddingProvider
+from applywise.cloudflare_ai import CloudflareAIError, CloudflareWorkersAIClient
+from applywise.embeddings import get_embedding_provider, safe_embed
 from applywise.models import (
     FitAnalysis,
     GitHubRepository,
@@ -35,7 +36,7 @@ FIT_SCORE_WEIGHTS = {
     "profile_quality_score": 0.05,
 }
 
-embedding_provider = DeterministicEmbeddingProvider()
+embedding_provider = get_embedding_provider()
 
 
 class FitExplanation(BaseModel):
@@ -203,6 +204,26 @@ class OpenAICompatibleFitExplanationProvider:
         return content
 
 
+class CloudflareFitExplanationProvider:
+    def __init__(self, client: CloudflareWorkersAIClient) -> None:
+        self.client = client
+
+    def explain_fit_json(self, payload: dict[str, Any]) -> str:
+        try:
+            return self.client.generate_json(
+                system_prompt=(
+                    "Explain the internship fit analysis using the requested JSON schema. "
+                    "Reference the supplied deterministic component scores and total. Never "
+                    "change, recalculate, or invent a score. Keep recommendations concrete."
+                ),
+                user_content=json.dumps(payload, separators=(",", ":")),
+                json_schema=FitExplanation.model_json_schema(),
+                max_tokens=1400,
+            )
+        except CloudflareAIError as exc:
+            raise FitExplanationError("Cloudflare fit explanation failed.") from exc
+
+
 @dataclass(frozen=True)
 class UserFitContext:
     profile: Profile | None
@@ -330,11 +351,15 @@ def build_fit_signals(job_post: JobPost, context: UserFitContext) -> dict[str, A
     missing_required = [
         skill for skill in job_required_skills if skill_key(skill) not in user_skill_keys
     ]
-    job_embedding = ensure_embedding(job_post.description, job_post.embedding)
+    job_embedding = ensure_embedding(
+        job_post.description,
+        job_post.embedding,
+        job_post.embedding_model,
+    )
     user_profile_text = build_user_profile_text(context)
     profile_similarity = cosine_similarity(
         job_embedding,
-        embedding_provider.embed(user_profile_text) if user_profile_text else None,
+        safe_embed(embedding_provider, user_profile_text) if user_profile_text else None,
     )
     project_scores = project_relevance_candidates(job_post, context, job_skill_keys, job_embedding)
 
@@ -415,7 +440,10 @@ def project_relevance_candidates(
         text = project_text(project)
         project_skill_keys = {skill_key(skill) for skill in project.skills or []}
         overlap_score = overlap_percentage(job_skill_keys, project_skill_keys)
-        semantic_score = cosine_similarity(job_embedding, embedding_provider.embed(text)) * 100
+        semantic_score = cosine_similarity(
+            job_embedding,
+            safe_embed(embedding_provider, text),
+        ) * 100
         score = rounded_score((0.6 * overlap_score) + (0.4 * semantic_score))
         candidates.append(
             {
@@ -635,6 +663,13 @@ def get_fit_explanation_provider() -> FitExplanationProvider:
     provider = os.environ.get("LLM_PROVIDER", "local").strip().lower()
     if provider in {"", "local", "heuristic"}:
         return LocalFitExplanationProvider()
+    if provider == "cloudflare":
+        try:
+            return CloudflareFitExplanationProvider(
+                CloudflareWorkersAIClient.from_environment()
+            )
+        except CloudflareAIError as exc:
+            raise FitExplanationError("Cloudflare AI is not fully configured.") from exc
     if provider in {"openai", "openai-compatible"}:
         api_url = os.environ.get("LLM_API_URL", "").strip()
         api_key = os.environ.get("LLM_API_KEY", "").strip()
@@ -676,12 +711,20 @@ def max_repository_similarity(
 ) -> float:
     repository_chunks = [chunk for chunk in chunks if chunk.repository_id == repository.id]
     similarities = [
-        cosine_similarity(job_embedding, ensure_embedding(chunk.content, chunk.embedding)) * 100
+        cosine_similarity(
+            job_embedding,
+            ensure_embedding(chunk.content, chunk.embedding, chunk.embedding_model),
+        )
+        * 100
         for chunk in repository_chunks
     ]
     if not similarities:
         similarities.append(
-            cosine_similarity(job_embedding, embedding_provider.embed(fallback_text)) * 100
+            cosine_similarity(
+                job_embedding,
+                safe_embed(embedding_provider, fallback_text),
+            )
+            * 100
         )
     return rounded_score(max(similarities, default=0.0))
 
@@ -698,8 +741,14 @@ def project_text(project: Project) -> str:
     )
 
 
-def ensure_embedding(text: str, embedding: list[float] | None) -> list[float]:
-    return embedding if embedding is not None else embedding_provider.embed(text)
+def ensure_embedding(
+    text: str,
+    embedding: list[float] | None,
+    embedding_model: str | None = None,
+) -> list[float] | None:
+    if embedding is not None and embedding_model == embedding_provider.model_name:
+        return embedding
+    return safe_embed(embedding_provider, text)
 
 
 def cosine_similarity(left: list[float] | None, right: list[float] | None) -> float:

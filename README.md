@@ -82,7 +82,7 @@ openssl rand -base64 48
 openssl rand -base64 48
 ```
 
-4. Set every placeholder in `.env.production`, including the public URLs, independent secrets, PostgreSQL credentials, at least one social OAuth provider, monitored `SUPPORT_EMAIL`, and the OpenAI-compatible LLM endpoint, key, and model. Use URL-safe PostgreSQL credentials, and keep the password in `DATABASE_URL` aligned with `POSTGRES_PASSWORD`.
+4. Set every placeholder in `.env.production`, including the public URLs, independent secrets, PostgreSQL credentials, at least one social OAuth provider, monitored `SUPPORT_EMAIL`, and Cloudflare Workers AI account/token values. Use URL-safe PostgreSQL credentials, and keep the password in `DATABASE_URL` aligned with `POSTGRES_PASSWORD`.
 5. Configure the callback for each enabled provider: `/api/auth/callback/github` for GitHub and `/api/auth/callback/google` for Google. Provider home/origin URLs should match `NEXTAUTH_URL`.
 6. Review the public [privacy notice](web/src/app/privacy/page.tsx) and [terms of use](web/src/app/terms/page.tsx) for your legal entity, jurisdiction, backup-retention policy, and provider contracts.
 7. Run the release gate and start the production stack:
@@ -124,7 +124,9 @@ Store backups in encrypted off-host storage and test restoration before launch. 
 
 The repository also includes [render.yaml](render.yaml) and [Dockerfile.render-free](Dockerfile.render-free) for a zero-cost public beta. This target runs Next.js and FastAPI in one Render Free web service, keeps FastAPI on the container loopback interface, uses a Render Free Key Value instance for quotas, and expects a Neon PostgreSQL connection string in `DATABASE_URL`. Neon-style `postgresql://` URLs are normalized to the configured psycopg driver automatically.
 
-The free target intentionally omits the placeholder worker and uses the local qualitative-analysis provider, so it does not require a paid LLM API. It is a beta topology, not the production topology: Render can sleep the service after inactivity, free Key Value data is not durable, and free database/service quotas apply. The regular Docker Compose production deployment remains unchanged.
+The free target intentionally omits a separate worker service and uses Cloudflare Workers AI for schema-validated qualitative output plus multilingual embeddings. Cloudflare currently includes a limited free daily allocation; `AI_ALLOW_LOCAL_FALLBACK=true` keeps deterministic analysis available after quota or provider failures. Create a Workers AI API token, then set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` on Render before deployment. Stored vectors include model provenance, and the migration clears incompatible legacy hash vectors before semantic retrieval starts.
+
+This is a beta topology, not an unlimited production platform: Render can sleep the service after inactivity, free Key Value data is not durable, and free database, AI, and service quotas apply. See the current [Render free-service limits](https://render.com/docs/free) and [Cloudflare Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) before inviting users.
 
 ## Public Launch Checklist
 

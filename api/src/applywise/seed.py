@@ -289,6 +289,7 @@ def create_resume(session: Session, user: User) -> None:
         content_text=DEMO_RESUME_TEXT,
         parsed_data=parsed_data,
         embedding=embedding_provider.embed(DEMO_RESUME_TEXT),
+        embedding_model=embedding_provider.model_name,
     )
     session.add(resume)
     session.flush()
@@ -299,6 +300,7 @@ def create_resume(session: Session, user: User) -> None:
                 chunk_index=index,
                 content=chunk,
                 embedding=embedding_provider.embed(chunk),
+                embedding_model=embedding_provider.model_name,
             )
         )
 
@@ -399,6 +401,7 @@ def create_repositories(session: Session, user: User) -> None:
                     chunk_index=index,
                     content=chunk,
                     embedding=embedding_provider.embed(chunk),
+                    embedding_model=embedding_provider.model_name,
                 )
             )
 
@@ -446,6 +449,7 @@ def create_jobs_and_workflow(session: Session, user: User) -> None:
             communication_expectations=analysis.communication_expectations,
             analysis_data=analysis.model_dump(),
             embedding=embedding_provider.embed(str(job_data["post"])),
+            embedding_model=embedding_provider.model_name,
         )
         session.add(job_post)
         session.flush()

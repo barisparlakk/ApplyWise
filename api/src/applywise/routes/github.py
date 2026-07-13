@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from applywise.auth import AuthContext, get_current_auth, get_current_user
 from applywise.database import get_session
-from applywise.embeddings import DeterministicEmbeddingProvider, chunk_text
+from applywise.embeddings import chunk_text, get_embedding_provider, safe_embed_many
 from applywise.github_analyzer import (
     GitHubAnalysisError,
     GitHubDeterministicSignals,
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/github/repositories", tags=["github"])
 current_auth_dependency = Depends(get_current_auth)
 current_user_dependency = Depends(get_current_user)
 session_dependency = Depends(get_session)
-embedding_provider = DeterministicEmbeddingProvider()
+embedding_provider = get_embedding_provider()
 
 
 class AnalyzeGitHubRepositoryPayload(BaseModel):
@@ -198,13 +198,18 @@ def rebuild_summary_chunks(
         session.delete(chunk)
     session.flush()
 
-    for index, chunk in enumerate(chunk_text(summary_text)):
+    chunks = chunk_text(summary_text)
+    embeddings = safe_embed_many(embedding_provider, chunks)
+    for index, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=True)):
         session.add(
             GitHubRepositoryChunk(
                 repository_id=repository.id,
                 chunk_index=index,
                 content=chunk,
-                embedding=embedding_provider.embed(chunk),
+                embedding=embedding,
+                embedding_model=(
+                    embedding_provider.model_name if embedding is not None else None
+                ),
             )
         )
 

@@ -185,6 +185,7 @@ class Resume(TimestampedUuidMixin, Base):
     content_text: Mapped[str] = mapped_column(Text, nullable=False)
     parsed_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     embedding: Mapped[list[float] | None] = mapped_column(Vector())
+    embedding_model: Mapped[str | None] = mapped_column(String(255))
 
     user: Mapped[User] = relationship(back_populates="resumes")
     chunks: Mapped[list[ResumeChunk]] = relationship(
@@ -207,6 +208,7 @@ class ResumeChunk(TimestampedUuidMixin, Base):
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[list[float] | None] = mapped_column(Vector())
+    embedding_model: Mapped[str | None] = mapped_column(String(255))
 
     resume: Mapped[Resume] = relationship(back_populates="chunks")
 
@@ -283,6 +285,7 @@ class GitHubRepositoryChunk(TimestampedUuidMixin, Base):
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[list[float] | None] = mapped_column(Vector())
+    embedding_model: Mapped[str | None] = mapped_column(String(255))
 
     repository: Mapped[GitHubRepository] = relationship(back_populates="chunks")
 
@@ -323,6 +326,7 @@ class JobPost(TimestampedUuidMixin, Base):
     )
     analysis_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
     embedding: Mapped[list[float] | None] = mapped_column(Vector())
+    embedding_model: Mapped[str | None] = mapped_column(String(255))
 
     user: Mapped[User | None] = relationship(back_populates="job_posts")
     applications: Mapped[list[Application]] = relationship(
