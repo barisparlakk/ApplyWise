@@ -16,6 +16,7 @@ from applywise.models import (
     FitAnalysis,
     InterviewPrep,
     JobPost,
+    ResumeVersion,
     User,
 )
 from applywise.validation import optional_http_url
@@ -29,6 +30,9 @@ class ApplicationResponse(BaseModel):
     job_post_id: uuid.UUID
     fit_analysis_id: uuid.UUID | None
     interview_prep_id: uuid.UUID | None
+    resume_version_id: uuid.UUID | None
+    resume_version_name: str | None
+    resume_version_target_role: str | None
     company: str
     role: str
     status: ApplicationStatus
@@ -48,6 +52,7 @@ class ApplicationResponse(BaseModel):
 class CreateApplicationPayload(BaseModel):
     status: ApplicationStatus = ApplicationStatus.SAVED
     next_action: str | None = Field(default=None, max_length=500)
+    resume_version_id: uuid.UUID | None = None
 
     @field_validator("next_action")
     @classmethod
@@ -63,6 +68,7 @@ class UpdateApplicationPayload(BaseModel):
     interview_date: date | None = None
     notes: str | None = Field(default=None, max_length=10000)
     next_action: str | None = Field(default=None, max_length=500)
+    resume_version_id: uuid.UUID | None = None
 
     @field_validator("notes", "next_action")
     @classmethod
@@ -89,6 +95,13 @@ def application_to_response(
         job_post_id=application.job_post_id,
         fit_analysis_id=fit_analysis.id if fit_analysis else None,
         interview_prep_id=interview_prep.id if interview_prep else None,
+        resume_version_id=application.resume_version_id,
+        resume_version_name=(
+            application.resume_version.name if application.resume_version else None
+        ),
+        resume_version_target_role=(
+            application.resume_version.target_role if application.resume_version else None
+        ),
         company=job_post.company_name,
         role=job_post.title,
         status=application.status,
@@ -121,6 +134,11 @@ def create_application_from_job(
     ).first()
     if job_post is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job post not found.")
+    resume_version = resolve_resume_version(
+        session,
+        current_user,
+        payload.resume_version_id,
+    )
 
     application = session.scalars(
         select(Application).where(
@@ -134,6 +152,7 @@ def create_application_from_job(
             job_post_id=job_post.id,
             status=payload.status,
             next_action=payload.next_action,
+            resume_version_id=resume_version.id if resume_version else None,
         )
         session.add(application)
     elif should_update_status(application.status, payload.status):
@@ -142,6 +161,8 @@ def create_application_from_job(
             application.next_action = payload.next_action
     elif payload.next_action is not None:
         application.next_action = payload.next_action
+    if "resume_version_id" in payload.model_fields_set:
+        application.resume_version = resume_version
 
     session.commit()
     session.refresh(application)
@@ -194,6 +215,12 @@ def update_application(
         application.next_action = payload.next_action
     if "job_url" in payload.model_fields_set:
         application.job_post.url = payload.job_url
+    if "resume_version_id" in payload.model_fields_set:
+        application.resume_version = resolve_resume_version(
+            session,
+            current_user,
+            payload.resume_version_id,
+        )
 
     if application.status == ApplicationStatus.APPLIED and application.applied_date is None:
         application.applied_date = date.today()
@@ -235,6 +262,27 @@ def should_update_status(
     if requested_status == ApplicationStatus.SAVED:
         return current_status == ApplicationStatus.SAVED
     return True
+
+
+def resolve_resume_version(
+    session: Session,
+    user: User,
+    resume_version_id: uuid.UUID | None,
+) -> ResumeVersion | None:
+    if resume_version_id is None:
+        return None
+    version = session.scalar(
+        select(ResumeVersion).where(
+            ResumeVersion.id == resume_version_id,
+            ResumeVersion.user_id == user.id,
+        )
+    )
+    if version is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume version not found.",
+        )
+    return version
 
 
 def latest_fit_analysis(session: Session, application: Application) -> FitAnalysis | None:

@@ -11,6 +11,8 @@ from applywise.models import (
     FitAnalysis,
     InterviewPrep,
     JobPost,
+    Resume,
+    ResumeVersion,
     User,
 )
 from applywise.routes.applications import (
@@ -65,6 +67,28 @@ def test_application_tracker_create_list_read_and_update() -> None:
         )
         session.add(job_post)
         session.flush()
+        resume = Resume(
+            user_id=user.id,
+            filename="tracker.pdf",
+            content_text="Python FastAPI PostgreSQL",
+            parsed_data={
+                "education": [],
+                "experience": ["Backend project"],
+                "skills": ["Python", "FastAPI"],
+                "projects": ["Tracker API"],
+            },
+        )
+        session.add(resume)
+        session.flush()
+        resume_version = ResumeVersion(
+            user_id=user.id,
+            source_resume_id=resume.id,
+            name="Backend CV",
+            target_role="Backend Intern",
+            content_text=resume.content_text,
+            parsed_data=resume.parsed_data,
+        )
+        session.add(resume_version)
         fit_analysis = FitAnalysis(
             user_id=user.id,
             job_post_id=job_post.id,
@@ -118,6 +142,7 @@ def test_application_tracker_create_list_read_and_update() -> None:
                 interview_date=date(2026, 7, 18),
                 notes="Recruiter screen scheduled.",
                 next_action="Prepare project story.",
+                resume_version_id=resume_version.id,
             ),
             current_user=user,
             session=session,
@@ -140,6 +165,9 @@ def test_application_tracker_create_list_read_and_update() -> None:
     assert updated.job_url == "https://example.com/jobs/backend-intern-updated"
     assert updated.interview_date == date(2026, 7, 18)
     assert updated.next_action == "Prepare project story."
+    assert updated.resume_version_id == resume_version.id
+    assert updated.resume_version_name == "Backend CV"
+    assert updated.resume_version_target_role == "Backend Intern"
     assert len(listed) == 1
     assert listed[0].interview_prep_id is not None
     assert fetched.notes == "Recruiter screen scheduled."

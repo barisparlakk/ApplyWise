@@ -122,6 +122,10 @@ class User(TimestampedUuidMixin, Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    resume_versions: Mapped[list[ResumeVersion]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
     projects: Mapped[list[Project]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
@@ -212,6 +216,7 @@ class Resume(TimestampedUuidMixin, Base):
         back_populates="resume",
         cascade="all, delete-orphan",
     )
+    versions: Mapped[list[ResumeVersion]] = relationship(back_populates="source_resume")
 
 
 class ResumeChunk(TimestampedUuidMixin, Base):
@@ -238,6 +243,32 @@ class ResumeChunk(TimestampedUuidMixin, Base):
     embedding_model: Mapped[str | None] = mapped_column(String(255))
 
     resume: Mapped[Resume] = relationship(back_populates="chunks")
+
+
+class ResumeVersion(TimestampedUuidMixin, Base):
+    __tablename__ = "resume_versions"
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="uq_resume_versions_user_name"),
+        Index("ix_resume_versions_target_role", "target_role"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    source_resume_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("resumes.id", ondelete="SET NULL"),
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    target_role: Mapped[str] = mapped_column(String(120), nullable=False)
+    content_text: Mapped[str] = mapped_column(Text, nullable=False)
+    parsed_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+    user: Mapped[User] = relationship(back_populates="resume_versions")
+    source_resume: Mapped[Resume | None] = relationship(back_populates="versions")
+    applications: Mapped[list[Application]] = relationship(back_populates="resume_version")
 
 
 class Project(TimestampedUuidMixin, Base):
@@ -400,6 +431,10 @@ class Application(TimestampedUuidMixin, Base):
         index=True,
         nullable=False,
     )
+    resume_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("resume_versions.id", ondelete="SET NULL"),
+        index=True,
+    )
     status: Mapped[ApplicationStatus] = mapped_column(
         application_status_enum,
         default=ApplicationStatus.SAVED,
@@ -413,6 +448,7 @@ class Application(TimestampedUuidMixin, Base):
 
     user: Mapped[User] = relationship(back_populates="applications")
     job_post: Mapped[JobPost] = relationship(back_populates="applications")
+    resume_version: Mapped[ResumeVersion | None] = relationship(back_populates="applications")
     application_notes: Mapped[list[ApplicationNote]] = relationship(
         back_populates="application",
         cascade="all, delete-orphan",

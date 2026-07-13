@@ -52,6 +52,17 @@ export type ResumeData = {
   chunk_count: number;
 };
 
+export type ResumeVersionData = {
+  id: string;
+  source_resume_id: string | null;
+  source_filename: string | null;
+  name: string;
+  target_role: string;
+  content_text: string;
+  parsed_data: ParsedResumeData;
+  selected_application_count: number;
+};
+
 export type GitHubDeterministicSignals = {
   readme_length: number;
   has_tests: boolean;
@@ -201,6 +212,9 @@ export type ApplicationData = {
   job_post_id: string;
   fit_analysis_id: string | null;
   interview_prep_id: string | null;
+  resume_version_id: string | null;
+  resume_version_name: string | null;
+  resume_version_target_role: string | null;
   company: string;
   role: string;
   status: ApplicationStatus;
@@ -339,6 +353,29 @@ export async function getResume(session: BackendSession): Promise<ResumeData | n
   }
 
   return (await response.json()) as ResumeData | null;
+}
+
+export async function getResumeVersions(
+  session: BackendSession,
+): Promise<ResumeVersionData[]> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/resume/versions`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected resume versions request: ${response.status}`);
+  }
+
+  return (await response.json()) as ResumeVersionData[];
 }
 
 export async function getGitHubRepositories(

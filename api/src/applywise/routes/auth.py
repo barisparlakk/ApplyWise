@@ -43,6 +43,9 @@ def export_current_user_data(current_user: User = current_user_dependency) -> JS
         "account": export_record(current_user, excluded={"auth_subject"}),
         "profile": export_record(current_user.profile) if current_user.profile else None,
         "resumes": [export_record(record) for record in current_user.resumes],
+        "resume_versions": [
+            export_record(record) for record in current_user.resume_versions
+        ],
         "projects": [export_record(record) for record in current_user.projects],
         "github_repositories": [
             export_record(record) for record in current_user.github_repositories

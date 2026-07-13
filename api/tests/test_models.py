@@ -43,6 +43,14 @@ def test_create_and_query_one_of_each_model() -> None:
             chunk_index=0,
             content="Python, SQL, machine learning",
         )
+        resume_version = repositories.resume_versions.create(
+            user_id=user.id,
+            source_resume_id=resume.id,
+            name="AI internship CV",
+            target_role="AI Intern",
+            content_text=resume.content_text,
+            parsed_data=resume.parsed_data,
+        )
         repositories.projects.create(
             user_id=user.id,
             name="Fraud detection",
@@ -95,6 +103,7 @@ def test_create_and_query_one_of_each_model() -> None:
         application = repositories.applications.create(
             user_id=user.id,
             job_post_id=job_post.id,
+            resume_version_id=resume_version.id,
             status=ApplicationStatus.PREPARING,
             notes="Need to review SQL.",
         )
@@ -143,6 +152,7 @@ def test_create_and_query_one_of_each_model() -> None:
         assert saved_user.profile is not None
         assert len(saved_user.resumes) == 1
         assert len(saved_user.resumes[0].chunks) == 1
+        assert len(saved_user.resume_versions) == 1
         assert len(saved_user.projects) == 1
         assert len(saved_user.github_repositories) == 1
         assert saved_user.github_repositories[0].analysis_data["strengths"] == [
@@ -153,6 +163,7 @@ def test_create_and_query_one_of_each_model() -> None:
         assert len(saved_user.job_posts) == 1
         assert len(saved_user.applications) == 1
         assert saved_user.applications[0].status == ApplicationStatus.PREPARING
+        assert saved_user.applications[0].resume_version is not None
         assert len(saved_user.fit_analyses) == 1
         assert saved_user.fit_analyses[0].total_score == 76.25
         assert len(saved_user.interview_preps) == 1

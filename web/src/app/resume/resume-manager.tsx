@@ -22,13 +22,14 @@ import { useState } from "react";
 import { z } from "zod";
 
 import { MotionBar, Reveal } from "@/components/motion";
+import { ResumeVersionLibrary } from "@/app/resume/resume-version-library";
 import { useLocale, useTranslations } from "@/components/locale-provider";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { SignalField } from "@/components/signal-field";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ParsedResumeData, ResumeData } from "@/lib/api";
+import type { ParsedResumeData, ResumeData, ResumeVersionData } from "@/lib/api";
 import { apiError, JSON_HEADERS } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ type SaveState = "idle" | "uploading" | "saving" | "saved" | "error";
 type ResumeManagerProps = {
   apiBaseUrl: string;
   initialResume: ResumeData | null;
+  initialResumeVersions: ResumeVersionData[];
 };
 
 function linesToList(value: string): string[] {
@@ -76,6 +78,7 @@ function fileToBase64(file: File): Promise<string> {
 export function ResumeManager({
   apiBaseUrl,
   initialResume,
+  initialResumeVersions,
 }: ResumeManagerProps) {
   const [resume, setResume] = useState<ResumeData | null>(initialResume);
   const [parsedData, setParsedData] = useState<ParsedResumeData>(
@@ -338,6 +341,12 @@ export function ResumeManager({
           ) : null}
         </aside>
       </div>
+
+      <ResumeVersionLibrary
+        apiBaseUrl={apiBaseUrl}
+        initialVersions={initialResumeVersions}
+        sourceResumeId={resume?.id ?? null}
+      />
     </div>
   );
 }

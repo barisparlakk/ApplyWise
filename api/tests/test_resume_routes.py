@@ -8,12 +8,18 @@ from docx import Document
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 
-from applywise.models import Base, Resume, ResumeChunk, User
+from applywise.models import Base, Resume, ResumeChunk, ResumeVersion, User
 from applywise.routes.resume import (
     ResumeCorrectionPayload,
     ResumeUploadPayload,
+    ResumeVersionCreatePayload,
+    ResumeVersionUpdatePayload,
+    create_resume_version,
+    delete_resume_version,
+    list_resume_versions,
     read_resume,
     update_resume_parsed_data,
+    update_resume_version,
     upload_resume,
 )
 
@@ -81,3 +87,65 @@ def test_resume_upload_parse_chunk_embed_and_correct() -> None:
         chunk.embedding_model == "deterministic-sha256-v1-1536"
         for chunk in saved_chunks
     )
+
+
+def test_resume_version_create_update_list_and_delete() -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+
+    with Session(engine) as session:
+        user = User(email="versions@example.com", full_name="Version User")
+        session.add(user)
+        session.flush()
+        resume = Resume(
+            user_id=user.id,
+            filename="source.pdf",
+            content_text="Python FastAPI backend project",
+            parsed_data={
+                "education": ["BS Computer Engineering"],
+                "experience": ["Backend project"],
+                "skills": ["Python", "FastAPI"],
+                "projects": ["Application API"],
+            },
+        )
+        session.add(resume)
+        session.commit()
+
+        created = create_resume_version(
+            ResumeVersionCreatePayload(
+                source_resume_id=resume.id,
+                name="Backend CV",
+                target_role="Backend Intern",
+            ),
+            current_user=user,
+            session=session,
+        )
+        updated = update_resume_version(
+            created.id,
+            ResumeVersionUpdatePayload(
+                name="Backend Platform CV",
+                parsed_data=ResumeCorrectionPayload(
+                    education=created.parsed_data.education,
+                    experience=["Built and tested a FastAPI service"],
+                    skills=["Python", "FastAPI", "PostgreSQL"],
+                    projects=created.parsed_data.projects,
+                ),
+            ),
+            current_user=user,
+            session=session,
+        )
+        listed = list_resume_versions(current_user=user, session=session)
+        delete_response = delete_resume_version(
+            created.id,
+            current_user=user,
+            session=session,
+        )
+        remaining = session.scalar(select(func.count()).select_from(ResumeVersion))
+
+    assert created.source_filename == "source.pdf"
+    assert updated.name == "Backend Platform CV"
+    assert updated.parsed_data.skills == ["Python", "FastAPI", "PostgreSQL"]
+    assert len(listed) == 1
+    assert listed[0].selected_application_count == 0
+    assert delete_response.status_code == 204
+    assert remaining == 0

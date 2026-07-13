@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { ResumeManager } from "@/app/resume/resume-manager";
 import { AppShell } from "@/components/app-shell";
-import { getResume } from "@/lib/api";
+import { getResume, getResumeVersions } from "@/lib/api";
 import { getBackendSession } from "@/lib/server-auth";
 
 export default async function ResumePage() {
@@ -12,7 +12,10 @@ export default async function ResumePage() {
     redirect("/login?callbackUrl=/resume");
   }
 
-  const resume = await getResume(session);
+  const [resume, resumeVersions] = await Promise.all([
+    getResume(session),
+    getResumeVersions(session),
+  ]);
 
   return (
     <AppShell>
@@ -20,6 +23,7 @@ export default async function ResumePage() {
         <ResumeManager
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           initialResume={resume}
+          initialResumeVersions={resumeVersions}
         />
       </section>
     </AppShell>

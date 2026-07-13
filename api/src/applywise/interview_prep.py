@@ -24,6 +24,7 @@ from applywise.models import (
     Project,
     Resume,
     ResumeChunk,
+    ResumeVersion,
     User,
 )
 
@@ -154,6 +155,7 @@ class EvidenceSnippet:
 @dataclass(frozen=True)
 class InterviewContext:
     profile: Profile | None
+    resume_version: ResumeVersion | None
     resumes: list[Resume]
     resume_chunks: list[ResumeChunk]
     projects: list[Project]
@@ -179,7 +181,12 @@ def generate_or_update_interview_prep(
     if existing is not None and selected_sections is None:
         return existing
 
-    context = load_interview_context(session, user=user, job_post=job_post)
+    context = load_interview_context(
+        session,
+        user=user,
+        application=application,
+        job_post=job_post,
+    )
     generated = build_interview_prep_plan(
         user=user,
         job_post=job_post,
@@ -234,7 +241,13 @@ def interview_prep_to_content(prep: InterviewPrep) -> InterviewPrepContent:
     return items_to_content(prep.questions or [])
 
 
-def load_interview_context(session: Session, *, user: User, job_post: JobPost) -> InterviewContext:
+def load_interview_context(
+    session: Session,
+    *,
+    user: User,
+    application: Application,
+    job_post: JobPost,
+) -> InterviewContext:
     fit_analysis = latest_fit_analysis(session, user=user, job_post=job_post)
     if fit_analysis is None:
         fit_analysis = compute_and_store_fit_analysis(session, user=user, job_post=job_post)
@@ -274,6 +287,7 @@ def load_interview_context(session: Session, *, user: User, job_post: JobPost) -
     )
     evidence = collect_evidence(
         profile=user.profile,
+        resume_version=application.resume_version,
         resumes=resumes,
         resume_chunks=resume_chunks,
         projects=projects,
@@ -284,6 +298,7 @@ def load_interview_context(session: Session, *, user: User, job_post: JobPost) -
     )
     return InterviewContext(
         profile=user.profile,
+        resume_version=application.resume_version,
         resumes=resumes,
         resume_chunks=resume_chunks,
         projects=projects,
@@ -538,6 +553,7 @@ def sanitize_generated_grounding(
 def collect_evidence(
     *,
     profile: Profile | None,
+    resume_version: ResumeVersion | None,
     resumes: list[Resume],
     resume_chunks: list[ResumeChunk],
     projects: list[Project],
@@ -571,6 +587,33 @@ def collect_evidence(
                     embedding=profile_embedding,
                     embedding_model=(
                         embedding_provider.model_name if profile_embedding is not None else None
+                    ),
+                )
+            )
+
+    if resume_version is not None:
+        parsed = resume_version.parsed_data or {}
+        version_text = " ".join(
+            unique_text(
+                [
+                    resume_version.name,
+                    resume_version.target_role,
+                    ", ".join(str(item) for item in parsed.get("education", [])),
+                    ", ".join(str(item) for item in parsed.get("experience", [])),
+                    ", ".join(str(item) for item in parsed.get("skills", [])),
+                    ", ".join(str(item) for item in parsed.get("projects", [])),
+                ]
+            )
+        )
+        if version_text:
+            version_embedding = safe_embed(embedding_provider, version_text)
+            evidence.append(
+                EvidenceSnippet(
+                    source=f"Selected CV {resume_version.name}",
+                    text=version_text,
+                    embedding=version_embedding,
+                    embedding_model=(
+                        embedding_provider.model_name if version_embedding is not None else None
                     ),
                 )
             )
@@ -680,6 +723,9 @@ def top_evidence(
         ]
     )
     query_embedding = safe_embed(embedding_provider, query)
+    selected_resume_evidence = [
+        snippet for snippet in evidence if snippet.source.startswith("Selected CV ")
+    ][:1]
     scored = [
         (
             cosine_similarity(
@@ -689,9 +735,11 @@ def top_evidence(
             snippet,
         )
         for snippet in evidence
+        if snippet not in selected_resume_evidence
     ]
     scored.sort(key=lambda item: item[0], reverse=True)
-    return [snippet for _, snippet in scored[:limit]]
+    remaining = max(limit - len(selected_resume_evidence), 0)
+    return [*selected_resume_evidence, *[snippet for _, snippet in scored[:remaining]]]
 
 
 def evidence_embedding(snippet: EvidenceSnippet) -> list[float] | None:

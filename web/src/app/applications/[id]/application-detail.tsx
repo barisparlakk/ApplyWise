@@ -36,7 +36,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { ApplicationData, ApplicationStatus, InterviewPrepData } from "@/lib/api";
+import type {
+  ApplicationData,
+  ApplicationStatus,
+  InterviewPrepData,
+  ResumeVersionData,
+} from "@/lib/api";
 import { apiError, JSON_HEADERS } from "@/lib/client-api";
 import { localeTag, type Translator } from "@/lib/i18n";
 
@@ -55,6 +60,7 @@ type ApplicationDetailProps = {
   apiBaseUrl: string;
   initialApplication: ApplicationData;
   initialInterviewPrep: InterviewPrepData;
+  initialResumeVersions: ResumeVersionData[];
 };
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -67,6 +73,7 @@ export function ApplicationDetail({
   apiBaseUrl,
   initialApplication,
   initialInterviewPrep,
+  initialResumeVersions,
 }: ApplicationDetailProps) {
   const [application, setApplication] = useState(initialApplication);
   const [interviewPrep] = useState(initialInterviewPrep);
@@ -78,6 +85,7 @@ export function ApplicationDetail({
     interview_date: initialApplication.interview_date ?? "",
     notes: initialApplication.notes ?? "",
     next_action: initialApplication.next_action ?? "",
+    resume_version_id: initialApplication.resume_version_id ?? "",
   });
   const [state, setState] = useState<SaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -99,6 +107,7 @@ export function ApplicationDetail({
           interview_date: emptyToNull(form.interview_date),
           notes: emptyToNull(form.notes),
           next_action: emptyToNull(form.next_action),
+          resume_version_id: emptyToNull(form.resume_version_id),
         }),
       });
 
@@ -116,6 +125,7 @@ export function ApplicationDetail({
         interview_date: updated.interview_date ?? "",
         notes: updated.notes ?? "",
         next_action: updated.next_action ?? "",
+        resume_version_id: updated.resume_version_id ?? "",
       });
       setState("saved");
       showToast("success", t("Application saved."));
@@ -211,6 +221,12 @@ export function ApplicationDetail({
               <Field icon={CalendarClock} label={t("Interview date")}><Input onChange={(event) => setForm((current) => ({ ...current, interview_date: event.target.value }))} type="date" value={form.interview_date} /></Field>
               <Field icon={Link2} label={t("Job URL")}><Input onChange={(event) => setForm((current) => ({ ...current, job_url: event.target.value }))} placeholder="https://company.com/jobs/role" value={form.job_url} /></Field>
               <Field icon={Target} label={t("Next action")}><Input onChange={(event) => setForm((current) => ({ ...current, next_action: event.target.value }))} placeholder={t("Follow up after 7 days")} value={form.next_action} /></Field>
+              <Field icon={FileText} label={t("Application CV")}>
+                <Select onChange={(event) => setForm((current) => ({ ...current, resume_version_id: event.target.value }))} value={form.resume_version_id}>
+                  <option value="">{t("No CV version selected")}</option>
+                  {initialResumeVersions.map((version) => <option key={version.id} value={version.id}>{version.name} - {t(version.target_role)}</option>)}
+                </Select>
+              </Field>
             </div>
 
             <div className="border-t border-border p-5 sm:p-6">
@@ -231,6 +247,7 @@ export function ApplicationDetail({
               <SummaryItem label={t("Fit score")} value={formatScore(application.fit_score)} />
               <SummaryItem label={t("Fit analysis")} value={application.fit_analysis_id ? t("Ready") : t("Missing")} />
               <SummaryItem label={t("Interview prep")} value={application.interview_prep_id ? t("Generated") : t("Not generated")} />
+              <SummaryItem label={t("Application CV")} value={application.resume_version_name ?? t("Not selected")} />
             </dl>
             <div className="grid gap-2 border-t border-border p-5">
               <LinkButton href={`/jobs/${application.job_post_id}/analysis`} icon={Gauge}>{t("Job analysis")}</LinkButton>
@@ -333,6 +350,7 @@ function buildMarkdownReport(application: ApplicationData, prep: InterviewPrepDa
     `- ${t("Interview date")}: ${application.interview_date ? formatDate(application.interview_date, locale) : "-"}`,
     `- ${t("Next action")}: ${application.next_action ? t(application.next_action) : "-"}`,
     `- ${t("Job URL")}: ${application.job_url ?? "-"}`,
+    `- ${t("Application CV")}: ${application.resume_version_name ?? t("Not selected")}`,
     "",
     `## ${t("Fit Breakdown")}`,
     ...fitComponentLines(application, t),

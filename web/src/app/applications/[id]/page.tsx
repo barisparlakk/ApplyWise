@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { ApplicationDetail } from "@/app/applications/[id]/application-detail";
 import { AppShell } from "@/components/app-shell";
-import { getApplication, getInterviewPrep } from "@/lib/api";
+import { getApplication, getInterviewPrep, getResumeVersions } from "@/lib/api";
 import { getBackendSession } from "@/lib/server-auth";
 
 type ApplicationDetailPageProps = {
@@ -19,9 +19,10 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
     redirect(`/login?callbackUrl=/applications/${id}`);
   }
 
-  const [application, interviewPrep] = await Promise.all([
+  const [application, interviewPrep, resumeVersions] = await Promise.all([
     getApplication(session, id),
     getInterviewPrep(session, id),
+    getResumeVersions(session),
   ]);
 
   return (
@@ -31,6 +32,7 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           initialApplication={application}
           initialInterviewPrep={interviewPrep}
+          initialResumeVersions={resumeVersions}
         />
       </section>
     </AppShell>

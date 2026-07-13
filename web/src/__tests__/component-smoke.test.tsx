@@ -13,6 +13,7 @@ import type {
   JobPostData,
   ProfileSnapshot,
   ResumeData,
+  ResumeVersionData,
 } from "@/lib/api";
 
 const apiBaseUrl = "http://localhost:8000";
@@ -52,6 +53,17 @@ const resume: ResumeData = {
     projects: ["Internship tracker API"],
   },
   chunk_count: 1,
+};
+
+const resumeVersion: ResumeVersionData = {
+  id: "resume-version-1",
+  source_resume_id: "resume-1",
+  source_filename: "demo-cv.pdf",
+  name: "AI internship CV",
+  target_role: "AI Intern",
+  content_text: resume.content_text,
+  parsed_data: resume.parsed_data,
+  selected_application_count: 1,
 };
 
 const repository: GitHubRepositoryData = {
@@ -189,6 +201,9 @@ const application: ApplicationData = {
   job_post_id: "job-1",
   fit_analysis_id: "fit-1",
   interview_prep_id: "prep-1",
+  resume_version_id: "resume-version-1",
+  resume_version_name: "AI internship CV",
+  resume_version_target_role: "AI Intern",
   company: "Northstar AI",
   role: "AI/ML Intern",
   status: "preparing",
@@ -298,6 +313,7 @@ export function ComponentSmokeCases() {
       <ResumeManager
         apiBaseUrl={apiBaseUrl}
         initialResume={resume}
+        initialResumeVersions={[resumeVersion]}
       />
       <GitHubAnalyzer
         apiBaseUrl={apiBaseUrl}
@@ -313,6 +329,7 @@ export function ComponentSmokeCases() {
         apiBaseUrl={apiBaseUrl}
         initialApplication={application}
         initialInterviewPrep={interviewPrep}
+        initialResumeVersions={[resumeVersion]}
       />
     </>
   );

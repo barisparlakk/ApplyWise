@@ -22,6 +22,7 @@ from applywise.models import (
     Project,
     Resume,
     ResumeChunk,
+    ResumeVersion,
     Skill,
     User,
 )
@@ -64,6 +65,7 @@ class Repositories:
         self.profiles = Repository[Profile](session, Profile)
         self.resumes = Repository[Resume](session, Resume)
         self.resume_chunks = Repository[ResumeChunk](session, ResumeChunk)
+        self.resume_versions = Repository[ResumeVersion](session, ResumeVersion)
         self.projects = Repository[Project](session, Project)
         self.github_repositories = Repository[GitHubRepository](session, GitHubRepository)
         self.github_repository_chunks = Repository[GitHubRepositoryChunk](

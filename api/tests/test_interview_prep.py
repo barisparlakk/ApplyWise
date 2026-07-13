@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from applywise.embeddings import DeterministicEmbeddingProvider
 from applywise.interview_prep import build_interview_prep_plan, load_interview_context
 from applywise.models import (
+    Application,
     Base,
     InterviewPrep,
     JobPost,
@@ -15,6 +16,7 @@ from applywise.models import (
     Project,
     Resume,
     ResumeChunk,
+    ResumeVersion,
     User,
 )
 from applywise.routes.applications import create_application_from_job
@@ -117,6 +119,18 @@ def test_interview_prep_generates_grounded_sections_and_regenerates_one_section(
         )
         session.add(resume)
         session.flush()
+        resume_version = ResumeVersion(
+            user_id=user.id,
+            source_resume_id=resume.id,
+            name="Backend Evidence CV",
+            target_role="Backend Intern",
+            content_text=resume.content_text,
+            parsed_data={
+                **resume.parsed_data,
+                "experience": ["Role-specific FastAPI delivery evidence"],
+            },
+        )
+        session.add(resume_version)
         session.add(
             ResumeChunk(
                 resume_id=resume.id,
@@ -163,7 +177,17 @@ def test_interview_prep_generates_grounded_sections_and_regenerates_one_section(
         session.commit()
 
         application = create_application_from_job(job_post.id, current_user=user, session=session)
-        context = load_interview_context(session, user=user, job_post=job_post)
+        application_record = session.get(Application, application.id)
+        assert application_record is not None
+        application_record.resume_version_id = resume_version.id
+        session.commit()
+        session.refresh(application_record)
+        context = load_interview_context(
+            session,
+            user=user,
+            application=application_record,
+            job_post=job_post,
+        )
         structured_plan = build_interview_prep_plan(
             user=user,
             job_post=job_post,
@@ -200,6 +224,7 @@ def test_interview_prep_generates_grounded_sections_and_regenerates_one_section(
     assert regenerated.content.technical_questions
     assert prep_count == 1
     assert structured_plan.focus_areas == ["Company-specific API design"]
+    assert context.evidence[1].source == "Selected CV Backend Evidence CV"
     assert structured_plan.content.technical_questions[0].question.startswith(
         "How would your evidence help ApplyWise Labs"
     )
