@@ -13,6 +13,7 @@ import {
   ExternalLink,
   FileText,
   Gauge,
+  History,
   Link2,
   LoaderCircle,
   MessageSquareText,
@@ -39,6 +40,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   ApplicationData,
+  ApplicationEventData,
   ApplicationStatus,
   CompanyProfileData,
   InterviewPrepData,
@@ -61,6 +63,7 @@ const STATUS_OPTIONS: ApplicationStatus[] = [
 type ApplicationDetailProps = {
   apiBaseUrl: string;
   initialApplication: ApplicationData;
+  initialApplicationEvents: ApplicationEventData[];
   initialInterviewPrep: InterviewPrepData;
   initialResumeVersions: ResumeVersionData[];
   initialCompanyProfile: CompanyProfileData | null;
@@ -75,11 +78,13 @@ type ToastState = {
 export function ApplicationDetail({
   apiBaseUrl,
   initialApplication,
+  initialApplicationEvents,
   initialInterviewPrep,
   initialResumeVersions,
   initialCompanyProfile,
 }: ApplicationDetailProps) {
   const [application, setApplication] = useState(initialApplication);
+  const [applicationEvents, setApplicationEvents] = useState(initialApplicationEvents);
   const [interviewPrep] = useState(initialInterviewPrep);
   const [form, setForm] = useState({
     status: initialApplication.status,
@@ -131,6 +136,10 @@ export function ApplicationDetail({
         next_action: updated.next_action ?? "",
         resume_version_id: updated.resume_version_id ?? "",
       });
+      const eventsResponse = await fetch(`${apiBaseUrl}/applications/${application.id}/events`);
+      if (eventsResponse.ok) {
+        setApplicationEvents((await eventsResponse.json()) as ApplicationEventData[]);
+      }
       setState("saved");
       showToast("success", t("Application saved."));
     } catch (error) {
@@ -248,6 +257,19 @@ export function ApplicationDetail({
             initialProfile={initialCompanyProfile}
             jobPostId={application.job_post_id}
           />
+
+          <Reveal className="app-surface overflow-hidden" delay={0.1}>
+            <div className="border-b border-border p-5 sm:p-6"><SectionHeading description={t("A durable audit trail of tracker creation, status changes, and field updates.")} title={t("Application timeline")} /></div>
+            <div className="divide-y divide-border">
+              {applicationEvents.length ? applicationEvents.map((event) => (
+                <article className="grid grid-cols-[36px_1fr_auto] gap-3 px-5 py-4 sm:px-6" key={event.id}>
+                  <span className="grid h-9 w-9 place-items-center rounded-md bg-[#f1f3f4] text-[#D9473F]"><History className="h-4 w-4" /></span>
+                  <div className="min-w-0"><h3 className="text-sm font-bold text-foreground">{eventTitle(event, t)}</h3><p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-semibold text-muted-foreground">{eventDescription(event, t)}</p></div>
+                  <time className="hidden text-right text-xs font-semibold text-muted-foreground sm:block" dateTime={event.created_at}>{formatDateTime(event.created_at, locale)}</time>
+                </article>
+              )) : <p className="px-6 py-8 text-sm text-muted-foreground">{t("No application events recorded yet.")}</p>}
+            </div>
+          </Reveal>
         </main>
 
         <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
@@ -327,6 +349,25 @@ function formatScore(value: number | null) {
 function formatDate(value: string | null, locale: string) {
   if (!value) return "--";
   return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${value}T00:00:00`));
+}
+
+function formatDateTime(value: string, locale: string) {
+  return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+}
+
+function eventTitle(event: ApplicationEventData, t: Translator) {
+  if (event.event_type === "status_changed") return t("Status changed");
+  if (event.event_type === "details_updated") return t("Tracker details updated");
+  if (event.event_type === "backfilled") return t("Existing application added to timeline");
+  return t("Application created");
+}
+
+function eventDescription(event: ApplicationEventData, t: Translator) {
+  if (event.from_status && event.to_status && event.from_status !== event.to_status) {
+    return <>{t(event.from_status)} <ArrowRight className="h-3.5 w-3.5" /> {t(event.to_status)}</>;
+  }
+  if (event.to_status) return <>{t("Stage")}: {t(event.to_status)}</>;
+  return t("Tracker activity recorded");
 }
 
 function Toast({ message, tone }: Readonly<{ message: string; tone: "success" | "error" }>) {

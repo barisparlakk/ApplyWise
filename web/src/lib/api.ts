@@ -286,6 +286,28 @@ export type ApplicationData = {
   updated_at: string;
 };
 
+export type ApplicationEventData = {
+  id: string;
+  event_type: string;
+  from_status: ApplicationStatus | null;
+  to_status: ApplicationStatus | null;
+  event_data: Record<string, unknown>;
+  created_at: string;
+};
+
+export type UserGoalData = {
+  id: string;
+  title: string;
+  target_role: string | null;
+  target_date: string | null;
+  weekly_application_target: number;
+  status: "active" | "completed" | "archived";
+  weekly_progress: number;
+  progress_percent: number;
+  days_remaining: number | null;
+  updated_at: string;
+};
+
 export type InterviewPrepQuestion = {
   question: string;
   guidance: string;
@@ -615,6 +637,51 @@ export async function getApplication(
   }
 
   return (await response.json()) as ApplicationData;
+}
+
+export async function getApplicationEvents(
+  session: BackendSession,
+  applicationId: string,
+): Promise<ApplicationEventData[]> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/applications/${applicationId}/events`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected application events request: ${response.status}`);
+  }
+
+  return (await response.json()) as ApplicationEventData[];
+}
+
+export async function getGoals(session: BackendSession): Promise<UserGoalData[]> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? "http://localhost:8000";
+
+  if (!session.backendToken) {
+    throw new Error("Missing backend token.");
+  }
+
+  const response = await fetch(`${baseUrl}/goals`, {
+    headers: {
+      Authorization: `Bearer ${session.backendToken}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Backend rejected goals request: ${response.status}`);
+  }
+
+  return (await response.json()) as UserGoalData[];
 }
 
 export async function getCompanyProfile(

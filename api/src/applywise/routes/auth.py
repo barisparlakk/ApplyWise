@@ -14,7 +14,7 @@ from starlette.responses import JSONResponse
 
 from applywise.auth import get_current_user
 from applywise.database import get_session
-from applywise.models import JobPost, JobSkillMapping, User
+from applywise.models import ApplicationEvent, JobPost, JobSkillMapping, User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 current_user_dependency = Depends(get_current_user)
@@ -67,6 +67,13 @@ def export_current_user_data(
             export_record(record) for record in current_user.company_profiles
         ],
         "applications": [export_record(record) for record in current_user.applications],
+        "application_events": [
+            export_record(record)
+            for record in session.scalars(
+                select(ApplicationEvent).where(ApplicationEvent.user_id == current_user.id)
+            )
+        ],
+        "user_goals": [export_record(record) for record in current_user.goals],
         "fit_analyses": [export_record(record) for record in current_user.fit_analyses],
         "interview_preps": [export_record(record) for record in current_user.interview_preps],
         "learning_roadmaps": [

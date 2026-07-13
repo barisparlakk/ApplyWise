@@ -15,12 +15,13 @@ import { redirect } from "next/navigation";
 
 import { DeleteAccountButton } from "@/app/settings/delete-account-button";
 import { ExportDataButton } from "@/app/settings/export-data-button";
+import { GoalManager } from "@/app/settings/goal-manager";
 import { SignOutButton } from "@/app/settings/sign-out-button";
 import { AppShell } from "@/components/app-shell";
 import { Reveal } from "@/components/motion";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { SignalField } from "@/components/signal-field";
-import { getCurrentUser } from "@/lib/api";
+import { getCurrentUser, getGoals } from "@/lib/api";
 import { getBackendSession } from "@/lib/server-auth";
 import { getTranslations } from "@/lib/server-i18n";
 
@@ -31,7 +32,7 @@ export default async function SettingsPage() {
     redirect("/login?callbackUrl=/settings");
   }
 
-  const user = await getCurrentUser(session);
+  const [user, goals] = await Promise.all([getCurrentUser(session), getGoals(session)]);
   const t = await getTranslations();
 
   return (
@@ -76,12 +77,16 @@ export default async function SettingsPage() {
           </Reveal>
         </div>
 
-        <Reveal className="grid border-y border-border bg-white lg:grid-cols-[240px_1fr]" delay={0.1}>
+        <Reveal delay={0.1}>
+          <GoalManager apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"} initialGoals={goals} />
+        </Reveal>
+
+        <Reveal className="grid border-y border-border bg-white lg:grid-cols-[240px_1fr]" delay={0.12}>
           <div className="border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#167D87]"><LockKeyhole className="h-4 w-4" />{t("Data and privacy")}</div><p className="mt-3 text-sm leading-6 text-muted-foreground">{t("Your evidence remains tied to your account.")}</p></div>
           <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><p className="max-w-2xl text-sm leading-7 text-muted-foreground">{t("Review the")} <Link className="font-bold text-[#D9473F] hover:text-foreground" href="/privacy">{t("privacy notice link")}</Link> {t("and")} <Link className="font-bold text-[#D9473F] hover:text-foreground" href="/terms">{t("terms of use link")}</Link> {t("for details on storage, processing, and deletion.")}</p><ExportDataButton /></div>
         </Reveal>
 
-        <Reveal className="border-l-2 border-[#FF5A4E] bg-[#fff5f4] p-5 sm:p-6" delay={0.14}>
+        <Reveal className="border-l-2 border-[#FF5A4E] bg-[#fff5f4] p-5 sm:p-6" delay={0.16}>
           <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-start">
             <div><p className="text-xs font-bold uppercase text-[#A63832]">{t("Danger zone")}</p><h2 className="mt-2 text-lg font-bold text-foreground">{t("Delete workspace and account")}</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{t("Permanently removes your profile, CVs, repository analyses, roles, applications, roadmaps, and interview preparation.")}</p></div>
             <DeleteAccountButton />

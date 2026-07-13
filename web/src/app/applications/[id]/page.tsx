@@ -4,6 +4,7 @@ import { ApplicationDetail } from "@/app/applications/[id]/application-detail";
 import { AppShell } from "@/components/app-shell";
 import {
   getApplication,
+  getApplicationEvents,
   getCompanyProfile,
   getInterviewPrep,
   getResumeVersions,
@@ -25,7 +26,8 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
   }
 
   const application = await getApplication(session, id);
-  const [interviewPrep, resumeVersions, companyProfile] = await Promise.all([
+  const [applicationEvents, interviewPrep, resumeVersions, companyProfile] = await Promise.all([
+    getApplicationEvents(session, id),
     getInterviewPrep(session, id),
     getResumeVersions(session),
     getCompanyProfile(session, application.job_post_id),
@@ -37,6 +39,7 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
         <ApplicationDetail
           apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/backend"}
           initialApplication={application}
+          initialApplicationEvents={applicationEvents}
           initialInterviewPrep={interviewPrep}
           initialResumeVersions={resumeVersions}
           initialCompanyProfile={companyProfile}

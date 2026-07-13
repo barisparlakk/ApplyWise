@@ -3,12 +3,14 @@ import { JobPostForm } from "@/app/jobs/new/job-post-form";
 import { JobAnalysisView } from "@/app/jobs/[id]/analysis/job-analysis-view";
 import { LoginForm } from "@/app/login/login-form";
 import { OnboardingForm } from "@/app/onboarding/onboarding-form";
+import { GoalManager } from "@/app/settings/goal-manager";
 import { GitHubAnalyzer } from "@/app/projects/github-analyzer";
 import { ProfileBuilder } from "@/app/profile/profile-builder";
 import { ResumeManager } from "@/app/resume/resume-manager";
 import type {
   ApplicationData,
   ApplicationCoachData,
+  ApplicationEventData,
   CompanyProfileData,
   GitHubRepositoryData,
   InterviewPrepData,
@@ -17,6 +19,7 @@ import type {
   ResumeData,
   ResumeVersionData,
   SkillGraphData,
+  UserGoalData,
 } from "@/lib/api";
 
 const apiBaseUrl = "http://localhost:8000";
@@ -261,6 +264,30 @@ const application: ApplicationData = {
   updated_at: "2026-07-06T10:00:00Z",
 };
 
+const applicationEvents: ApplicationEventData[] = [
+  {
+    id: "event-1",
+    event_type: "created",
+    from_status: null,
+    to_status: "saved",
+    event_data: {},
+    created_at: "2026-07-06T10:00:00Z",
+  },
+];
+
+const userGoal: UserGoalData = {
+  id: "goal-1",
+  title: "Build a focused internship pipeline",
+  target_role: "Backend Intern",
+  target_date: "2026-08-15",
+  weekly_application_target: 5,
+  status: "active",
+  weekly_progress: 2,
+  progress_percent: 40,
+  days_remaining: 33,
+  updated_at: "2026-07-13T08:00:00Z",
+};
+
 const companyProfile: CompanyProfileData = {
   id: "company-profile-1",
   job_post_id: "job-1",
@@ -384,6 +411,7 @@ export function ComponentSmokeCases() {
         initialRepositories={[repository]}
       />
       <JobPostForm apiBaseUrl={apiBaseUrl} />
+      <GoalManager apiBaseUrl={apiBaseUrl} initialGoals={[userGoal]} />
       <JobAnalysisView
         apiBaseUrl={apiBaseUrl}
         applicationCoach={applicationCoach}
@@ -394,6 +422,7 @@ export function ComponentSmokeCases() {
       <ApplicationDetail
         apiBaseUrl={apiBaseUrl}
         initialApplication={application}
+        initialApplicationEvents={applicationEvents}
         initialCompanyProfile={companyProfile}
         initialInterviewPrep={interviewPrep}
         initialResumeVersions={[resumeVersion]}

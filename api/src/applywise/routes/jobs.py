@@ -17,6 +17,11 @@ from applywise.fit_score import (
     latest_fit_analysis,
 )
 from applywise.job_analyzer import JobAnalysisError, JobPostAnalysis, analyze_job_post
+from applywise.job_ingestion import (
+    JobSourceFetchError,
+    UnsupportedJobSourceError,
+    import_job_post,
+)
 from applywise.models import FitAnalysis, JobPost, User
 from applywise.rate_limit import ai_action_limit_dependency
 from applywise.roadmap import RoadmapPlan, build_and_store_roadmap, roadmap_to_plan
@@ -45,6 +50,18 @@ class AnalyzeJobPayload(BaseModel):
     @classmethod
     def strip_source_url(cls, value: str | None) -> str | None:
         return optional_http_url(value)
+
+
+class ImportJobPayload(BaseModel):
+    source_url: str = Field(min_length=10, max_length=2048)
+
+    @field_validator("source_url")
+    @classmethod
+    def validate_source_url(cls, value: str) -> str:
+        validated = optional_http_url(value)
+        if validated is None:
+            raise ValueError("A job URL is required.")
+        return validated
 
 
 class FitAnalysisComponentsResponse(BaseModel):
@@ -155,6 +172,51 @@ def analyze_job(
     session: Session = session_dependency,
     _rate_limit: None = ai_action_limit_dependency,
 ) -> JobPostResponse:
+    return analyze_and_store_job(
+        payload,
+        current_user=current_user,
+        session=session,
+        source="manual",
+    )
+
+
+@router.post("/import", response_model=JobPostResponse)
+def import_job(
+    payload: ImportJobPayload,
+    current_user: User = current_user_dependency,
+    session: Session = session_dependency,
+    _rate_limit: None = ai_action_limit_dependency,
+) -> JobPostResponse:
+    try:
+        imported_job = import_job_post(payload.source_url)
+    except UnsupportedJobSourceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    except JobSourceFetchError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="The public job could not be imported.",
+        ) from exc
+    return analyze_and_store_job(
+        AnalyzeJobPayload(
+            content=imported_job.analysis_text(),
+            source_url=imported_job.source_url,
+        ),
+        current_user=current_user,
+        session=session,
+        source=imported_job.source,
+    )
+
+
+def analyze_and_store_job(
+    payload: AnalyzeJobPayload,
+    *,
+    current_user: User,
+    session: Session,
+    source: str,
+) -> JobPostResponse:
     try:
         analysis = analyze_job_post(payload.content)
     except JobAnalysisError as exc:
@@ -171,7 +233,7 @@ def analyze_job(
         description=payload.content,
         location=infer_location(payload.content),
         url=payload.source_url,
-        source="manual",
+        source=source,
         required_skills=analysis.required_skills,
         nice_to_have_skills=analysis.nice_to_have_skills,
         responsibilities=analysis.responsibilities,

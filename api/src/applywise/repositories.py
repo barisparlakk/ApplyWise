@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from applywise.models import (
     Application,
+    ApplicationEvent,
     ApplicationNote,
     Base,
     CompanyProfile,
@@ -28,6 +29,7 @@ from applywise.models import (
     Skill,
     SkillPrerequisite,
     User,
+    UserGoal,
 )
 
 ModelT = TypeVar("ModelT", bound=Base)
@@ -81,8 +83,10 @@ class Repositories:
         self.job_skill_mappings = Repository[JobSkillMapping](session, JobSkillMapping)
         self.company_profiles = Repository[CompanyProfile](session, CompanyProfile)
         self.applications = Repository[Application](session, Application)
+        self.application_events = Repository[ApplicationEvent](session, ApplicationEvent)
         self.fit_analyses = Repository[FitAnalysis](session, FitAnalysis)
         self.interview_preps = Repository[InterviewPrep](session, InterviewPrep)
         self.learning_roadmaps = Repository[LearningRoadmap](session, LearningRoadmap)
         self.cover_letters = Repository[CoverLetter](session, CoverLetter)
         self.application_notes = Repository[ApplicationNote](session, ApplicationNote)
+        self.user_goals = Repository[UserGoal](session, UserGoal)

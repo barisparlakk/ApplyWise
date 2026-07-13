@@ -12,6 +12,7 @@ from applywise.auth import get_current_user
 from applywise.database import get_session
 from applywise.models import (
     Application,
+    ApplicationEvent,
     ApplicationStatus,
     FitAnalysis,
     InterviewPrep,
@@ -47,6 +48,15 @@ class ApplicationResponse(BaseModel):
     notes: str | None
     next_action: str | None
     updated_at: str
+
+
+class ApplicationEventResponse(BaseModel):
+    id: uuid.UUID
+    event_type: str
+    from_status: ApplicationStatus | None
+    to_status: ApplicationStatus | None
+    event_data: dict[str, object]
+    created_at: str
 
 
 class CreateApplicationPayload(BaseModel):
@@ -146,6 +156,8 @@ def create_application_from_job(
             Application.job_post_id == job_post.id,
         )
     ).first()
+    previous_status = application.status if application else None
+    changed_fields = create_application_changed_fields(application, payload)
     if application is None:
         application = Application(
             user_id=current_user.id,
@@ -155,6 +167,14 @@ def create_application_from_job(
             resume_version_id=resume_version.id if resume_version else None,
         )
         session.add(application)
+        session.flush()
+        record_application_event(
+            session,
+            application,
+            event_type="created",
+            from_status=None,
+            to_status=application.status,
+        )
     elif should_update_status(application.status, payload.status):
         application.status = payload.status
         if payload.next_action is not None:
@@ -163,6 +183,25 @@ def create_application_from_job(
         application.next_action = payload.next_action
     if "resume_version_id" in payload.model_fields_set:
         application.resume_version = resume_version
+
+    if previous_status is not None and previous_status != application.status:
+        record_application_event(
+            session,
+            application,
+            event_type="status_changed",
+            from_status=previous_status,
+            to_status=application.status,
+            event_data={"changed_fields": changed_fields},
+        )
+    elif previous_status is not None and changed_fields:
+        record_application_event(
+            session,
+            application,
+            event_type="details_updated",
+            from_status=application.status,
+            to_status=application.status,
+            event_data={"changed_fields": changed_fields},
+        )
 
     session.commit()
     session.refresh(application)
@@ -193,6 +232,21 @@ def read_application(
     return application_to_response(session, application)
 
 
+@router.get("/{application_id}/events", response_model=list[ApplicationEventResponse])
+def list_application_events(
+    application_id: uuid.UUID,
+    current_user: User = current_user_dependency,
+    session: Session = session_dependency,
+) -> list[ApplicationEventResponse]:
+    application = get_owned_application(session, current_user, application_id)
+    events = session.scalars(
+        select(ApplicationEvent)
+        .where(ApplicationEvent.application_id == application.id)
+        .order_by(ApplicationEvent.created_at.desc())
+    ).all()
+    return [application_event_to_response(event) for event in events]
+
+
 @router.patch("/{application_id}", response_model=ApplicationResponse)
 def update_application(
     application_id: uuid.UUID,
@@ -201,6 +255,8 @@ def update_application(
     session: Session = session_dependency,
 ) -> ApplicationResponse:
     application = get_owned_application(session, current_user, application_id)
+    previous_status = application.status
+    changed_fields = application_changed_fields(application, payload)
     if payload.status is not None:
         application.status = payload.status
     if "deadline" in payload.model_fields_set:
@@ -226,6 +282,25 @@ def update_application(
         application.applied_date = date.today()
     if application.status == ApplicationStatus.INTERVIEW and application.interview_date is None:
         application.interview_date = date.today()
+
+    if previous_status != application.status:
+        record_application_event(
+            session,
+            application,
+            event_type="status_changed",
+            from_status=previous_status,
+            to_status=application.status,
+            event_data={"changed_fields": changed_fields},
+        )
+    elif changed_fields:
+        record_application_event(
+            session,
+            application,
+            event_type="details_updated",
+            from_status=application.status,
+            to_status=application.status,
+            event_data={"changed_fields": changed_fields},
+        )
 
     session.commit()
     session.refresh(application)
@@ -336,3 +411,72 @@ def strip_optional_text(value: str | None) -> str | None:
         return None
     stripped = value.strip()
     return stripped or None
+
+
+def record_application_event(
+    session: Session,
+    application: Application,
+    *,
+    event_type: str,
+    from_status: ApplicationStatus | None,
+    to_status: ApplicationStatus | None,
+    event_data: dict[str, object] | None = None,
+) -> ApplicationEvent:
+    event = ApplicationEvent(
+        user_id=application.user_id,
+        application_id=application.id,
+        event_type=event_type,
+        from_status=from_status,
+        to_status=to_status,
+        event_data=event_data or {},
+    )
+    session.add(event)
+    session.flush()
+    return event
+
+
+def application_changed_fields(
+    application: Application,
+    payload: UpdateApplicationPayload,
+) -> list[str]:
+    changed: list[str] = []
+    for field in payload.model_fields_set:
+        if field == "job_url":
+            current_value = application.job_post.url
+        elif field == "resume_version_id":
+            current_value = application.resume_version_id
+        else:
+            current_value = getattr(application, field)
+        if current_value != getattr(payload, field):
+            changed.append(field)
+    return sorted(changed)
+
+
+def create_application_changed_fields(
+    application: Application | None,
+    payload: CreateApplicationPayload,
+) -> list[str]:
+    if application is None:
+        return []
+    changed: list[str] = []
+    if should_update_status(application.status, payload.status):
+        changed.append("status")
+    if payload.next_action is not None and payload.next_action != application.next_action:
+        changed.append("next_action")
+    if (
+        "resume_version_id" in payload.model_fields_set
+        and payload.resume_version_id != application.resume_version_id
+    ):
+        changed.append("resume_version_id")
+    return changed
+
+
+def application_event_to_response(event: ApplicationEvent) -> ApplicationEventResponse:
+    return ApplicationEventResponse(
+        id=event.id,
+        event_type=event.event_type,
+        from_status=event.from_status,
+        to_status=event.to_status,
+        event_data=event.event_data or {},
+        created_at=event.created_at.isoformat(),
+    )

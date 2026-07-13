@@ -19,8 +19,8 @@ import { MotionBar, Reveal } from "@/components/motion";
 import { PageHeader, SectionHeading } from "@/components/page-header";
 import { ScoreRing } from "@/components/score-ring";
 import { SignalField } from "@/components/signal-field";
-import type { ApplicationData } from "@/lib/api";
-import { getApplications, getCurrentUser } from "@/lib/api";
+import type { ApplicationData, UserGoalData } from "@/lib/api";
+import { getApplications, getCurrentUser, getGoals } from "@/lib/api";
 import { createTranslator, localeTag, type Translator } from "@/lib/i18n";
 import { getBackendSession } from "@/lib/server-auth";
 import { getRequestLocale } from "@/lib/server-i18n";
@@ -37,8 +37,11 @@ export default async function DashboardPage() {
     redirect("/login?callbackUrl=/dashboard");
   }
 
-  const user = await getCurrentUser(session);
-  const applications = await getApplications(session);
+  const [user, applications, goals] = await Promise.all([
+    getCurrentUser(session),
+    getApplications(session),
+    getGoals(session),
+  ]);
   const locale = await getRequestLocale();
   const t = createTranslator(locale);
   const activeApplications = applications.filter((application) =>
@@ -61,6 +64,7 @@ export default async function DashboardPage() {
   const nextBestActions = buildNextBestActions(applications, t).slice(0, 5);
   const averageFit = averageFitValue(applications);
   const leadAction = nextBestActions[0];
+  const activeGoal = goals.find((goal) => goal.status === "active");
 
   return (
     <AppShell>
@@ -123,6 +127,8 @@ export default async function DashboardPage() {
             </div>
           </div>
         </Reveal>
+
+        {activeGoal ? <GoalSignal goal={activeGoal} locale={localeTag(locale)} t={t} /> : null}
 
         <div className="mt-6 grid gap-6 xl:grid-cols-[1.45fr_0.75fr] xl:items-start">
           <Reveal className="app-surface overflow-hidden" delay={0.05}>
@@ -276,6 +282,16 @@ function SignalMetric({ label, value }: Readonly<{ label: string; value: string 
       <p className="text-xl font-bold text-white">{value}</p>
       <p className="mt-0.5 text-[10px] font-semibold uppercase text-white/[0.45]">{label}</p>
     </div>
+  );
+}
+
+function GoalSignal({ goal, locale, t }: Readonly<{ goal: UserGoalData; locale: string; t: Translator }>) {
+  return (
+    <Reveal className="mt-6 grid border-y border-border bg-white lg:grid-cols-[240px_1fr_260px]" delay={0.04}>
+      <div className="border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r"><div className="flex items-center gap-2 text-xs font-bold uppercase text-[#D9473F]"><Target className="h-4 w-4" />{t("Active goal")}</div><h2 className="mt-3 text-lg font-bold text-foreground">{goal.title}</h2></div>
+      <div className="border-b border-border p-5 sm:p-6 lg:border-b-0 lg:border-r"><div className="flex items-center justify-between gap-3 text-sm"><span className="font-semibold text-muted-foreground">{t("Weekly application pace")}</span><span className="font-bold text-foreground">{goal.weekly_progress}/{goal.weekly_application_target}</span></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-[#eceef1]"><MotionBar className={goal.progress_percent >= 100 ? "bg-[#2BC3CE]" : "bg-[#FF5A4E]"} value={goal.progress_percent} /></div><p className="mt-3 text-xs font-semibold text-muted-foreground">{goal.target_role ?? t("All target roles")}</p></div>
+      <div className="flex items-center justify-between gap-4 p-5 sm:p-6"><div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t("Target date")}</p><p className="mt-2 text-sm font-bold text-foreground">{goal.target_date ? formatDate(goal.target_date, locale) : t("Open timeline")}</p></div><InlineLink href="/settings" label={t("Manage goal")} /></div>
+    </Reveal>
   );
 }
 

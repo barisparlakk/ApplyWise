@@ -12,9 +12,11 @@ from applywise.interview_prep import generate_or_update_interview_prep
 from applywise.job_analyzer import analyze_job_post
 from applywise.models import (
     Application,
+    ApplicationEvent,
     ApplicationStatus,
     GitHubRepository,
     GitHubRepositoryChunk,
+    GoalStatus,
     JobPost,
     Profile,
     Project,
@@ -22,6 +24,7 @@ from applywise.models import (
     ResumeChunk,
     Skill,
     User,
+    UserGoal,
 )
 from applywise.roadmap import build_and_store_roadmap
 
@@ -204,6 +207,7 @@ def main() -> None:
         create_repositories(session, user)
         create_skill_catalog(session)
         create_jobs_and_workflow(session, user)
+        create_demo_goal(session, user)
         session.commit()
         print(f"Seeded demo user {DEMO_EMAIL} with {len(DEMO_JOBS)} applications.")
         print("Use the email login provider with this address to explore the full demo.")
@@ -469,6 +473,16 @@ def create_jobs_and_workflow(session: Session, user: User) -> None:
         )
         session.add(application)
         session.flush()
+        session.add(
+            ApplicationEvent(
+                user_id=user.id,
+                application_id=application.id,
+                event_type="created",
+                from_status=None,
+                to_status=application.status,
+                event_data={"source": "demo_seed"},
+            )
+        )
 
         fit_analysis = compute_and_store_fit_analysis(session, user=user, job_post=job_post)
         build_and_store_roadmap(
@@ -479,6 +493,20 @@ def create_jobs_and_workflow(session: Session, user: User) -> None:
             duration_days=7,
         )
         generate_or_update_interview_prep(session, user=user, application=application)
+
+
+def create_demo_goal(session: Session, user: User) -> None:
+    session.add(
+        UserGoal(
+            user_id=user.id,
+            title="Build a focused internship pipeline",
+            target_role="Backend Intern",
+            target_date=date.today() + timedelta(days=30),
+            weekly_application_target=5,
+            status=GoalStatus.ACTIVE,
+            progress_data={"source": "demo_seed"},
+        )
+    )
 
 
 if __name__ == "__main__":

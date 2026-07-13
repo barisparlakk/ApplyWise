@@ -20,6 +20,7 @@ from applywise.routes.applications import router as applications_router
 from applywise.routes.auth import router as auth_router
 from applywise.routes.company_profiles import router as company_profiles_router
 from applywise.routes.github import router as github_router
+from applywise.routes.goals import router as goals_router
 from applywise.routes.interview_prep import router as interview_prep_router
 from applywise.routes.jobs import router as jobs_router
 from applywise.routes.onboarding import router as onboarding_router
@@ -75,6 +76,7 @@ app.include_router(application_coach_router)
 app.include_router(auth_router)
 app.include_router(company_profiles_router)
 app.include_router(github_router)
+app.include_router(goals_router)
 app.include_router(interview_prep_router)
 app.include_router(jobs_router)
 app.include_router(onboarding_router)

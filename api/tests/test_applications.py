@@ -19,6 +19,7 @@ from applywise.routes.applications import (
     CreateApplicationPayload,
     UpdateApplicationPayload,
     create_application_from_job,
+    list_application_events,
     list_applications,
     read_application,
     update_application,
@@ -149,6 +150,27 @@ def test_application_tracker_create_list_read_and_update() -> None:
         )
         listed = list_applications(current_user=user, session=session)
         fetched = read_application(created.id, current_user=user, session=session)
+        events = list_application_events(created.id, current_user=user, session=session)
+        update_application(
+            created.id,
+            UpdateApplicationPayload(
+                status=updated.status,
+                deadline=updated.deadline,
+                job_url=updated.job_url,
+                applied_date=updated.applied_date,
+                interview_date=updated.interview_date,
+                notes=updated.notes,
+                next_action=updated.next_action,
+                resume_version_id=updated.resume_version_id,
+            ),
+            current_user=user,
+            session=session,
+        )
+        events_after_noop = list_application_events(
+            created.id,
+            current_user=user,
+            session=session,
+        )
 
     assert created.company == "ApplyWise Labs"
     assert created.role == "Backend Intern"
@@ -171,3 +193,7 @@ def test_application_tracker_create_list_read_and_update() -> None:
     assert len(listed) == 1
     assert listed[0].interview_prep_id is not None
     assert fetched.notes == "Recruiter screen scheduled."
+    assert [event.event_type for event in events] == ["status_changed", "created"]
+    assert events[0].from_status == ApplicationStatus.SAVED
+    assert events[0].to_status == ApplicationStatus.INTERVIEW
+    assert len(events_after_noop) == len(events)

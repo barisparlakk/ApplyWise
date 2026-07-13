@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from applywise.models import (
     ApplicationStatus,
     Base,
+    GoalStatus,
     User,
 )
 from applywise.services import ApplyWiseService
@@ -135,6 +136,22 @@ def test_create_and_query_one_of_each_model() -> None:
             status=ApplicationStatus.PREPARING,
             notes="Need to review SQL.",
         )
+        repositories.application_events.create(
+            user_id=user.id,
+            application_id=application.id,
+            event_type="created",
+            from_status=None,
+            to_status=ApplicationStatus.PREPARING,
+            event_data={},
+        )
+        repositories.user_goals.create(
+            user_id=user.id,
+            title="Apply consistently",
+            target_role="AI Engineering Intern",
+            weekly_application_target=4,
+            status=GoalStatus.ACTIVE,
+            progress_data={},
+        )
         fit_analysis = repositories.fit_analyses.create(
             user_id=user.id,
             job_post_id=job_post.id,
@@ -193,6 +210,8 @@ def test_create_and_query_one_of_each_model() -> None:
         assert len(saved_user.job_posts) == 1
         assert len(saved_user.company_profiles) == 1
         assert len(saved_user.applications) == 1
+        assert len(saved_user.application_events) == 1
+        assert len(saved_user.goals) == 1
         assert saved_user.applications[0].status == ApplicationStatus.PREPARING
         assert saved_user.applications[0].resume_version is not None
         assert len(saved_user.fit_analyses) == 1

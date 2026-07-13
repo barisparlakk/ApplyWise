@@ -114,8 +114,8 @@ const turkishMessages: Readonly<Record<string, string>> = {
   "Last updated July 13, 2026": "Son güncelleme: 13 Temmuz 2026",
   "Questions can be sent to": "Sorularınızı şu adrese gönderebilirsiniz:",
   "Information we store": "Sakladığımız bilgiler",
-  "ApplyWise stores the identity details supplied by your sign-in provider, profile and education details, CV text and extracted sections, selected GitHub repository metadata, job descriptions, application tracking data, fit analyses, learning plans, and interview preparation content.":
-    "ApplyWise; giriş sağlayıcınızdan gelen kimlik bilgilerini, profil ve eğitim bilgilerini, CV metnini ve çıkarılan bölümleri, seçtiğiniz GitHub repolarının meta verilerini, iş ilanlarını, başvuru takip verilerini, uyum analizlerini, öğrenme planlarını ve mülakat hazırlık içeriklerini saklar.",
+  "ApplyWise stores the identity details supplied by your sign-in provider, profile and education details, CV text and extracted sections, selected GitHub repository metadata, job descriptions, application goals, tracker data and event history, fit analyses, learning plans, and interview preparation content.":
+    "ApplyWise; giriş sağlayıcınızdan gelen kimlik bilgilerini, profil ve eğitim bilgilerini, CV metnini ve çıkarılan bölümleri, seçtiğiniz GitHub repolarının meta verilerini, iş ilanlarını, başvuru hedeflerini, takip verilerini ve olay geçmişini, uyum analizlerini, öğrenme planlarını ve mülakat hazırlık içeriklerini saklar.",
   "GitHub access tokens remain inside the encrypted authentication session and are used only to request repository information you ask ApplyWise to analyze. They are not stored in the ApplyWise product database.":
     "GitHub erişim anahtarları şifrelenmiş kimlik doğrulama oturumunda kalır ve yalnızca ApplyWise'ın analiz etmesini istediğiniz repo bilgilerini istemek için kullanılır. ApplyWise ürün veritabanında saklanmazlar.",
   "How information is used": "Bilgilerin kullanım amacı",
@@ -133,8 +133,8 @@ const turkishMessages: Readonly<Record<string, string>> = {
   "Security and service providers": "Güvenlik ve hizmet sağlayıcılar",
   "ApplyWise uses access controls, encrypted transport, private service networking, bounded uploads, and short-lived backend credentials. No online service can promise absolute security.":
     "ApplyWise; erişim kontrolleri, şifrelenmiş veri aktarımı, özel servis ağı, sınırlandırılmış yüklemeler ve kısa ömürlü backend kimlik bilgileri kullanır. Hiçbir çevrimiçi hizmet mutlak güvenlik garantisi veremez.",
-  "The free beta uses Render for hosting and temporary queue storage, Neon for PostgreSQL, Google or GitHub for sign-in, GitHub for repository metadata, and Cloudflare Workers AI for configured AI and embedding operations.":
-    "Ücretsiz beta; barındırma ve geçici kuyruk depolaması için Render'ı, PostgreSQL için Neon'u, giriş için Google veya GitHub'ı, repo meta verileri için GitHub'ı ve yapılandırılmış yapay zeka ile embedding işlemleri için Cloudflare Workers AI'ı kullanır.",
+  "The free beta uses Render for hosting and temporary queue storage, Neon for PostgreSQL, Google or GitHub for sign-in, GitHub for repository metadata, and Cloudflare Workers AI for configured AI and embedding operations. Optional job imports read published postings through the public Greenhouse or Lever APIs only after you provide a supported URL.":
+    "Ücretsiz beta; barındırma ve geçici kuyruk depolaması için Render'ı, PostgreSQL için Neon'u, giriş için Google veya GitHub'ı, repo meta verileri için GitHub'ı ve yapılandırılmış yapay zeka ile embedding işlemleri için Cloudflare Workers AI'ı kullanır. İsteğe bağlı ilan içe aktarma, yalnızca desteklenen bir URL verdiğinizde yayımlanmış ilanları Greenhouse veya Lever'ın herkese açık API'lerinden okur.",
   "This notice explains what ApplyWise handles when you use the career intelligence workspace and the controls available to you.":
     "Bu bildirim, kariyer zekası çalışma alanını kullandığınızda ApplyWise'ın hangi verileri işlediğini ve kullanabileceğiniz kontrolleri açıklar.",
   "Privacy notice": "Gizlilik bildirimi",
@@ -830,6 +830,65 @@ const turkishMessages: Readonly<Record<string, string>> = {
     "Eksik profil kanıtlarını tamamla; en güçlü CV, proje ve repo sinyallerini bağla.",
   "Keep your role evidence current and tailor it before submitting.":
     "Pozisyon kanıtlarını güncel tut ve göndermeden önce hedefe göre düzenle.",
+  "Enter a supported public Greenhouse or Lever job URL.":
+    "Desteklenen herkese açık bir Greenhouse veya Lever ilan URL'si gir.",
+  "Import failed": "İçe aktarma başarısız",
+  "Import failed.": "İlan içe aktarılamadı.",
+  "Public source is ready for import": "Herkese açık kaynak içe aktarmaya hazır",
+  "Add an official job posting URL": "Resmi bir iş ilanı URL'si ekle",
+  "Supported public sources use their official read-only job APIs.":
+    "Desteklenen herkese açık kaynaklar resmi salt okunur ilan API'lerini kullanır.",
+  "Official source": "Resmi kaynak",
+  "source selected": "kaynak seçildi",
+  "Import one published posting through the source's official public API.":
+    "Yayımlanmış bir ilanı kaynağın resmi herkese açık API'si üzerinden içe aktar.",
+  "Published job URL": "Yayımlanmış ilan URL'si",
+  "Job source mode": "İlan kaynak modu",
+  Paste: "Yapıştır",
+  Import: "İçe aktar",
+  "Public posting": "Herkese açık ilan",
+  "Greenhouse or Lever URL": "Greenhouse veya Lever URL'si",
+  "Only published job data is read. ApplyWise never submits an application to the source.":
+    "Yalnızca yayımlanmış ilan verisi okunur. ApplyWise kaynak sisteme hiçbir zaman başvuru göndermez.",
+  "Ready to import public posting": "Herkese açık ilan içe aktarmaya hazır",
+  "Waiting for a supported URL": "Desteklenen bir URL bekleniyor",
+  "Import and analyze": "İçe aktar ve analiz et",
+  "Application goals": "Başvuru hedefleri",
+  "Set a weekly application pace and a target role without turning activity into random volume.":
+    "Aktiviteyi rastgele başvuru sayısına çevirmeden haftalık tempo ve hedef pozisyon belirle.",
+  "Complete the goal title and weekly target.": "Hedef başlığını ve haftalık sayıyı tamamla.",
+  "Goal could not be created": "Hedef oluşturulamadı",
+  "Goal could not be created.": "Hedef oluşturulamadı.",
+  "Goal could not be updated": "Hedef güncellenemedi",
+  "Goal could not be updated.": "Hedef güncellenemedi.",
+  "Goal could not be deleted": "Hedef silinemedi",
+  "Goal could not be deleted.": "Hedef silinemedi.",
+  "Goal title": "Hedef başlığı",
+  "Build a focused internship pipeline": "Odaklı bir staj başvuru süreci oluştur",
+  "Target date": "Hedef tarih",
+  "Applications / week": "Başvuru / hafta",
+  "Add goal": "Hedef ekle",
+  "All target roles": "Tüm hedef pozisyonlar",
+  "Weekly progress": "Haftalık ilerleme",
+  "Reopen goal": "Hedefi yeniden aç",
+  "Complete goal": "Hedefi tamamla",
+  "Delete goal": "Hedefi sil",
+  "No application goal yet.": "Henüz başvuru hedefi yok.",
+  active: "aktif",
+  completed: "tamamlandı",
+  "Active goal": "Aktif hedef",
+  "Weekly application pace": "Haftalık başvuru temposu",
+  "Open timeline": "Açık zaman planı",
+  "Manage goal": "Hedefi yönet",
+  "A durable audit trail of tracker creation, status changes, and field updates.":
+    "Takip kaydının oluşturulması, durum geçişleri ve alan güncellemeleri için kalıcı işlem geçmişi.",
+  "Application timeline": "Başvuru zaman çizelgesi",
+  "Status changed": "Durum değişti",
+  "Tracker details updated": "Takip ayrıntıları güncellendi",
+  "Existing application added to timeline": "Mevcut başvuru zaman çizelgesine eklendi",
+  "Application created": "Başvuru oluşturuldu",
+  "Tracker activity recorded": "Takip etkinliği kaydedildi",
+  "No application events recorded yet.": "Henüz başvuru etkinliği kaydedilmedi.",
   "Delete account": "Hesabı sil",
   "Permanently delete this account?": "Bu hesap kalıcı olarak silinsin mi?",
   "This removes your profile, CVs, repository analyses, jobs, applications, roadmaps, and interview preparation. This action cannot be undone.":

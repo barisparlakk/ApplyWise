@@ -22,6 +22,7 @@ flowchart LR
     Worker --> Postgres
     API --> AI["LLM Provider Interface"]
     API --> GitHub["GitHub REST API"]
+    API --> JobSources["Greenhouse / Lever public job APIs"]
     API --> Score["Deterministic Fit Score Engine"]
     Score --> Postgres
 ```
@@ -126,6 +127,8 @@ The repository also includes [render.yaml](render.yaml) and [Dockerfile.render-f
 
 The free target runs a single low-concurrency Dramatiq worker inside the web container, rather than billing for a separate worker service. Resume and repository embeddings are queued through Redis so uploads do not hold the request open; job analysis keeps the embedding needed for its immediate fit score and queues repair work after a provider failure. Cloudflare Workers AI provides schema-validated qualitative output plus multilingual embeddings. Cloudflare currently includes a limited free daily allocation; `AI_ALLOW_LOCAL_FALLBACK=true` keeps deterministic analysis available after quota or provider failures. Create a Workers AI API token, then set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` on Render before deployment. Stored vectors include model provenance, and the migration clears incompatible legacy hash vectors before semantic retrieval starts.
 
+Optional job import is deliberately narrow. ApplyWise accepts only user-supplied published posting URLs from Greenhouse and Lever, reconstructs the provider-owned API URL from validated identifiers, and reads the posting through the official [Greenhouse Job Board API](https://developers.greenhouse.io/job-board.html) or [Lever Postings API](https://github.com/lever/postings-api). It does not crawl search pages, follow arbitrary hosts or redirects, or submit applications to either provider. Manual paste remains available for every other source.
+
 This is a beta topology, not an unlimited production platform: Render can sleep the service after inactivity, free Key Value data is not durable, and free database, AI, and service quotas apply. See the current [Render free-service limits](https://render.com/docs/free) and [Cloudflare Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) before inviting users.
 
 The repository includes two free GitHub Actions operations workflows:
@@ -161,7 +164,7 @@ Use the local email provider with:
 demo@applywise.dev
 ```
 
-The seed command creates that user, a profile, a parsed resume, three GitHub repository analyses, three job posts, fit analyses, roadmaps, interview prep records, and tracked applications.
+The seed command creates that user, a profile, a parsed resume, three GitHub repository analyses, three job posts, fit analyses, roadmaps, interview prep records, tracked applications with event history, and an active weekly goal.
 
 ## Common Commands
 
@@ -218,7 +221,7 @@ Seeded demo user demo@applywise.dev with 3 applications.
 
 Capture these views for product demos after the stack is running:
 
-- Dashboard: active applications, deadlines, average fit score, missing skills, and next actions.
+- Dashboard: active applications, weekly goal progress, deadlines, average fit score, missing skills, and next actions.
 - Profile Builder: education, tagged skills, projects, roles, languages, and preferences.
-- Job Analysis: structured job extraction, deterministic fit score, roadmap, and save-to-tracker action.
-- Application Detail: status, notes, interview prep, and exportable report.
+- Job Analysis: structured job extraction, deterministic fit score, skill graph, application coach, roadmap, and save-to-tracker action.
+- Application Detail: status, event timeline, notes, company preparation, interview prep, and exportable report.

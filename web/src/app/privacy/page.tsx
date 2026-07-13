@@ -7,7 +7,7 @@ const sections = [
   {
     title: "Information we store",
     paragraphs: [
-      "ApplyWise stores the identity details supplied by your sign-in provider, profile and education details, CV text and extracted sections, selected GitHub repository metadata, job descriptions, application tracking data, fit analyses, learning plans, and interview preparation content.",
+      "ApplyWise stores the identity details supplied by your sign-in provider, profile and education details, CV text and extracted sections, selected GitHub repository metadata, job descriptions, application goals, tracker data and event history, fit analyses, learning plans, and interview preparation content.",
       "GitHub access tokens remain inside the encrypted authentication session and are used only to request repository information you ask ApplyWise to analyze. They are not stored in the ApplyWise product database.",
     ],
   },
@@ -30,7 +30,7 @@ const sections = [
     title: "Security and service providers",
     paragraphs: [
       "ApplyWise uses access controls, encrypted transport, private service networking, bounded uploads, and short-lived backend credentials. No online service can promise absolute security.",
-      "The free beta uses Render for hosting and temporary queue storage, Neon for PostgreSQL, Google or GitHub for sign-in, GitHub for repository metadata, and Cloudflare Workers AI for configured AI and embedding operations.",
+      "The free beta uses Render for hosting and temporary queue storage, Neon for PostgreSQL, Google or GitHub for sign-in, GitHub for repository metadata, and Cloudflare Workers AI for configured AI and embedding operations. Optional job imports read published postings through the public Greenhouse or Lever APIs only after you provide a supported URL.",
     ],
   },
 ];

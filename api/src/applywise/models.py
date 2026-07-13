@@ -107,6 +107,19 @@ application_status_enum = SAEnum(
 )
 
 
+class GoalStatus(enum.StrEnum):
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    ARCHIVED = "archived"
+
+
+goal_status_enum = SAEnum(
+    GoalStatus,
+    name="goal_status",
+    values_callable=lambda values: [item.value for item in values],
+)
+
+
 class User(TimestampedUuidMixin, Base):
     __tablename__ = "users"
     __table_args__ = (Index("ix_users_email", "email"),)
@@ -164,6 +177,14 @@ class User(TimestampedUuidMixin, Base):
         cascade="all, delete-orphan",
     )
     application_notes: Mapped[list[ApplicationNote]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    application_events: Mapped[list[ApplicationEvent]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    goals: Mapped[list[UserGoal]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )
@@ -553,6 +574,64 @@ class Application(TimestampedUuidMixin, Base):
     )
     interview_preps: Mapped[list[InterviewPrep]] = relationship(back_populates="application")
     cover_letters: Mapped[list[CoverLetter]] = relationship(back_populates="application")
+    events: Mapped[list[ApplicationEvent]] = relationship(
+        back_populates="application",
+        cascade="all, delete-orphan",
+        order_by="ApplicationEvent.created_at",
+    )
+
+
+class ApplicationEvent(TimestampedUuidMixin, Base):
+    __tablename__ = "application_events"
+    __table_args__ = (Index("ix_application_events_event_type", "event_type"),)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("applications.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    event_type: Mapped[str] = mapped_column(String(80), nullable=False)
+    from_status: Mapped[ApplicationStatus | None] = mapped_column(application_status_enum)
+    to_status: Mapped[ApplicationStatus | None] = mapped_column(application_status_enum)
+    event_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+    user: Mapped[User] = relationship(back_populates="application_events")
+    application: Mapped[Application] = relationship(back_populates="events")
+
+
+class UserGoal(TimestampedUuidMixin, Base):
+    __tablename__ = "user_goals"
+    __table_args__ = (
+        CheckConstraint(
+            "weekly_application_target BETWEEN 1 AND 50",
+            name="ck_user_goals_weekly_target_range",
+        ),
+        Index("ix_user_goals_status", "status"),
+        Index("ix_user_goals_target_date", "target_date"),
+    )
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    target_role: Mapped[str | None] = mapped_column(String(120))
+    target_date: Mapped[date | None] = mapped_column(Date)
+    weekly_application_target: Mapped[int] = mapped_column(Integer, default=5, nullable=False)
+    status: Mapped[GoalStatus] = mapped_column(
+        goal_status_enum,
+        default=GoalStatus.ACTIVE,
+        nullable=False,
+    )
+    progress_data: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+    user: Mapped[User] = relationship(back_populates="goals")
 
 
 class FitAnalysis(TimestampedUuidMixin, Base):
