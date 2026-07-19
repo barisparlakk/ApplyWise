@@ -9,7 +9,7 @@ charset-normalizer==3.4.9
 click==8.4.2
 cryptography==49.0.0
 dramatiq==2.2.0
-fastapi==0.139.0
+fastapi==0.139.2
 greenlet==3.5.3
 h11==0.16.0
 idna==3.18
