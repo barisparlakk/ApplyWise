@@ -1,7 +1,7 @@
 # Generated from the verified Python 3.11 production image.
 alembic==1.18.5
 annotated-doc==0.0.4
-annotated-types==0.7.0
+annotated-types==0.8.0
 anyio==4.14.1
 async-timeout==5.0.1
 cffi==2.1.0
