@@ -1,4 +1,4 @@
-FROM python:3.14-slim AS runtime-base
+FROM python:3.15-slim AS runtime-base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
